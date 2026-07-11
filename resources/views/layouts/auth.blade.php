@@ -54,16 +54,19 @@
         <div class="hidden lg:block lg:w-1/2 relative h-screen overflow-hidden" id="authSlideshow">
             {{-- Slide images --}}
             <div class="absolute inset-0 transition-opacity duration-1000 ease-in-out opacity-100 slide-image" data-index="0">
-                <img src="{{ asset('1411.jpg') }}" alt="Kids Dental Care" class="absolute inset-0 w-full h-full object-cover">
+                <img src="{{ asset('7.jpg') }}" alt="Dukarahisi Notes" class="absolute inset-0 w-full h-full object-cover">
             </div>
             <div class="absolute inset-0 transition-opacity duration-1000 ease-in-out opacity-0 slide-image" data-index="1">
-                <img src="{{ asset('7678.jpg') }}" alt="Modern Clinic" class="absolute inset-0 w-full h-full object-cover">
+                <img src="{{ asset('1226.jpg') }}" alt="Dukarahisi Fresh" class="absolute inset-0 w-full h-full object-cover">
             </div>
             <div class="absolute inset-0 transition-opacity duration-1000 ease-in-out opacity-0 slide-image" data-index="2">
-                <img src="{{ asset('images.png') }}" alt="Expert Team" class="absolute inset-0 w-full h-full object-cover">
+                <img src="{{ asset('6640.jpg') }}" alt="Dukarahisi Study" class="absolute inset-0 w-full h-full object-cover">
             </div>
             <div class="absolute inset-0 transition-opacity duration-1000 ease-in-out opacity-0 slide-image" data-index="3">
-                <img src="{{ asset('watoto.png') }}" alt="Family Care" class="absolute inset-0 w-full h-full object-cover">
+                <img src="{{ asset('8618.jpg') }}" alt="Dukarahisi Learning" class="absolute inset-0 w-full h-full object-cover">
+            </div>
+            <div class="absolute inset-0 transition-opacity duration-1000 ease-in-out opacity-0 slide-image" data-index="4">
+                <img src="{{ asset('8640.jpg') }}" alt="Dukarahisi Future" class="absolute inset-0 w-full h-full object-cover">
             </div>
 
             <div class="absolute inset-0 bg-gradient-to-br from-emerald-900/70 via-emerald-800/50 to-transparent"></div>
@@ -83,6 +86,7 @@
                 <button class="slide-dot w-2.5 h-2.5 rounded-full bg-white/40 transition-all duration-300" data-index="1"></button>
                 <button class="slide-dot w-2.5 h-2.5 rounded-full bg-white/40 transition-all duration-300" data-index="2"></button>
                 <button class="slide-dot w-2.5 h-2.5 rounded-full bg-white/40 transition-all duration-300" data-index="3"></button>
+                <button class="slide-dot w-2.5 h-2.5 rounded-full bg-white/40 transition-all duration-300" data-index="4"></button>
             </div>
         </div>
 
@@ -184,10 +188,11 @@
         const slideDesc = document.getElementById('slideDesc');
 
         const slides = [
-            { title: 'Gentle Care for Kids', desc: 'A friendly, stress-free dental experience for your little ones.' },
-            { title: 'Modern Facilities', desc: 'State-of-the-art equipment and a clean, comfortable clinic.' },
-            { title: 'Expert Dental Team', desc: 'Professional dentists committed to your healthy, confident smile.' },
-            { title: 'Care for the Whole Family', desc: 'Comprehensive dental services tailored to every age.' }
+            { title: 'Dukarahisi - Notes', desc: 'Pata notes zote za masomo kwa urahisi na haraka.' },
+            { title: 'Dukarahisi - Fresh', desc: 'Mada mpya na fresh kwa kila somo kila siku.' },
+            { title: 'Dukarahisi - Study', desc: 'Jifunze kwa urahisi na pata matokeo mazuri.' },
+            { title: 'Dukarahisi - Learning', desc: 'Ujifunzaji bora kwa wanafunzi wote.' },
+            { title: 'Dukarahisi - Future', desc: 'Jiandae kwa mustakabali wako kwa Dukarahisi.' }
         ];
 
         let current = 0;
