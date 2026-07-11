@@ -14,7 +14,7 @@ class DukarahisiApp extends StatelessWidget {
         debugShowCheckedModeBanner: false,
         theme: AppTheme.lightTheme,
         darkTheme: AppTheme.darkTheme,
-        routerConfig: AppRouter.router,
+        routerConfig: AppRouter.router(),
       ),
     );
   }

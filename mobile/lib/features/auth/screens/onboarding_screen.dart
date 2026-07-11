@@ -17,22 +17,19 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   final List<_OnboardingPage> _pages = const [
     _OnboardingPage(
-      icon: Icons.menu_book_rounded,
-      title: 'Learn Anywhere',
-      description: 'Access high-quality notes, books, and lesson materials for every subject and level.',
-      color: AppColors.primary,
+      image: 'assets/images/login.png',
+      title: 'Welcome to Dukarahisi',
+      description: 'Your digital learning companion. Access notes, books, and lesson materials anytime, anywhere.',
     ),
     _OnboardingPage(
-      icon: Icons.school_rounded,
-      title: 'For Every Level',
-      description: 'From primary to secondary school, find content tailored to your class and curriculum.',
-      color: AppColors.accent,
+      image: 'assets/images/notes.png',
+      title: 'All Subjects Covered',
+      description: 'Find well-organized notes for Mathematics, Sciences, Languages, and more for every level.',
     ),
     _OnboardingPage(
-      icon: Icons.payment_rounded,
-      title: 'Easy Payment',
-      description: 'Buy notes instantly using mobile money. Fast, secure, and convenient.',
-      color: AppColors.info,
+      image: 'assets/images/payment.png',
+      title: 'Simple Mobile Payment',
+      description: 'Purchase materials instantly using mobile money. Secure, fast, and reliable.',
     ),
   ];
 
@@ -52,131 +49,170 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [AppColors.surface, AppColors.background, Color(0xFFD1FAE5)],
+      body: Stack(
+        children: [
+          // Background gradient
+          Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [AppColors.primary, AppColors.primaryDark, Color(0xFF065F46)],
+              ),
+            ),
           ),
-        ),
-        child: SafeArea(
-          child: Column(
-            children: [
-              const SizedBox(height: 24),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: AppColors.primary,
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    child: const Icon(Icons.auto_stories, color: Colors.white, size: 28),
-                  ),
-                  const SizedBox(width: 12),
-                  Text(
-                    'Dukarahisi',
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.textPrimary,
+          // Decorative circles
+          Positioned(
+            top: -80,
+            right: -80,
+            child: Container(
+              width: 240,
+              height: 240,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white.withOpacity(0.08),
+              ),
+            ),
+          ),
+          Positioned(
+            bottom: -100,
+            left: -100,
+            child: Container(
+              width: 300,
+              height: 300,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white.withOpacity(0.05),
+              ),
+            ),
+          ),
+          SafeArea(
+            child: Column(
+              children: [
+                // Top bar with logo
+                Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.15),
+                          borderRadius: BorderRadius.circular(12),
                         ),
-                  ),
-                ],
-              ),
-              Expanded(
-                child: PageView.builder(
-                  controller: _controller,
-                  itemCount: _pages.length,
-                  onPageChanged: (index) => setState(() => _currentIndex = index),
-                  itemBuilder: (context, index) => _buildPage(_pages[index]),
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                child: Column(
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: List.generate(_pages.length, (index) {
-                        final active = index == _currentIndex;
-                        return AnimatedContainer(
-                          duration: const Duration(milliseconds: 300),
-                          margin: const EdgeInsets.symmetric(horizontal: 4),
-                          width: active ? 28 : 8,
-                          height: 8,
-                          decoration: BoxDecoration(
-                            color: active ? AppColors.primary : AppColors.border,
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                        );
-                      }),
-                    ),
-                    const SizedBox(height: 32),
-                    ElevatedButton(
-                      onPressed: _next,
-                      child: Text(_currentIndex == _pages.length - 1 ? 'Get Started' : 'Next'),
-                    ),
-                    const SizedBox(height: 12),
-                    if (_currentIndex < _pages.length - 1)
-                      TextButton(
-                        onPressed: _finish,
-                        child: const Text('Skip', style: TextStyle(color: AppColors.textSecondary)),
+                        child: const Icon(Icons.auto_stories, color: Colors.white, size: 24),
                       ),
-                    const SizedBox(height: 24),
-                  ],
+                      const SizedBox(width: 12),
+                      Text(
+                        'Dukarahisi',
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            ],
+                // Page content
+                Expanded(
+                  child: PageView.builder(
+                    controller: _controller,
+                    itemCount: _pages.length,
+                    onPageChanged: (index) => setState(() => _currentIndex = index),
+                    itemBuilder: (context, index) => _buildPage(_pages[index]),
+                  ),
+                ),
+                // Bottom card matching web auth style
+                Container(
+                  margin: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(24),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.2),
+                        blurRadius: 30,
+                        offset: const Offset(0, 10),
+                      ),
+                    ],
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(28),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: List.generate(_pages.length, (index) {
+                            final active = index == _currentIndex;
+                            return AnimatedContainer(
+                              duration: const Duration(milliseconds: 300),
+                              margin: const EdgeInsets.symmetric(horizontal: 4),
+                              width: active ? 28 : 8,
+                              height: 8,
+                              decoration: BoxDecoration(
+                                color: active ? AppColors.primary : AppColors.border,
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                            );
+                          }),
+                        ),
+                        const SizedBox(height: 28),
+                        Text(
+                          _pages[_currentIndex].title,
+                          textAlign: TextAlign.center,
+                          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.textPrimary,
+                              ),
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          _pages[_currentIndex].description,
+                          textAlign: TextAlign.center,
+                          style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: AppColors.textSecondary),
+                        ),
+                        const SizedBox(height: 28),
+                        ElevatedButton(
+                          onPressed: _next,
+                          child: Text(_currentIndex == _pages.length - 1 ? 'Get Started' : 'Next'),
+                        ),
+                        const SizedBox(height: 12),
+                        if (_currentIndex < _pages.length - 1)
+                          TextButton(
+                            onPressed: _finish,
+                            child: const Text('Skip', style: TextStyle(color: AppColors.textSecondary)),
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
-        ),
+        ],
       ),
     );
   }
 
   Widget _buildPage(_OnboardingPage page) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 32),
+      padding: const EdgeInsets.symmetric(horizontal: 40),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Container(
-            width: 220,
-            height: 220,
+            width: 180,
+            height: 180,
+            padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: LinearGradient(
-                colors: [page.color.withOpacity(0.15), page.color.withOpacity(0.05)],
-              ),
+              color: Colors.white.withOpacity(0.15),
+              borderRadius: BorderRadius.circular(28),
+              border: Border.all(color: Colors.white.withOpacity(0.2)),
             ),
-            child: Center(
-              child: Container(
-                width: 130,
-                height: 130,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: page.color.withOpacity(0.2),
-                ),
-                child: Icon(page.icon, size: 64, color: page.color),
-              ),
-            ),
+            child: Image.asset(page.image, fit: BoxFit.contain),
           ),
-          const SizedBox(height: 48),
-          Text(
-            page.title,
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.textPrimary,
-                ),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            page.description,
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: AppColors.textSecondary),
-          ),
+          const SizedBox(height: 32),
         ],
       ),
     );
@@ -184,15 +220,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 }
 
 class _OnboardingPage {
-  final IconData icon;
+  final String image;
   final String title;
   final String description;
-  final Color color;
 
   const _OnboardingPage({
-    required this.icon,
+    required this.image,
     required this.title,
     required this.description,
-    required this.color,
   });
 }
