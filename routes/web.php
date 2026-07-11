@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin\AnalyticsController;
 use App\Http\Controllers\Admin\CatalogManageController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\MaterialManageController;
+use App\Http\Controllers\Admin\ProfileController;
 use App\Http\Controllers\Admin\SalesController;
 use App\Http\Controllers\Admin\SettingController;
 use App\Http\Controllers\HomeController;
@@ -52,10 +53,18 @@ Route::middleware(['auth', 'admin'])->group(function () {
 
     // Materials management
     foreach (['notes', 'books', 'lesson-notes', 'lesson-plans', 'syllabus', 'schemes', 'logbooks'] as $type) {
-        Route::get("/materials/$type", [MaterialManageController::class, 'index'])->name("admin.materials.$type");
-        Route::post("/materials/$type", [MaterialManageController::class, 'store'])->name("admin.materials.$type.store");
-        Route::put("/materials/$type/{id}", [MaterialManageController::class, 'update'])->name("admin.materials.$type.update");
-        Route::delete("/materials/$type/{id}", [MaterialManageController::class, 'destroy'])->name("admin.materials.$type.destroy");
+        Route::get("/materials/$type", function (\Illuminate\Http\Request $request) use ($type) {
+            return app(MaterialManageController::class)->index($type, $request);
+        })->name("admin.materials.$type");
+        Route::post("/materials/$type", function (\Illuminate\Http\Request $request) use ($type) {
+            return app(MaterialManageController::class)->store($type, $request);
+        })->name("admin.materials.$type.store");
+        Route::put("/materials/$type/{id}", function (\Illuminate\Http\Request $request, $id) use ($type) {
+            return app(MaterialManageController::class)->update($type, $id, $request);
+        })->name("admin.materials.$type.update");
+        Route::delete("/materials/$type/{id}", function (\Illuminate\Http\Request $request, $id) use ($type) {
+            return app(MaterialManageController::class)->destroy($type, $id, $request);
+        })->name("admin.materials.$type.destroy");
     }
 
     // Sales management
@@ -69,7 +78,14 @@ Route::middleware(['auth', 'admin'])->group(function () {
         Route::delete('/reviews/{review}', [SalesController::class, 'reviewsDestroy'])->name('reviews.destroy');
     });
 
+    // Profile
+    Route::get('/admin/profile', [ProfileController::class, 'index'])->name('admin.profile.index');
+    Route::post('/admin/profile', [ProfileController::class, 'update'])->name('admin.profile.update');
+    Route::post('/admin/profile/password', [ProfileController::class, 'updatePassword'])->name('admin.profile.password');
+    Route::post('/admin/profile/avatar', [ProfileController::class, 'updateAvatar'])->name('admin.profile.avatar');
+
     // Settings
     Route::get('/admin/settings', [SettingController::class, 'index'])->name('admin.settings.index');
     Route::post('/admin/settings', [SettingController::class, 'update'])->name('admin.settings.update');
+    Route::post('/admin/settings/clear-cache', [SettingController::class, 'clearCache'])->name('admin.settings.clear-cache');
 });
