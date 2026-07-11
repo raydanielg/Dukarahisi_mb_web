@@ -14,10 +14,13 @@ Route::get('/', function () {
 Auth::routes();
 
 Route::middleware(['auth', 'admin'])->group(function () {
-    Route::get('/home', [HomeController::class, 'index'])->name('home');
+    Route::get('/home', function () {
+        return redirect('/dashboard');
+    })->name('home');
 
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/admin/dashboard', [DashboardController::class, 'index'])->name('admin.dashboard');
-    Route::redirect('/admin', '/admin/dashboard');
+    Route::redirect('/admin', '/dashboard');
 
     // Catalog management
     Route::prefix('admin/catalog')->name('admin.catalog.')->group(function () {

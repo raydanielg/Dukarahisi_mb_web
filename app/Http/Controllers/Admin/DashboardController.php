@@ -41,23 +41,24 @@ class DashboardController extends Controller
             ->get();
 
         $dailySales = [];
+        $dailyUsers = [];
+        $dailyLabels = [];
+
         for ($i = 13; $i >= 0; $i--) {
             $date = Carbon::now()->subDays($i);
-            $dailySales[] = [
-                'date' => $date->format('d M'),
-                'amount' => Order::where('status', 'paid')
-                    ->whereDate('created_at', $date)
-                    ->sum('total_amount'),
-                'count' => Order::where('status', 'paid')
-                    ->whereDate('created_at', $date)
-                    ->count(),
-            ];
+            $dailyLabels[] = $date->format('d M');
+            $dailySales[] = Order::where('status', 'paid')
+                ->whereDate('created_at', $date)
+                ->sum('total_amount');
+            $dailyUsers[] = User::where('role', 'customer')
+                ->whereDate('created_at', $date)
+                ->count();
         }
 
         return view('admin.dashboard', compact(
             'totalNotes', 'publishedNotes', 'totalOrders', 'totalRevenue',
             'totalUsers', 'pendingOrders', 'recentOrders', 'recentUsers',
-            'topNotes', 'dailySales'
+            'topNotes', 'dailyLabels', 'dailySales', 'dailyUsers'
         ));
     }
 }

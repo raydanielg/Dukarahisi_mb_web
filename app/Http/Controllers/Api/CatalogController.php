@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\ClassRoom;
 use App\Models\Level;
 use App\Models\Note;
+use App\Models\OrderItem;
 use App\Models\Subject;
 use Illuminate\Http\Request;
 

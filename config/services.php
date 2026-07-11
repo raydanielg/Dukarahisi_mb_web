@@ -35,4 +35,19 @@ return [
         ],
     ],
 
+    'sms' => [
+        'provider' => env('SMS_PROVIDER', 'beem'),
+        'beem_api_key' => env('SMS_API_KEY'),
+        'beem_secret_key' => env('SMS_SECRET_KEY'),
+        'beem_sender_id' => env('SMS_SENDER_ID', 'ELIMUSTORE'),
+    ],
+
+    'payment' => [
+        'provider' => env('PAYMENT_PROVIDER', 'selcom'),
+        'api_key' => env('PAYMENT_API_KEY'),
+        'api_secret' => env('PAYMENT_API_SECRET'),
+        'base_url' => env('PAYMENT_BASE_URL', 'https://api.selcommobile.com'),
+        'webhook_secret' => env('PAYMENT_WEBHOOK_SECRET'),
+    ],
+
 ];

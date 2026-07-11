@@ -1,0 +1,6 @@
+<svg width="200" height="280" xmlns="http://www.w3.org/2000/svg">
+  <rect width="200" height="280" fill="#e6f5f1"/>
+  <rect x="20" y="40" width="160" height="120" rx="8" fill="#024938"/>
+  <text x="100" y="200" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#024938" text-anchor="middle">Elimu Store</text>
+  <text x="100" y="230" font-family="Arial, sans-serif" font-size="12" fill="#4db5a8" text-anchor="middle">Notes & Books</text>
+</svg>

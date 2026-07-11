@@ -43,7 +43,7 @@ class Note extends Model
 
     public function getCoverImageUrlAttribute(): string
     {
-        return $this->cover_image ? asset('storage/' . $this->cover_image) : asset('images/default-note-cover.png');
+        return $this->cover_image ? asset('storage/' . $this->cover_image) : asset('images/default-note-cover.svg');
     }
 
     public function getFileUrlAttribute(): string
