@@ -6,22 +6,22 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class Subject extends Model
+class Topic extends Model
 {
-    protected $fillable = ['class_room_id', 'name', 'description', 'icon', 'order', 'is_active'];
+    protected $fillable = ['subject_id', 'name', 'description', 'order', 'is_active'];
 
     protected $casts = [
         'is_active' => 'boolean',
         'order' => 'integer',
     ];
 
-    public function classRoom(): BelongsTo
+    public function subject(): BelongsTo
     {
-        return $this->belongsTo(ClassRoom::class);
+        return $this->belongsTo(Subject::class);
     }
 
     public function notes(): HasMany
     {
-        return $this->hasMany(Note::class)->orderBy('created_at', 'desc');
+        return $this->hasMany(Note::class);
     }
 }

@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Level extends Model
 {
-    protected $fillable = ['name', 'order', 'is_active'];
+    protected $fillable = ['name', 'description', 'order', 'is_active'];
 
     protected $casts = [
         'is_active' => 'boolean',

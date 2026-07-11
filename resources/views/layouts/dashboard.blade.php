@@ -24,22 +24,7 @@
             }
         }
     </script>
-    <style>
-        @keyframes fadeIn { from { opacity:0 } to { opacity:1 } }
-        .animate-fade { animation: fadeIn 0.3s ease-out both; }
-        .sidebar-link { transition: all 0.2s ease; }
-        .sidebar-link:hover { background: rgba(255,255,255,0.06); }
-        .sidebar-link.active { background: rgba(255,255,255,0.08); color: #fff; }
-        .sidebar-submenu { max-height: 0; overflow: hidden; transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease; opacity: 0; }
-        .sidebar-submenu.open { max-height: 500px; opacity: 1; }
-        .sidebar-submenu a { border-radius: 6px; padding-left: 12px; padding-right: 12px; transition: all 0.2s ease; }
-        .sidebar-submenu a:hover { background: rgba(255,255,255,0.06); color: #fff; }
-        .arrow-rotate { transform: rotate(180deg); }
-        ::-webkit-scrollbar { width: 5px; }
-        ::-webkit-scrollbar-track { background: #01241f; }
-        ::-webkit-scrollbar-thumb { background: #024938; border-radius: 3px; }
-        ::-webkit-scrollbar-thumb:hover { background: #f9ac00; }
-    </style>
+    <link rel="stylesheet" href="{{ asset('css/dashboard.css') }}?v=1.0">
 </head>
 <body class="font-['Nunito',sans-serif] antialiased bg-gray-50 text-slate-800">
 
@@ -75,7 +60,7 @@
 
             {{-- Analytics --}}
             <div class="sidebar-group">
-                <a href="#" class="sidebar-link w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-emerald-100 text-sm font-medium">
+                <a href="{{ route('admin.analytics') }}" class="sidebar-link w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-emerald-100 text-sm font-medium {{ request()->routeIs('admin.analytics') ? 'active' : '' }}">
                     <svg class="w-5 h-5 text-gold-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
                     <span>Analytics & Reports</span>
                 </a>
@@ -93,9 +78,22 @@
                     <svg class="w-4 h-4 ml-auto transition-transform {{ request()->routeIs('admin.catalog.*') ? 'arrow-rotate' : '' }}" id="arrow-catalog" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
                 </button>
                 <div id="menu-catalog" class="sidebar-submenu pl-11 space-y-0.5 {{ request()->routeIs('admin.catalog.*') ? 'open' : '' }}">
-                    <a href="{{ route('admin.catalog.levels') }}" class="block py-1.5 text-xs text-emerald-200/70 hover:text-white transition-colors {{ request()->routeIs('admin.catalog.levels') ? 'text-white font-medium' : '' }}">Levels</a>
-                    <a href="{{ route('admin.catalog.classes') }}" class="block py-1.5 text-xs text-emerald-200/70 hover:text-white transition-colors {{ request()->routeIs('admin.catalog.classes') ? 'text-white font-medium' : '' }}">Classes</a>
-                    <a href="{{ route('admin.catalog.subjects') }}" class="block py-1.5 text-xs text-emerald-200/70 hover:text-white transition-colors {{ request()->routeIs('admin.catalog.subjects') ? 'text-white font-medium' : '' }}">Subjects</a>
+                    <a href="{{ route('admin.catalog.levels') }}" class="flex items-center gap-2 py-1.5 text-xs text-emerald-200/70 hover:text-white transition-colors {{ request()->routeIs('admin.catalog.levels') ? 'text-white font-medium' : '' }}">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+                        Levels
+                    </a>
+                    <a href="{{ route('admin.catalog.classes') }}" class="flex items-center gap-2 py-1.5 text-xs text-emerald-200/70 hover:text-white transition-colors {{ request()->routeIs('admin.catalog.classes') ? 'text-white font-medium' : '' }}">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+                        Classes
+                    </a>
+                    <a href="{{ route('admin.catalog.subjects') }}" class="flex items-center gap-2 py-1.5 text-xs text-emerald-200/70 hover:text-white transition-colors {{ request()->routeIs('admin.catalog.subjects') ? 'text-white font-medium' : '' }}">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+                        Subjects
+                    </a>
+                    <a href="{{ route('admin.catalog.topics') }}" class="flex items-center gap-2 py-1.5 text-xs text-emerald-200/70 hover:text-white transition-colors {{ request()->routeIs('admin.catalog.topics') ? 'text-white font-medium' : '' }}">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/></svg>
+                        Topics
+                    </a>
                 </div>
             </div>
 
@@ -205,7 +203,7 @@
         </header>
 
         {{-- Page Content --}}
-        <main class="flex-1 p-6 animate-fade">
+        <main class="flex-1 p-6 page-content">
             @yield('content')
         </main>
 

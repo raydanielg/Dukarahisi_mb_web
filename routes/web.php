@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\AnalyticsController;
 use App\Http\Controllers\Admin\CatalogManageController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\NoteController;
@@ -22,6 +23,9 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::get('/admin/dashboard', [DashboardController::class, 'index'])->name('admin.dashboard');
     Route::redirect('/admin', '/dashboard');
 
+    // Analytics
+    Route::get('/admin/analytics', [AnalyticsController::class, 'index'])->name('admin.analytics');
+
     // Catalog management
     Route::prefix('admin/catalog')->name('admin.catalog.')->group(function () {
         Route::get('/levels', [CatalogManageController::class, 'levelsIndex'])->name('levels');
@@ -38,6 +42,11 @@ Route::middleware(['auth', 'admin'])->group(function () {
         Route::post('/subjects', [CatalogManageController::class, 'subjectsStore'])->name('subjects.store');
         Route::put('/subjects/{subject}', [CatalogManageController::class, 'subjectsUpdate'])->name('subjects.update');
         Route::delete('/subjects/{subject}', [CatalogManageController::class, 'subjectsDestroy'])->name('subjects.destroy');
+
+        Route::get('/topics', [CatalogManageController::class, 'topicsIndex'])->name('topics');
+        Route::post('/topics', [CatalogManageController::class, 'topicsStore'])->name('topics.store');
+        Route::put('/topics/{topic}', [CatalogManageController::class, 'topicsUpdate'])->name('topics.update');
+        Route::delete('/topics/{topic}', [CatalogManageController::class, 'topicsDestroy'])->name('topics.destroy');
     });
 
     // Notes management

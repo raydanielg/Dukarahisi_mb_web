@@ -14,7 +14,7 @@ $verifiedUsersPercent = $totalUsers > 0 ? round((\App\Models\User::where('role',
 <div class="space-y-6">
     {{-- KPI Cards --}}
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <div class="bg-gradient-to-br from-emerald-600 to-emerald-700 rounded-xl border border-emerald-500 p-4 text-white relative overflow-hidden hover:shadow-lg transition-shadow">
+        <div class="kpi-card dashboard-card bg-gradient-to-br from-emerald-600 to-emerald-700 rounded-xl border border-emerald-500 p-4 text-white relative overflow-hidden hover:shadow-lg">
             <div class="absolute top-0 right-0 w-16 h-16 bg-white/10 rounded-full -mr-8 -mt-8"></div>
             <div class="relative z-10">
                 <div class="flex items-start justify-between mb-2">
@@ -26,7 +26,7 @@ $verifiedUsersPercent = $totalUsers > 0 ? round((\App\Models\User::where('role',
             </div>
         </div>
 
-        <div class="bg-gradient-to-br from-amber-400 to-amber-500 rounded-xl border border-amber-300 p-4 text-white relative overflow-hidden hover:shadow-lg transition-shadow">
+        <div class="kpi-card dashboard-card bg-gradient-to-br from-amber-400 to-amber-500 rounded-xl border border-amber-300 p-4 text-white relative overflow-hidden hover:shadow-lg">
             <div class="absolute top-0 right-0 w-16 h-16 bg-white/10 rounded-full -mr-8 -mt-8"></div>
             <div class="relative z-10">
                 <div class="flex items-start justify-between mb-2">
@@ -38,7 +38,7 @@ $verifiedUsersPercent = $totalUsers > 0 ? round((\App\Models\User::where('role',
             </div>
         </div>
 
-        <div class="bg-gradient-to-br from-sky-500 to-sky-600 rounded-xl border border-sky-400 p-4 text-white relative overflow-hidden hover:shadow-lg transition-shadow">
+        <div class="kpi-card dashboard-card bg-gradient-to-br from-sky-500 to-sky-600 rounded-xl border border-sky-400 p-4 text-white relative overflow-hidden hover:shadow-lg">
             <div class="absolute top-0 right-0 w-16 h-16 bg-white/10 rounded-full -mr-8 -mt-8"></div>
             <div class="relative z-10">
                 <div class="flex items-start justify-between mb-2">
@@ -50,7 +50,7 @@ $verifiedUsersPercent = $totalUsers > 0 ? round((\App\Models\User::where('role',
             </div>
         </div>
 
-        <div class="bg-gradient-to-br from-violet-500 to-violet-600 rounded-xl border border-violet-400 p-4 text-white relative overflow-hidden hover:shadow-lg transition-shadow">
+        <div class="kpi-card dashboard-card bg-gradient-to-br from-violet-500 to-violet-600 rounded-xl border border-violet-400 p-4 text-white relative overflow-hidden hover:shadow-lg">
             <div class="absolute top-0 right-0 w-16 h-16 bg-white/10 rounded-full -mr-8 -mt-8"></div>
             <div class="relative z-10">
                 <div class="flex items-start justify-between mb-2">
@@ -65,7 +65,7 @@ $verifiedUsersPercent = $totalUsers > 0 ? round((\App\Models\User::where('role',
 
     {{-- Circular Progress Charts --}}
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div class="bg-white rounded-xl border border-gray-100 p-5 flex flex-col items-center">
+        <div class="dashboard-card hover-lift bg-white rounded-xl border border-gray-100 p-5 flex flex-col items-center">
             <h3 class="text-xs font-semibold text-gray-700 mb-3">Published Notes</h3>
             <div class="relative w-24 h-24">
                 <svg class="w-24 h-24 transform -rotate-90">
@@ -79,7 +79,7 @@ $verifiedUsersPercent = $totalUsers > 0 ? round((\App\Models\User::where('role',
             <p class="text-xs text-gray-500 mt-2">{{ $publishedNotes }}/{{ $totalNotes }} notes</p>
         </div>
 
-        <div class="bg-white rounded-xl border border-gray-100 p-5 flex flex-col items-center">
+        <div class="dashboard-card hover-lift bg-white rounded-xl border border-gray-100 p-5 flex flex-col items-center">
             <h3 class="text-xs font-semibold text-gray-700 mb-3">Paid Orders</h3>
             <div class="relative w-24 h-24">
                 <svg class="w-24 h-24 transform -rotate-90">
@@ -93,7 +93,7 @@ $verifiedUsersPercent = $totalUsers > 0 ? round((\App\Models\User::where('role',
             <p class="text-xs text-gray-500 mt-2">{{ \App\Models\Order::where('status', 'paid')->count() }}/{{ $totalOrders }} orders</p>
         </div>
 
-        <div class="bg-white rounded-xl border border-gray-100 p-5 flex flex-col items-center">
+        <div class="dashboard-card hover-lift bg-white rounded-xl border border-gray-100 p-5 flex flex-col items-center">
             <h3 class="text-xs font-semibold text-gray-700 mb-3">Free Notes</h3>
             <div class="relative w-24 h-24">
                 <svg class="w-24 h-24 transform -rotate-90">
@@ -107,7 +107,7 @@ $verifiedUsersPercent = $totalUsers > 0 ? round((\App\Models\User::where('role',
             <p class="text-xs text-gray-500 mt-2">{{ \App\Models\Note::where('is_free', true)->count() }}/{{ $totalNotes }} notes</p>
         </div>
 
-        <div class="bg-white rounded-xl border border-gray-100 p-5 flex flex-col items-center">
+        <div class="dashboard-card hover-lift bg-white rounded-xl border border-gray-100 p-5 flex flex-col items-center">
             <h3 class="text-xs font-semibold text-gray-700 mb-3">Verified Users</h3>
             <div class="relative w-24 h-24">
                 <svg class="w-24 h-24 transform -rotate-90">
@@ -130,7 +130,7 @@ $verifiedUsersPercent = $totalUsers > 0 ? round((\App\Models\User::where('role',
                 <h3 class="text-sm font-semibold text-gray-900">Revenue Overview (Last 14 Days)</h3>
                 <span class="text-xs text-gray-500">Payments</span>
             </div>
-            <div class="relative h-72 w-full">
+            <div class="chart-container">
                 <canvas id="revenueChart"></canvas>
             </div>
         </div>
@@ -141,7 +141,7 @@ $verifiedUsersPercent = $totalUsers > 0 ? round((\App\Models\User::where('role',
                 <h3 class="text-sm font-semibold text-gray-900">User Activity (Last 14 Days)</h3>
                 <span class="text-xs text-gray-500">Logins & Signups</span>
             </div>
-            <div class="relative h-72 w-full">
+            <div class="chart-container">
                 <canvas id="activityChart"></canvas>
             </div>
         </div>
@@ -149,13 +149,13 @@ $verifiedUsersPercent = $totalUsers > 0 ? round((\App\Models\User::where('role',
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {{-- Recent Orders --}}
-        <div class="bg-white rounded-xl border border-gray-100 overflow-hidden">
+        <div class="hover-lift bg-white rounded-xl border border-gray-100 overflow-hidden">
             <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
                 <h3 class="text-sm font-semibold text-gray-900">Orders za Hivi Karibuni</h3>
                 <a href="#" class="text-xs font-medium text-emerald-600 hover:text-emerald-700">View All</a>
             </div>
             <div class="overflow-x-auto">
-                <table class="w-full text-sm">
+                <table class="dashboard-table w-full text-sm">
                     <thead><tr class="text-left text-xs text-gray-500 bg-gray-50/50">
                         <th class="px-6 py-3 font-medium">Order ID</th>
                         <th class="px-6 py-3 font-medium">Customer</th>
@@ -170,11 +170,11 @@ $verifiedUsersPercent = $totalUsers > 0 ? round((\App\Models\User::where('role',
                             <td class="px-6 py-3 text-xs font-semibold text-gray-900">TZS {{ number_format($order->total_amount, 0) }}</td>
                             <td class="px-6 py-3">
                                 @if($order->status === 'paid')
-                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-100">Paid</span>
+                                    <span class="status-badge inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-100">Paid</span>
                                 @elseif($order->status === 'pending')
-                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-amber-50 text-amber-700 border border-amber-100">Pending</span>
+                                    <span class="status-badge inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-amber-50 text-amber-700 border border-amber-100">Pending</span>
                                 @else
-                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-red-50 text-red-700 border border-red-100">{{ ucfirst($order->status) }}</span>
+                                    <span class="status-badge inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-red-50 text-red-700 border border-red-100">{{ ucfirst($order->status) }}</span>
                                 @endif
                             </td>
                         </tr>
@@ -187,7 +187,7 @@ $verifiedUsersPercent = $totalUsers > 0 ? round((\App\Models\User::where('role',
         </div>
 
         {{-- Top Notes --}}
-        <div class="bg-white rounded-xl border border-gray-100 p-6">
+        <div class="hover-lift bg-white rounded-xl border border-gray-100 p-6">
             <h3 class="text-sm font-semibold text-gray-900 mb-4">Notes Zinazouzwa Zaidi</h3>
             <div class="space-y-3">
                 @forelse($topNotes as $note)
