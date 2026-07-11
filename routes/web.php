@@ -3,7 +3,8 @@
 use App\Http\Controllers\Admin\AnalyticsController;
 use App\Http\Controllers\Admin\CatalogManageController;
 use App\Http\Controllers\Admin\DashboardController;
-use App\Http\Controllers\Admin\NoteController;
+use App\Http\Controllers\Admin\MaterialManageController;
+use App\Http\Controllers\Admin\SalesController;
 use App\Http\Controllers\Admin\SettingController;
 use App\Http\Controllers\HomeController;
 use Illuminate\Support\Facades\Route;
@@ -49,8 +50,24 @@ Route::middleware(['auth', 'admin'])->group(function () {
         Route::delete('/topics/{topic}', [CatalogManageController::class, 'topicsDestroy'])->name('topics.destroy');
     });
 
-    // Notes management
-    Route::resource('admin/notes', NoteController::class)->names('admin.notes');
+    // Materials management
+    foreach (['notes', 'books', 'lesson-notes', 'lesson-plans', 'syllabus', 'schemes', 'logbooks'] as $type) {
+        Route::get("/materials/$type", [MaterialManageController::class, 'index'])->name("admin.materials.$type");
+        Route::post("/materials/$type", [MaterialManageController::class, 'store'])->name("admin.materials.$type.store");
+        Route::put("/materials/$type/{id}", [MaterialManageController::class, 'update'])->name("admin.materials.$type.update");
+        Route::delete("/materials/$type/{id}", [MaterialManageController::class, 'destroy'])->name("admin.materials.$type.destroy");
+    }
+
+    // Sales management
+    Route::prefix('admin/sales')->name('admin.sales.')->group(function () {
+        Route::get('/orders', [SalesController::class, 'ordersIndex'])->name('orders');
+        Route::patch('/orders/{order}/status', [SalesController::class, 'ordersUpdateStatus'])->name('orders.status');
+        Route::get('/customers', [SalesController::class, 'customersIndex'])->name('customers');
+        Route::get('/payments', [SalesController::class, 'paymentsIndex'])->name('payments');
+        Route::patch('/payments/{payment}/status', [SalesController::class, 'paymentsUpdateStatus'])->name('payments.status');
+        Route::get('/reviews', [SalesController::class, 'reviewsIndex'])->name('reviews');
+        Route::delete('/reviews/{review}', [SalesController::class, 'reviewsDestroy'])->name('reviews.destroy');
+    });
 
     // Settings
     Route::get('/admin/settings', [SettingController::class, 'index'])->name('admin.settings.index');

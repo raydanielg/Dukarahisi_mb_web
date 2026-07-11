@@ -11,7 +11,7 @@ class Note extends Model
     protected $fillable = [
         'subject_id', 'title', 'slug', 'description', 'price',
         'is_free', 'file_path', 'cover_image', 'downloads_count',
-        'status', 'is_active'
+        'status', 'is_active', 'order'
     ];
 
     protected $casts = [
@@ -19,6 +19,7 @@ class Note extends Model
         'is_free' => 'boolean',
         'is_active' => 'boolean',
         'downloads_count' => 'integer',
+        'order' => 'integer',
     ];
 
     public function subject(): BelongsTo
