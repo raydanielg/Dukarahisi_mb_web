@@ -54,6 +54,10 @@ class Note extends Model
 
     public function getFileUrlAttribute(): string
     {
-        return $this->file_path ? asset('storage/' . $this->file_path) : '#';
+        if (!$this->file_path) {
+            return '#';
+        }
+        $path = str_replace('public/', '', $this->file_path);
+        return asset('storage/' . $path);
     }
 }

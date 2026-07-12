@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pdfx/pdfx.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/services/catalog_service.dart';
 import '../../../core/network/api_client.dart';
@@ -140,126 +142,168 @@ class _CatalogMaterialsScreenState extends State<CatalogMaterialsScreen> {
   }
 
   Widget _buildMaterialCard(Map<String, dynamic> material) {
-    final rawPrice = material['price'];
-    final double price = rawPrice is num ? rawPrice.toDouble() : (double.tryParse(rawPrice?.toString() ?? '0') ?? 0);
-    final bool isFree = material['is_free'] == true || price <= 0;
-    final hasPurchased = material['has_purchased'] ?? false;
+    final bool hasAccess = material['has_purchased'] == true || material['is_free'] == true;
+    final String? fileUrl = material['file_url']?.toString();
 
-    return GestureDetector(
-      onTap: () {
-        // Navigate to material detail or purchase
-      },
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.primary.withOpacity(0.12), width: 1.5),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.primary.withOpacity(0.06),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.primary.withOpacity(0.12), width: 1.5),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withOpacity(0.06),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: AppColors.primary.withOpacity(0.08),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(
+                Icons.description_outlined,
+                color: AppColors.primary,
+                size: 24,
+              ),
             ),
-          ],
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Container(
-                width: 56,
-                height: 72,
-                decoration: BoxDecoration(
-                  color: AppColors.primary.withOpacity(0.08),
-                  borderRadius: BorderRadius.circular(12),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Text(
+                material['title']?.toString() ?? 'Material',
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary,
                 ),
-                child: Icon(
-                  Icons.description_outlined,
-                  color: AppColors.primary,
-                  size: 28,
-                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
               ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      material['title']?.toString() ?? 'Material',
-                      style: const TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.textPrimary,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 6),
-                    isFree
-                        ? Row(
-                            children: [
-                              Icon(Icons.check_circle, color: AppColors.success, size: 14),
-                              const SizedBox(width: 4),
-                              Text(
-                                'This source is free',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppColors.success,
-                                ),
-                              ),
-                            ],
-                          )
-                        : Row(
-                            children: [
-                              Icon(Icons.monetization_on, color: AppColors.accent, size: 14),
-                              const SizedBox(width: 4),
-                              Text(
-                                'TZS ${price.toStringAsFixed(2)}',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppColors.accent,
-                                ),
-                              ),
-                            ],
-                          ),
-                    const SizedBox(height: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: AppColors.primary.withOpacity(0.08),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        (material['file_type']?.toString() ?? 'PDF').toUpperCase(),
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.primary,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 8),
-              Container(
-                width: 36,
-                height: 36,
+            ),
+            const SizedBox(width: 10),
+            GestureDetector(
+              onTap: () => _handleViewMaterial(material),
+              child: Container(
+                width: 40,
+                height: 40,
                 decoration: BoxDecoration(
                   color: AppColors.primary.withOpacity(0.1),
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(
-                  Icons.chevron_right_rounded,
+                  Icons.visibility,
                   color: AppColors.primary,
                   size: 20,
                 ),
               ),
-            ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _handleViewMaterial(Map<String, dynamic> material) {
+    final bool hasAccess = material['has_purchased'] == true || material['is_free'] == true;
+    final String? fileUrl = material['file_url']?.toString();
+
+    if (!hasAccess || fileUrl == null || fileUrl.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Purchase this material to view the PDF'),
+          backgroundColor: AppColors.textPrimary,
+        ),
+      );
+      return;
+    }
+
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => _PdfViewerScreen(url: fileUrl, title: material['title']?.toString() ?? 'Document'),
+      ),
+    );
+  }
+}
+
+class _PdfViewerScreen extends StatefulWidget {
+  final String url;
+  final String title;
+
+  const _PdfViewerScreen({required this.url, required this.title});
+
+  @override
+  State<_PdfViewerScreen> createState() => _PdfViewerScreenState();
+}
+
+class _PdfViewerScreenState extends State<_PdfViewerScreen> {
+  late final PdfControllerPinch _pdfController;
+
+  @override
+  void initState() {
+    super.initState();
+    _pdfController = PdfControllerPinch(
+      document: PdfDocument.openData(
+        // ignore: invalid_return_type_for_catch_error
+        NetworkAssetBundle(Uri.parse(widget.url)).load(widget.url).then((byteData) => byteData.buffer.asUint8List()),
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    _pdfController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.white,
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+        title: Text(
+          widget.title,
+          style: const TextStyle(
+            color: AppColors.textPrimary,
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ),
+      body: PdfViewPinch(
+        controller: _pdfController,
+        builders: PdfViewPinchBuilders<DefaultBuilderOptions>(
+          options: const DefaultBuilderOptions(),
+          errorBuilder: (context, error) => Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.error_outline, color: Colors.red[400], size: 48),
+                const SizedBox(height: 16),
+                Text(
+                  'Failed to load PDF',
+                  style: TextStyle(color: AppColors.textSecondary),
+                ),
+              ],
+            ),
+          ),
+          documentLoaderBuilder: (context) => const Center(
+            child: CircularProgressIndicator(color: AppColors.primary),
           ),
         ),
       ),

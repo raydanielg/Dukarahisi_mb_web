@@ -107,6 +107,11 @@ flutter:
     - assets/images/
     - assets/icons/
     - assets/fonts/
+    - assets/foldericon.png
+    - assets/standards.png
+    - assets/iconsapp.png
+    - assets/foldeicon1.png
+    - assets/WhatsApp Image 2026-07-12 at 04.16.47.jpeg
     - assets/images/login.png
     - assets/images/register.png
     - assets/images/forgotpass.png
