@@ -112,12 +112,27 @@
             </div>
 
             <div class="drawer-form-group">
-                <label for="levelIcon">Icon Path</label>
-                <input type="text" id="levelIcon" name="icon" placeholder="e.g. assets/icons/primary.png">
-                <p class="text-xs text-gray-500 mt-1">Path to mobile app icon asset (e.g. assets/icons/primary.png)</p>
+                <label>Level Icon</label>
+                <div class="relative border-2 border-dashed border-emerald-200 rounded-lg p-5 hover:border-emerald-500 hover:bg-emerald-50/30 transition-all bg-emerald-50/20 group" id="iconDropZone">
+                    <input type="file" id="levelIcon" name="icon" accept="image/png,image/jpeg,image/jpg,image/svg+xml,image/webp" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10">
+                    <div class="text-center pointer-events-none">
+                        <div class="w-12 h-12 mx-auto rounded-full bg-emerald-100 flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
+                            <svg class="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                        </div>
+                        <p class="text-sm font-semibold text-gray-700" id="iconFileName">Click or drop icon here</p>
+                        <p class="text-xs text-gray-500 mt-1.5">PNG, JPG, SVG, WEBP • Max 2MB</p>
+                    </div>
+                </div>
+                <input type="hidden" id="existingIcon" name="existing_icon" value="">
                 <div id="iconPreview" class="mt-3 hidden">
                     <p class="text-xs text-gray-500 mb-1">Preview:</p>
-                    <img id="iconPreviewImg" src="" alt="Icon preview" class="w-12 h-12 rounded-lg object-contain bg-gray-50 p-1 border border-gray-200">
+                    <div class="flex items-center gap-3">
+                        <img id="iconPreviewImg" src="" alt="Icon preview" class="w-12 h-12 rounded-lg object-contain bg-gray-50 p-1 border border-gray-200">
+                        <button type="button" onclick="removeIconFile()" class="text-xs text-red-600 hover:text-red-700 font-medium flex items-center gap-1">
+                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                            Remove icon
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -166,6 +181,9 @@
         document.getElementById('levelName').value = '';
         document.getElementById('levelDescription').value = '';
         document.getElementById('levelIcon').value = '';
+        document.getElementById('existingIcon').value = '';
+        document.getElementById('iconFileName').textContent = 'Click or drop icon here';
+        document.getElementById('iconFileName').classList.remove('text-emerald-700', 'font-semibold');
         updateIconPreview('');
         document.getElementById('levelOrder').value = 0;
         document.getElementById('levelActive').checked = true;
@@ -188,7 +206,14 @@
         document.getElementById('levelId').value = id;
         document.getElementById('levelName').value = name;
         document.getElementById('levelDescription').value = description;
-        document.getElementById('levelIcon').value = icon;
+        document.getElementById('levelIcon').value = '';
+        document.getElementById('existingIcon').value = icon;
+        document.getElementById('iconFileName').textContent = icon ? 'Current icon selected. Click to replace' : 'Click or drop icon here';
+        if (icon) {
+            document.getElementById('iconFileName').classList.add('text-emerald-700', 'font-semibold');
+        } else {
+            document.getElementById('iconFileName').classList.remove('text-emerald-700', 'font-semibold');
+        }
         updateIconPreview(icon);
         document.getElementById('levelOrder').value = order;
         document.getElementById('levelActive').checked = isActive === 1;
@@ -202,15 +227,42 @@
         const previewContainer = document.getElementById('iconPreview');
         const previewImg = document.getElementById('iconPreviewImg');
         if (iconPath && iconPath.trim() !== '') {
-            previewImg.src = iconPath.startsWith('http') ? iconPath : '{{ asset('') }}' + iconPath;
+            previewImg.src = iconPath.startsWith('http') || iconPath.startsWith('data:') ? iconPath : '{{ asset('storage/' . str_replace('public/', '', '')) }}' + iconPath.replace('public/', '');
             previewContainer.classList.remove('hidden');
         } else {
             previewContainer.classList.add('hidden');
         }
     }
 
-    document.getElementById('levelIcon').addEventListener('input', function(e) {
-        updateIconPreview(e.target.value);
+    function removeIconFile() {
+        document.getElementById('levelIcon').value = '';
+        document.getElementById('existingIcon').value = '';
+        document.getElementById('iconFileName').textContent = 'Click or drop icon here';
+        document.getElementById('iconFileName').classList.remove('text-emerald-700', 'font-semibold');
+        updateIconPreview('');
+    }
+
+    document.getElementById('levelIcon').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            if (file.size > 2 * 1024 * 1024) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'File too large',
+                    text: 'Icon must be smaller than 2MB.',
+                    confirmButtonColor: '#10B981'
+                });
+                e.target.value = '';
+                return;
+            }
+            document.getElementById('iconFileName').textContent = file.name;
+            document.getElementById('iconFileName').classList.add('text-emerald-700', 'font-semibold');
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                updateIconPreview(e.target.result);
+            };
+            reader.readAsDataURL(file);
+        }
     });
 
     function setLoading(loading) {
@@ -291,28 +343,31 @@
         setLoading(true);
 
         const formData = new FormData(levelForm);
-        const data = {
-            name: formData.get('name'),
-            description: formData.get('description'),
-            icon: formData.get('icon') || null,
-            order: parseInt(formData.get('order')) || 0,
-            is_active: formData.get('is_active') ? 1 : 0,
-            _token: formData.get('_token')
-        };
+        formData.set('order', parseInt(formData.get('order')) || 0);
+        formData.set('is_active', formData.get('is_active') ? 1 : 0);
+
+        if (!formData.get('icon') && document.getElementById('existingIcon').value) {
+            // Keep existing icon if no new file selected and not removed
+        } else if (!formData.get('icon') && !document.getElementById('existingIcon').value) {
+            formData.set('remove_icon', '1');
+        }
 
         const url = editingId
             ? `{{ url('admin/catalog/levels') }}/${editingId}`
             : '{{ route('admin.catalog.levels.store') }}';
-        const method = editingId ? 'PUT' : 'POST';
+        const method = editingId ? 'POST' : 'POST';
+
+        if (editingId) {
+            formData.append('_method', 'PUT');
+        }
 
         fetch(url, {
             method: method,
             headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': data._token,
+                'X-CSRF-TOKEN': formData.get('_token'),
                 'Accept': 'application/json'
             },
-            body: JSON.stringify(data)
+            body: formData
         })
         .then(response => response.json())
         .then(result => {

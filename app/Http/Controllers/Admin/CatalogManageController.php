@@ -38,17 +38,22 @@ class CatalogManageController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'nullable|string|max:500',
-            'icon' => 'nullable|string|max:255',
+            'icon' => 'nullable|image|mimes:png,jpg,jpeg,svg,webp|max:2048',
             'order' => 'required|integer|min:0',
         ]);
 
-        $level = Level::create([
+        $data = [
             'name' => $validated['name'],
             'description' => $validated['description'] ?? null,
-            'icon' => $validated['icon'] ?? null,
             'order' => $validated['order'],
             'is_active' => true,
-        ]);
+        ];
+
+        if ($request->hasFile('icon')) {
+            $data['icon'] = $this->storeIconFile($request->file('icon'), 'level');
+        }
+
+        $level = Level::create($data);
 
         if ($request->ajax() || $request->wantsJson()) {
             return response()->json([
@@ -66,18 +71,27 @@ class CatalogManageController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'nullable|string|max:500',
-            'icon' => 'nullable|string|max:255',
+            'icon' => 'nullable|image|mimes:png,jpg,jpeg,svg,webp|max:2048',
             'order' => 'required|integer|min:0',
             'is_active' => 'boolean',
         ]);
 
-        $level->update([
+        $data = [
             'name' => $validated['name'],
             'description' => $validated['description'] ?? null,
-            'icon' => $validated['icon'] ?? null,
             'order' => $validated['order'],
             'is_active' => $validated['is_active'] ?? true,
-        ]);
+        ];
+
+        if ($request->hasFile('icon')) {
+            $this->deleteIconFile($level);
+            $data['icon'] = $this->storeIconFile($request->file('icon'), 'level');
+        } elseif ($request->boolean('remove_icon')) {
+            $this->deleteIconFile($level);
+            $data['icon'] = null;
+        }
+
+        $level->update($data);
 
         if ($request->ajax() || $request->wantsJson()) {
             return response()->json([
@@ -90,8 +104,22 @@ class CatalogManageController extends Controller
         return redirect()->route('admin.catalog.levels')->with('status', 'Level updated successfully.');
     }
 
+    protected function storeIconFile($file, string $prefix): string
+    {
+        $filename = $prefix . '_' . time() . '_' . str_replace(' ', '_', $file->getClientOriginalName());
+        return $file->storeAs('public/icons', $filename);
+    }
+
+    protected function deleteIconFile($level): void
+    {
+        if ($level->icon && \Storage::exists($level->icon)) {
+            \Storage::delete($level->icon);
+        }
+    }
+
     public function levelsDestroy(Level $level)
     {
+        $this->deleteIconFile($level);
         $level->delete();
 
         if (request()->ajax() || request()->wantsJson()) {
