@@ -104,17 +104,6 @@ class AuthController extends Controller
             throw ValidationException::withMessages(['phone_number' => 'Invalid phone number or password.']);
         }
 
-        if (!$user->hasVerifiedPhone()) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Phone number not verified.',
-                'data' => [
-                    'phone_verified' => false,
-                    'phone_number' => $user->phone_number,
-                ],
-            ], 403);
-        }
-
         $token = $user->createToken('mobile-app')->plainTextToken;
 
         return response()->json([
