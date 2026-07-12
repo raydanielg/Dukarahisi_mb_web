@@ -45,7 +45,7 @@
                         <td class="px-6 py-3 text-xs text-gray-500">{{ $index + 1 }}</td>
                         <td class="px-6 py-3">
                             @if($level->icon)
-                                <img src="{{ asset($level->icon) }}" alt="{{ $level->name }}" class="w-10 h-10 rounded-lg object-contain bg-gray-50 p-1">
+                                <img src="{{ asset(str_replace('public/', 'storage/', $level->icon)) }}" alt="{{ $level->name }}" class="w-10 h-10 rounded-lg object-contain bg-gray-50 p-1">
                             @else
                                 <div class="w-10 h-10 rounded-lg bg-emerald-100 flex items-center justify-center text-emerald-600">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
@@ -290,8 +290,9 @@
         const activeText = level.is_active ? 'Active' : 'Inactive';
         const description = level.description ? level.description.replace(/'/g, "\\'") : '';
         const icon = level.icon ? level.icon.replace(/'/g, "\\'") : '';
+        const iconUrl = level.icon ? '{{ asset('') }}' + level.icon.replace('public/', 'storage/') : '';
         const iconHtml = level.icon
-            ? `<img src="{{ asset('') }}${icon}" alt="${level.name}" class="w-10 h-10 rounded-lg object-contain bg-gray-50 p-1">`
+            ? `<img src="${iconUrl}" alt="${level.name}" class="w-10 h-10 rounded-lg object-contain bg-gray-50 p-1">`
             : `<div class="w-10 h-10 rounded-lg bg-emerald-100 flex items-center justify-center text-emerald-600"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg></div>`;
 
         const row = document.createElement('tr');
@@ -527,8 +528,9 @@
             const description = level.description ? level.description.replace(/'/g, "\\'") : '';
             const icon = level.icon ? level.icon.replace(/'/g, "\\'") : '';
             const displayDescription = level.description || 'No description';
+            const iconUrl = level.icon ? '{{ asset('') }}' + level.icon.replace('public/', 'storage/') : '';
             const iconHtml = level.icon
-                ? `<img src="{{ asset('') }}${icon}" alt="${level.name}" class="w-10 h-10 rounded-lg object-contain bg-gray-50 p-1">`
+                ? `<img src="${iconUrl}" alt="${level.name}" class="w-10 h-10 rounded-lg object-contain bg-gray-50 p-1">`
                 : `<div class="w-10 h-10 rounded-lg bg-emerald-100 flex items-center justify-center text-emerald-600"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg></div>`;
 
             const row = document.createElement('tr');

@@ -33,7 +33,11 @@ class CatalogController extends Controller
                     'id' => $level->id,
                     'name' => $level->name,
                     'description' => $level->description,
-                    'icon' => $level->icon ?: 'assets/icons/level.png',
+                    'icon' => $level->icon
+                        ? (str_starts_with($level->icon, 'public/')
+                            ? asset(str_replace('public/', 'storage/', $level->icon))
+                            : $level->icon)
+                        : 'assets/icons/level.png',
                     'order' => $level->order,
                     'is_active' => $level->is_active,
                 ];

@@ -174,10 +174,25 @@ class _CatalogLevelsScreenState extends State<CatalogLevelsScreen> {
                 child: iconPath != null && iconPath.isNotEmpty
                     ? Padding(
                         padding: const EdgeInsets.all(10),
-                        child: Image.asset(
-                          iconPath,
-                          fit: BoxFit.contain,
-                        ),
+                        child: iconPath.startsWith('http')
+                            ? Image.network(
+                                iconPath,
+                                fit: BoxFit.contain,
+                                errorBuilder: (context, error, stackTrace) => const Icon(
+                                  Icons.school,
+                                  color: Colors.white,
+                                  size: 28,
+                                ),
+                              )
+                            : Image.asset(
+                                iconPath,
+                                fit: BoxFit.contain,
+                                errorBuilder: (context, error, stackTrace) => const Icon(
+                                  Icons.school,
+                                  color: Colors.white,
+                                  size: 28,
+                                ),
+                              ),
                       )
                     : const Icon(
                         Icons.school,
