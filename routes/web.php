@@ -52,7 +52,7 @@ Route::middleware(['auth', 'admin'])->group(function () {
     });
 
     // Materials management
-    foreach (['notes', 'books', 'lesson-notes', 'lesson-plans', 'syllabus', 'schemes', 'logbooks'] as $type) {
+    foreach (['notes', 'books', 'lesson-plans', 'syllabus', 'schemes', 'logbooks'] as $type) {
         Route::get("/materials/$type", function (\Illuminate\Http\Request $request) use ($type) {
             return app(MaterialManageController::class)->index($type, $request);
         })->name("admin.materials.$type");

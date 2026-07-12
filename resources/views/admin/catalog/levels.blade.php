@@ -32,6 +32,7 @@
             <table class="dashboard-table w-full text-sm" id="levelsTable">
                 <thead><tr class="text-left text-xs text-gray-500 bg-gray-50/50">
                     <th class="px-6 py-3 font-medium">#</th>
+                    <th class="px-6 py-3 font-medium">Icon</th>
                     <th class="px-6 py-3 font-medium">Level Name</th>
                     <th class="px-6 py-3 font-medium">Description</th>
                     <th class="px-6 py-3 font-medium">Order</th>
@@ -42,6 +43,15 @@
                     @forelse($levels as $index => $level)
                     <tr class="border-t border-gray-100 transition-colors animate-fade" data-id="{{ $level->id }}" data-name="{{ strtolower($level->name) }}" style="animation-delay: {{ $index * 0.05 }}s">
                         <td class="px-6 py-3 text-xs text-gray-500">{{ $index + 1 }}</td>
+                        <td class="px-6 py-3">
+                            @if($level->icon)
+                                <img src="{{ asset($level->icon) }}" alt="{{ $level->name }}" class="w-10 h-10 rounded-lg object-contain bg-gray-50 p-1">
+                            @else
+                                <div class="w-10 h-10 rounded-lg bg-emerald-100 flex items-center justify-center text-emerald-600">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+                                </div>
+                            @endif
+                        </td>
                         <td class="px-6 py-3">
                             <p class="text-sm font-semibold text-gray-900">{{ $level->name }}</p>
                         </td>
@@ -58,7 +68,7 @@
                         </td>
                         <td class="px-6 py-3 text-right">
                             <div class="flex items-center justify-end gap-2">
-                                <button onclick="editLevel({{ $level->id }}, '{{ addslashes($level->name) }}', '{{ addslashes($level->description ?? '') }}', {{ $level->order }}, {{ $level->is_active ? 1 : 0 }})" class="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors" title="Edit">
+                                <button onclick="editLevel({{ $level->id }}, '{{ addslashes($level->name) }}', '{{ addslashes($level->description ?? '') }}', '{{ addslashes($level->icon ?? '') }}', {{ $level->order }}, {{ $level->is_active ? 1 : 0 }})" class="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors" title="Edit">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.433-4.333A2.001 2.001 0 0119 10a2.001 2.001 0 01-.433 1.333L12.5 17.5l-4 1 1-4 6.067-6.167z"/></svg>
                                 </button>
                                 <button onclick="deleteLevel({{ $level->id }})" class="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="Delete">
@@ -68,7 +78,7 @@
                         </td>
                     </tr>
                     @empty
-                    <tr id="emptyRow"><td colspan="6" class="px-6 py-12 text-center text-gray-400 text-sm">No levels found. Click "Add New Level" to create one.</td></tr>
+                    <tr id="emptyRow"><td colspan="7" class="px-6 py-12 text-center text-gray-400 text-sm">No levels found. Click "Add New Level" to create one.</td></tr>
                     @endforelse
                 </tbody>
             </table>
@@ -99,6 +109,16 @@
             <div class="drawer-form-group">
                 <label for="levelDescription">Description</label>
                 <textarea id="levelDescription" name="description" rows="4" placeholder="Short description about this level..."></textarea>
+            </div>
+
+            <div class="drawer-form-group">
+                <label for="levelIcon">Icon Path</label>
+                <input type="text" id="levelIcon" name="icon" placeholder="e.g. assets/icons/primary.png">
+                <p class="text-xs text-gray-500 mt-1">Path to mobile app icon asset (e.g. assets/icons/primary.png)</p>
+                <div id="iconPreview" class="mt-3 hidden">
+                    <p class="text-xs text-gray-500 mb-1">Preview:</p>
+                    <img id="iconPreviewImg" src="" alt="Icon preview" class="w-12 h-12 rounded-lg object-contain bg-gray-50 p-1 border border-gray-200">
+                </div>
             </div>
 
             <div class="drawer-form-group">
@@ -145,6 +165,8 @@
         document.getElementById('levelId').value = '';
         document.getElementById('levelName').value = '';
         document.getElementById('levelDescription').value = '';
+        document.getElementById('levelIcon').value = '';
+        updateIconPreview('');
         document.getElementById('levelOrder').value = 0;
         document.getElementById('levelActive').checked = true;
         document.getElementById('saveText').textContent = 'Save Level';
@@ -160,12 +182,14 @@
         editingId = null;
     }
 
-    function editLevel(id, name, description, order, isActive) {
+    function editLevel(id, name, description, icon, order, isActive) {
         editingId = id;
         drawerTitle.textContent = 'Edit Level';
         document.getElementById('levelId').value = id;
         document.getElementById('levelName').value = name;
         document.getElementById('levelDescription').value = description;
+        document.getElementById('levelIcon').value = icon;
+        updateIconPreview(icon);
         document.getElementById('levelOrder').value = order;
         document.getElementById('levelActive').checked = isActive === 1;
         document.getElementById('saveText').textContent = 'Update Level';
@@ -173,6 +197,21 @@
         levelSidebar.classList.add('open');
         document.body.style.overflow = 'hidden';
     }
+
+    function updateIconPreview(iconPath) {
+        const previewContainer = document.getElementById('iconPreview');
+        const previewImg = document.getElementById('iconPreviewImg');
+        if (iconPath && iconPath.trim() !== '') {
+            previewImg.src = iconPath.startsWith('http') ? iconPath : '{{ asset('') }}' + iconPath;
+            previewContainer.classList.remove('hidden');
+        } else {
+            previewContainer.classList.add('hidden');
+        }
+    }
+
+    document.getElementById('levelIcon').addEventListener('input', function(e) {
+        updateIconPreview(e.target.value);
+    });
 
     function setLoading(loading) {
         saveBtn.disabled = loading;
@@ -250,6 +289,7 @@
         const data = {
             name: formData.get('name'),
             description: formData.get('description'),
+            icon: formData.get('icon') || null,
             order: parseInt(formData.get('order')) || 0,
             is_active: formData.get('is_active') ? 1 : 0,
             _token: formData.get('_token')

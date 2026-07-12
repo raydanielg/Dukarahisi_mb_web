@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Book;
 use App\Models\ClassRoom;
-use App\Models\LessonNote;
 use App\Models\LessonPlan;
 use App\Models\Level;
 use App\Models\Logbook;
@@ -119,9 +118,6 @@ class CatalogController extends Controller
             case 'books':
                 $materials = $this->getBooks($topic, $user);
                 break;
-            case 'lesson-notes':
-                $materials = $this->getLessonNotes($topic, $user);
-                break;
             case 'lesson-plans':
                 $materials = $this->getLessonPlans($topic, $user);
                 break;
@@ -198,33 +194,6 @@ class CatalogController extends Controller
             });
 
         return $books;
-    }
-
-    /**
-     * Get lesson notes for a topic.
-     */
-    private function getLessonNotes(Topic $topic, $user)
-    {
-        $lessonNotes = LessonNote::where('topic_id', $topic->id)
-            ->where('is_active', true)
-            ->orderBy('order')
-            ->get()
-            ->map(function (LessonNote $lessonNote) {
-                return [
-                    'id' => $lessonNote->id,
-                    'title' => $lessonNote->title,
-                    'description' => $lessonNote->description,
-                    'price' => 0,
-                    'is_free' => true,
-                    'cover_image' => null,
-                    'file_url' => $lessonNote->file_path ? asset('storage/' . $lessonNote->file_path) : null,
-                    'file_type' => 'pdf',
-                    'has_purchased' => true,
-                    'material_type' => 'lesson-notes',
-                ];
-            });
-
-        return $lessonNotes;
     }
 
     /**

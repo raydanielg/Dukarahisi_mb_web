@@ -177,7 +177,6 @@ class _CatalogLevelsScreenState extends State<CatalogLevelsScreen> {
                         child: Image.asset(
                           iconPath,
                           fit: BoxFit.contain,
-                          color: Colors.white,
                         ),
                       )
                     : const Icon(

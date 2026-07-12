@@ -38,12 +38,14 @@ class CatalogManageController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'nullable|string|max:500',
+            'icon' => 'nullable|string|max:255',
             'order' => 'required|integer|min:0',
         ]);
 
         $level = Level::create([
             'name' => $validated['name'],
             'description' => $validated['description'] ?? null,
+            'icon' => $validated['icon'] ?? null,
             'order' => $validated['order'],
             'is_active' => true,
         ]);
@@ -64,6 +66,7 @@ class CatalogManageController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'nullable|string|max:500',
+            'icon' => 'nullable|string|max:255',
             'order' => 'required|integer|min:0',
             'is_active' => 'boolean',
         ]);
@@ -71,6 +74,7 @@ class CatalogManageController extends Controller
         $level->update([
             'name' => $validated['name'],
             'description' => $validated['description'] ?? null,
+            'icon' => $validated['icon'] ?? null,
             'order' => $validated['order'],
             'is_active' => $validated['is_active'] ?? true,
         ]);

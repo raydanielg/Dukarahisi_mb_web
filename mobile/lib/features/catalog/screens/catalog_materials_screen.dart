@@ -126,8 +126,6 @@ class _CatalogMaterialsScreenState extends State<CatalogMaterialsScreen> {
         return 'Notes';
       case 'books':
         return 'Books';
-      case 'lesson-notes':
-        return 'Lesson Notes';
       case 'lesson-plans':
         return 'Lesson Plans';
       case 'syllabus':
