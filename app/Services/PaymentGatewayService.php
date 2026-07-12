@@ -92,7 +92,6 @@ class PaymentGatewayService
                     'reference' => $paymentData['reference'] ?? null,
                     'status' => 'pending',
                     'raw_response' => $data,
-                    'phone_number' => $cleanPhone,
                 ]
             );
 

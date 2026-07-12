@@ -75,6 +75,19 @@ class DashboardService {
     }
   }
 
+  Future<Map<String, dynamic>> getUserOrders() async {
+    try {
+      final response = await _apiClient.get('/orders');
+      final orders = response.data['data']['data'] as List;
+      return {
+        'status': 'success',
+        'data': List<Map<String, dynamic>>.from(orders),
+      };
+    } on ApiException catch (e) {
+      rethrow;
+    }
+  }
+
   Future<Map<String, dynamic>> getPendingPayments() async {
     try {
       final response = await _apiClient.get('/orders');

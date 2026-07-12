@@ -138,6 +138,21 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         _pollCount++;
         try {
           final response = await _paymentService.checkStatus(_orderId!);
+          if (response['status'] == 'error') {
+            final code = response['code'] as int?;
+            if (code == 401 || code == 403) {
+              timer.cancel();
+              if (mounted) {
+                setState(() {
+                  _status = _CheckoutStatus.failed;
+                  _error = response['message']?.toString() ?? 'Session expired. Please login again.';
+                });
+              }
+              return;
+            }
+            // ignore other transient errors and keep polling
+            return;
+          }
           final data = response['data'] as Map<String, dynamic>?;
           final paymentStatus = data?['payment_status']?.toString().toLowerCase();
           if (paymentStatus == 'success' || paymentStatus == 'paid') {

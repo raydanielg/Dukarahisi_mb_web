@@ -164,28 +164,36 @@ class OrderController extends Controller
      */
     public function status(Request $request, Order $order)
     {
-        $authUser = $request->user();
+        try {
+            $authUser = $request->user();
 
-        if ($order->user_id !== $authUser->id) {
-            Log::warning('Order status unauthorized access attempt', [
-                'order_id' => $order->id,
-                'order_user_id' => $order->user_id,
-                'auth_user_id' => $authUser->id,
+            if ($order->user_id !== $authUser->id) {
+                Log::warning('Order status unauthorized access attempt', [
+                    'order_id' => $order->id,
+                    'order_user_id' => $order->user_id,
+                    'auth_user_id' => $authUser->id,
+                ]);
+                return response()->json(['status' => 'error', 'message' => 'Unauthorized.'], 403);
+            }
+
+            $payment = $order->payment;
+
+            return response()->json([
+                'status' => 'success',
+                'data' => [
+                    'order_id' => $order->id,
+                    'reference' => $order->reference,
+                    'order_status' => $order->status,
+                    'payment_status' => $payment?->status ?? 'pending',
+                    'amount' => $order->total_amount,
+                ],
             ]);
-            return response()->json(['status' => 'error', 'message' => 'Unauthorized.'], 403);
-        }
-
-        $payment = $order->payment;
-
-        return response()->json([
-            'status' => 'success',
-            'data' => [
+        } catch (\Exception $e) {
+            Log::error('Order status error: ' . $e->getMessage(), [
                 'order_id' => $order->id,
-                'reference' => $order->reference,
-                'order_status' => $order->status,
-                'payment_status' => $payment?->status ?? 'pending',
-                'amount' => $order->total_amount,
-            ],
-        ]);
+                'trace' => $e->getTraceAsString(),
+            ]);
+            return response()->json(['status' => 'error', 'message' => 'Server error.'], 500);
+        }
     }
 }
