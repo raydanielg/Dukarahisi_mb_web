@@ -17,7 +17,7 @@ Route::post('/reset-password', [AuthController::class, 'resetPassword']);
 Route::post('/payments/webhook', [PaymentController::class, 'webhook'])->name('payments.webhook');
 
 // Protected routes
-Route::middleware(['auth:sanctum', 'phone.verified'])->group(function () {
+Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/me', [AuthController::class, 'me']);
     Route::post('/logout', [AuthController::class, 'logout']);
 
