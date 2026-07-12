@@ -55,7 +55,7 @@ class PaymentController extends Controller
     public function webhook(Request $request)
     {
         $payload = $request->all();
-        $signature = $request->header('X-Payment-Signature');
+        $signature = $request->header('X-Webhook-Signature');
 
         if ($signature && !PaymentGatewayService::verifyWebhookSignature($payload, $signature)) {
             return response()->json(['status' => 'error', 'message' => 'Invalid signature.'], 400);

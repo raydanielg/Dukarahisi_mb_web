@@ -43,11 +43,12 @@ return [
     ],
 
     'payment' => [
-        'provider' => env('PAYMENT_PROVIDER', 'selcom'),
+        'provider' => env('PAYMENT_PROVIDER', 'snippe'),
         'api_key' => env('PAYMENT_API_KEY'),
         'api_secret' => env('PAYMENT_API_SECRET'),
-        'base_url' => env('PAYMENT_BASE_URL', 'https://api.selcommobile.com'),
+        'base_url' => env('PAYMENT_BASE_URL', 'https://api.snippe.sh'),
         'webhook_secret' => env('PAYMENT_WEBHOOK_SECRET'),
+        'api_version' => env('SNIPPE_API_VERSION', '2026-01-25'),
     ],
 
 ];

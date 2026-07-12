@@ -88,4 +88,97 @@ class OrderController extends Controller
             'data' => $orders,
         ]);
     }
+
+    /**
+     * Create a single material order.
+     */
+    public function storeSingle(Request $request)
+    {
+        $request->validate([
+            'material_type' => 'required|string|in:notes,books,lesson-plans,syllabus,scheme-of-work,logbooks',
+            'material_id' => 'required|integer',
+        ]);
+
+        $user = $request->user();
+        $type = $request->material_type;
+        $id = $request->material_id;
+
+        $models = [
+            'notes' => \App\Models\Note::class,
+            'books' => \App\Models\Book::class,
+            'lesson-plans' => \App\Models\LessonPlan::class,
+            'syllabus' => \App\Models\Syllabus::class,
+            'scheme-of-work' => \App\Models\SchemeOfWork::class,
+            'logbooks' => \App\Models\Logbook::class,
+        ];
+
+        $modelClass = $models[$type];
+        $item = $modelClass::findOrFail($id);
+
+        if ($item->is_free || $item->final_price <= 0) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'This material is free.',
+            ], 422);
+        }
+
+        $alreadyPurchased = OrderItem::whereHas('order', function ($q) use ($user) {
+            $q->where('user_id', $user->id)->where('status', 'paid');
+        })->where('note_id', $id)->exists();
+
+        if ($alreadyPurchased) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'You have already purchased this material.',
+            ], 422);
+        }
+
+        return DB::transaction(function () use ($user, $item, $id) {
+            $order = Order::create([
+                'user_id' => $user->id,
+                'total_amount' => $item->final_price,
+                'status' => 'pending',
+                'reference' => 'ORD-' . strtoupper(uniqid()),
+            ]);
+
+            OrderItem::create([
+                'order_id' => $order->id,
+                'note_id' => $id,
+                'price_at_purchase' => $item->final_price,
+            ]);
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Order created successfully.',
+                'data' => [
+                    'order_id' => $order->id,
+                    'reference' => $order->reference,
+                    'total_amount' => $order->total_amount,
+                ],
+            ], 201);
+        });
+    }
+
+    /**
+     * Check order payment status.
+     */
+    public function status(Request $request, Order $order)
+    {
+        if ($order->user_id !== $request->user()->id) {
+            return response()->json(['status' => 'error', 'message' => 'Unauthorized.'], 403);
+        }
+
+        $payment = $order->payment;
+
+        return response()->json([
+            'status' => 'success',
+            'data' => [
+                'order_id' => $order->id,
+                'reference' => $order->reference,
+                'order_status' => $order->status,
+                'payment_status' => $payment?->status ?? 'pending',
+                'amount' => $order->total_amount,
+            ],
+        ]);
+    }
 }

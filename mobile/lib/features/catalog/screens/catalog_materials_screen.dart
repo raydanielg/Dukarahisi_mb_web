@@ -65,13 +65,12 @@ class _CatalogMaterialsScreenState extends State<CatalogMaterialsScreen> {
   }
 
   void _openPdfViewer(Map<String, dynamic> material) {
-    final bool hasAccess = material['has_purchased'] == true || material['is_free'] == true;
     final String? fileUrl = material['file_url']?.toString();
 
-    if (!hasAccess || fileUrl == null || fileUrl.isEmpty) {
+    if (fileUrl == null || fileUrl.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Purchase this material to view the PDF'),
+          content: Text('PDF not available'),
           backgroundColor: AppColors.textPrimary,
         ),
       );
@@ -271,9 +270,12 @@ class _PdfViewerScreenState extends State<_PdfViewerScreen> {
   PDFViewController? _pdfController;
   final Completer<PDFViewController> _controller = Completer<PDFViewController>();
 
-  bool get _hasAccess => true;
+  bool get _hasAccess =>
+      widget.material['has_purchased'] == true || widget.material['is_free'] == true;
 
   bool get _isFree => widget.material['is_free'] == true;
+
+  static const int _previewPageLimit = 2;
 
   @override
   void initState() {
@@ -452,7 +454,7 @@ class _PdfViewerScreenState extends State<_PdfViewerScreen> {
           ],
         ),
         actions: [
-          if (_isFree && _hasAccess)
+          if (_hasAccess)
             IconButton(
               icon: const Icon(Icons.download, color: AppColors.primary),
               onPressed: _downloadFileToDevice,
@@ -492,7 +494,7 @@ class _PdfViewerScreenState extends State<_PdfViewerScreen> {
                       pageSnap: false,
                       defaultPage: 0,
                       fitPolicy: FitPolicy.BOTH,
-                      preventLinkNavigation: false,
+                      preventLinkNavigation: true,
                       backgroundColor: Colors.grey[200],
                       onRender: (pages) {
                         if (mounted) {
@@ -517,17 +519,29 @@ class _PdfViewerScreenState extends State<_PdfViewerScreen> {
                         if (!_controller.isCompleted) {
                           _controller.complete(pdfViewController);
                         }
-                        Future.delayed(const Duration(milliseconds: 500), _refreshPageInfo);
+                        Future.delayed(const Duration(milliseconds: 300), () async {
+                          await _refreshPageInfo();
+                          if (!_hasAccess) {
+                            final controller = await _controller.future;
+                            controller.setPage(0);
+                          }
+                        });
                       },
                       onPageChanged: (int? page, int? total) async {
                         if (!mounted) return;
-                        if (!_hasAccess && (page ?? 0) > 0) {
+                        final newPage = page ?? _currentPage;
+                        if (!_hasAccess && newPage >= _previewPageLimit) {
+                          final controller = await _controller.future;
+                          controller.setPage(_previewPageLimit - 1);
+                          return;
+                        }
+                        if (!_hasAccess && newPage < 0) {
                           final controller = await _controller.future;
                           controller.setPage(0);
                           return;
                         }
                         setState(() {
-                          _currentPage = page ?? _currentPage;
+                          _currentPage = newPage;
                           _pages = total ?? _pages;
                         });
                       },
@@ -556,7 +570,7 @@ class _PdfViewerScreenState extends State<_PdfViewerScreen> {
                               const SizedBox(width: 10),
                               Expanded(
                                 child: Text(
-                                  'This is a preview of page 1. Buy to unlock all pages.',
+                                  'Preview: first $_previewPageLimit pages only. Buy to unlock full PDF.',
                                   style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w500),
                                 ),
                               ),
@@ -568,7 +582,7 @@ class _PdfViewerScreenState extends State<_PdfViewerScreen> {
                 ),
       bottomNavigationBar: _isReady && _error == null && !_hasAccess
           ? Container(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
                 color: Colors.white,
                 border: Border(top: BorderSide(color: Colors.grey.shade200)),
@@ -583,48 +597,60 @@ class _PdfViewerScreenState extends State<_PdfViewerScreen> {
               child: SafeArea(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
+                        IconButton(
+                          icon: const Icon(Icons.chevron_left, color: AppColors.textPrimary),
+                          onPressed: _currentPage > 0
+                              ? () async {
+                                  final controller = await _controller.future;
+                                  controller.setPage(_currentPage - 1);
+                                }
+                              : null,
+                        ),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
                           decoration: BoxDecoration(
-                            color: AppColors.primary.withOpacity(0.1),
+                            color: AppColors.primary.withOpacity(0.08),
                             borderRadius: BorderRadius.circular(20),
                           ),
-                          child: const Text(
-                            'PREVIEW',
-                            style: TextStyle(
-                              fontSize: 10,
+                          child: Text(
+                            'Page ${_currentPage + 1} of $_previewPageLimit',
+                            style: const TextStyle(
                               fontWeight: FontWeight.bold,
+                              fontSize: 13,
                               color: AppColors.primary,
                             ),
                           ),
                         ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            'Buy to unlock full PDF and download',
-                            style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
-                          ),
+                        IconButton(
+                          icon: const Icon(Icons.chevron_right, color: AppColors.textPrimary),
+                          onPressed: _currentPage < _previewPageLimit - 1
+                              ? () async {
+                                  final controller = await _controller.future;
+                                  controller.setPage(_currentPage + 1);
+                                }
+                              : null,
                         ),
                       ],
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 8),
                     SizedBox(
-                      height: 52,
+                      height: 48,
+                      width: double.infinity,
                       child: ElevatedButton.icon(
                         onPressed: _goToCheckout,
-                        icon: const Icon(Icons.lock_open, color: Colors.white),
+                        icon: const Icon(Icons.lock_open, color: Colors.white, size: 20),
                         label: Text(
                           'Buy Now - ${AppConfig.currency} ${((widget.material['price'] as num?)?.toDouble() ?? 0.0).toStringAsFixed(0)}',
-                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
                         ),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.primary,
                           foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                           elevation: 0,
                         ),
                       ),

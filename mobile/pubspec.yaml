@@ -87,11 +87,11 @@ dev_dependencies:
 flutter_launcher_icons:
   android: "launcher_icon"
   ios: true
-  image_path: "assets/iconsapp.png"
+  image_path: "assets/Duka Rahisi.png"
   min_sdk_android: 21
   remove_alpha_ios: true
   adaptive_icon_background: "#FFFFFF"
-  adaptive_icon_foreground: "assets/iconsapp.png"
+  adaptive_icon_foreground: "assets/Duka Rahisi.png"
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -112,6 +112,7 @@ flutter:
     - assets/standards.png
     - assets/iconsapp.png
     - assets/foldeicon1.png
+    - "assets/Duka Rahisi.png"
     - assets/WhatsApp Image 2026-07-12 at 04.16.47.jpeg
     - assets/images/login.png
     - assets/images/register.png

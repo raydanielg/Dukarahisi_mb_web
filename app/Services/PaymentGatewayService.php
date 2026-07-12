@@ -14,14 +14,13 @@ class PaymentGatewayService
      */
     public static function initiate(Order $order, string $phoneNumber): array
     {
-        $provider = config('services.payment.provider', 'selcom');
+        $provider = config('services.payment.provider', 'snippe');
 
         try {
-            if ($provider === 'selcom') {
-                return self::initiateSelcom($order, $phoneNumber);
+            if ($provider === 'snippe') {
+                return self::initiateSnippe($order, $phoneNumber);
             }
 
-            // Fallback for testing
             return [
                 'success' => true,
                 'reference' => 'TEST-' . time(),
@@ -37,44 +36,78 @@ class PaymentGatewayService
     }
 
     /**
-     * Initiate Selcom payment.
+     * Initiate Snippe mobile money payment.
      */
-    protected static function initiateSelcom(Order $order, string $phoneNumber): array
+    protected static function initiateSnippe(Order $order, string $phoneNumber): array
     {
         $apiKey = config('services.payment.api_key');
-        $apiSecret = config('services.payment.api_secret');
-        $baseUrl = config('services.payment.base_url', 'https://api.selcommobile.com');
+        $baseUrl = rtrim(config('services.payment.base_url', 'https://api.snippe.sh'), '/');
 
-        if (!$apiKey || !$apiSecret) {
+        if (!$apiKey) {
             return [
                 'success' => false,
                 'message' => 'Payment gateway not configured.',
             ];
         }
 
+        $cleanPhone = ltrim($phoneNumber, '+');
+        if (!str_starts_with($cleanPhone, '255')) {
+            $cleanPhone = '255' . ltrim($cleanPhone, '0');
+        }
+
+        $user = $order->user;
+
         $response = Http::withHeaders([
-            'Authorization' => 'Bearer ' . base64_encode($apiKey . ':' . $apiSecret),
+            'Authorization' => 'Bearer ' . $apiKey,
             'Content-Type' => 'application/json',
-        ])->post($baseUrl . '/v1/payment/checkout', [
-            'order_id' => $order->reference,
-            'amount' => $order->total_amount,
-            'msisdn' => $phoneNumber,
-            'currency' => 'TZS',
-            'callback_url' => route('payments.webhook'),
+            'Idempotency-Key' => substr('ord-' . $order->reference, 0, 30),
+        ])->post($baseUrl . '/v1/payments', [
+            'payment_type' => 'mobile',
+            'details' => [
+                'amount' => (int) $order->total_amount,
+                'currency' => 'TZS',
+            ],
+            'phone_number' => $cleanPhone,
+            'customer' => [
+                'firstname' => $user?->first_name ?? 'Customer',
+                'lastname' => $user?->last_name ?? 'User',
+                'email' => $user?->email ?? 'customer@darasahurutz.com',
+            ],
+            'webhook_url' => route('payments.webhook'),
+            'metadata' => [
+                'order_id' => $order->id,
+                'order_reference' => $order->reference,
+            ],
         ]);
 
-        if ($response->successful()) {
-            $data = $response->json();
+        $data = $response->json();
+
+        if ($response->successful() && ($data['status'] ?? '') === 'success') {
+            $paymentData = $data['data'] ?? [];
+
+            Payment::updateOrCreate(
+                ['order_id' => $order->id],
+                [
+                    'method' => 'mobile_money',
+                    'reference' => $paymentData['reference'] ?? null,
+                    'status' => 'pending',
+                    'raw_response' => $data,
+                    'phone_number' => $cleanPhone,
+                ]
+            );
+
             return [
                 'success' => true,
-                'reference' => $data['reference'] ?? $order->reference,
-                'message' => $data['message'] ?? 'Payment initiated successfully',
+                'reference' => $paymentData['reference'] ?? $order->reference,
+                'message' => 'Payment initiated. Please authorize on your phone.',
             ];
         }
 
+        Log::error('Snippe payment initiation error', ['response' => $data]);
+
         return [
             'success' => false,
-            'message' => 'Payment gateway error.',
+            'message' => $data['message'] ?? 'Payment gateway error.',
         ];
     }
 
@@ -93,33 +126,51 @@ class PaymentGatewayService
     }
 
     /**
-     * Process successful payment webhook.
+     * Process Snippe webhook payload.
      */
     public static function processWebhook(array $payload): ?Payment
     {
-        $orderReference = $payload['order_id'] ?? null;
-        if (!$orderReference) {
-            return null;
+        $metadata = $payload['data']['metadata'] ?? ($payload['metadata'] ?? []);
+        $orderId = $metadata['order_id'] ?? null;
+        $orderReference = $metadata['order_reference'] ?? null;
+
+        $order = null;
+        if ($orderId) {
+            $order = Order::find($orderId);
+        }
+        if (!$order && $orderReference) {
+            $order = Order::where('reference', $orderReference)->first();
         }
 
-        $order = Order::where('reference', $orderReference)->first();
         if (!$order) {
+            Log::warning('Snippe webhook: order not found', ['payload' => $payload]);
             return null;
         }
 
-        $status = ($payload['status'] ?? '') === 'success' ? 'success' : 'failed';
+        $eventType = $payload['type'] ?? '';
+        $paymentStatus = 'pending';
+
+        if (str_contains($eventType, 'completed')) {
+            $paymentStatus = 'success';
+        } elseif (str_contains($eventType, 'failed')) {
+            $paymentStatus = 'failed';
+        } elseif (str_contains($eventType, 'expired')) {
+            $paymentStatus = 'expired';
+        } elseif (str_contains($eventType, 'voided')) {
+            $paymentStatus = 'voided';
+        }
 
         $payment = Payment::updateOrCreate(
             ['order_id' => $order->id],
             [
-                'method' => $payload['method'] ?? 'mobile_money',
-                'reference' => $payload['reference'] ?? $orderReference,
-                'status' => $status,
+                'method' => $payload['data']['channel']['type'] ?? 'mobile_money',
+                'reference' => $payload['data']['reference'] ?? ($payload['data']['external_reference'] ?? $order->reference),
+                'status' => $paymentStatus,
                 'raw_response' => $payload,
             ]
         );
 
-        $order->status = $status === 'success' ? 'paid' : 'failed';
+        $order->status = $paymentStatus === 'success' ? 'paid' : $paymentStatus;
         $order->save();
 
         return $payment;
