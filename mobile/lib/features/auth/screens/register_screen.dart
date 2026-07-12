@@ -6,6 +6,9 @@ import '../../../core/widgets/custom_toast.dart';
 import '../../../core/services/auth_service.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/network/api_exceptions.dart';
+import '../../../core/storage/secure_store.dart';
+import '../../../core/storage/local_cache.dart';
+import '../../../core/config/constants.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -59,9 +62,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
           setState(() => _loading = false);
           
           if (response['status'] == 'success') {
+            // Save token and login state
+            final token = response['data']?['token'];
+            if (token != null) {
+              await SecureStore.setToken(token);
+              await LocalCache.set(Constants.isLoggedInKey, true);
+            }
+            
             CustomToast.show(
               context,
-              message: response['message'] ?? 'Account created successfully!',
+              message: 'Welcome to Dukarahisi! 🎉',
               type: ToastType.success,
             );
             // Navigate directly to main screen after successful registration

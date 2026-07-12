@@ -52,39 +52,25 @@ class _LoginScreenState extends State<LoginScreen> {
           if (response['status'] == 'success') {
             CustomToast.show(
               context,
-              message: response['message'] ?? 'Login successful!',
+              message: 'Welcome back! 🎉',
               type: ToastType.success,
             );
             Future.delayed(const Duration(milliseconds: 500), () {
-              if (mounted) context.go('/home');
-            });
-          } else if (response['status'] == 'error' && response['data']['phone_verified'] == false) {
-            // Phone not verified, redirect to OTP verification
-            CustomToast.show(
-              context,
-              message: 'Please verify your phone number',
-              type: ToastType.warning,
-            );
-            Future.delayed(const Duration(milliseconds: 500), () {
-              if (mounted) {
-                context.push('/otp-verification', extra: _emailOrPhoneController.text.trim());
-              }
+              if (mounted) context.go('/main');
             });
           } else {
-            CustomToast.show(
-              context,
-              message: response['message'] ?? 'Login failed',
-              type: ToastType.error,
+            _showErrorDialog(
+              title: 'Login Failed',
+              message: response['message'] ?? 'Invalid email, phone number or password.',
             );
           }
         }
       } on NetworkException catch (e) {
         if (mounted) {
           setState(() => _loading = false);
-          CustomToast.show(
-            context,
+          _showErrorDialog(
+            title: 'Connection Error',
             message: e.message,
-            type: ToastType.error,
           );
         }
       } on ValidationException catch (e) {
@@ -99,28 +85,25 @@ class _LoginScreenState extends State<LoginScreen> {
               errorMessage = firstError;
             }
           }
-          CustomToast.show(
-            context,
+          _showErrorDialog(
+            title: 'Validation Error',
             message: errorMessage,
-            type: ToastType.error,
           );
         }
       } on ApiException catch (e) {
         if (mounted) {
           setState(() => _loading = false);
-          CustomToast.show(
-            context,
-            message: e.message,
-            type: ToastType.error,
+          _showErrorDialog(
+            title: 'Login Failed',
+            message: e.message.isNotEmpty ? e.message : 'Invalid email, phone number or password.',
           );
         }
       } catch (e) {
         if (mounted) {
           setState(() => _loading = false);
-          CustomToast.show(
-            context,
-            message: 'An unexpected error occurred',
-            type: ToastType.error,
+          _showErrorDialog(
+            title: 'Server Error',
+            message: 'Something went wrong on our end. Please try again later.',
           );
         }
       }
@@ -131,6 +114,59 @@ class _LoginScreenState extends State<LoginScreen> {
         type: ToastType.error,
       );
     }
+  }
+
+  void _showErrorDialog({required String title, required String message}) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: AppColors.error.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(Icons.error_outline, color: AppColors.error, size: 24),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                title,
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+            ),
+          ],
+        ),
+        content: Text(
+          message,
+          style: TextStyle(
+            fontSize: 14,
+            color: AppColors.textSecondary,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text(
+              'Try Again',
+              style: TextStyle(
+                color: AppColors.primary,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   @override

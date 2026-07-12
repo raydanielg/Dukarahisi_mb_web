@@ -42,7 +42,7 @@ class SalesController extends Controller
 
     public function customersIndex(Request $request)
     {
-        $query = User::where('role', 'customer')->orderBy('created_at', 'desc');
+        $query = User::where('role', 'customer')->with('orders')->orderBy('created_at', 'desc');
 
         if ($request->filled('search')) {
             $search = $request->input('search');
@@ -181,6 +181,14 @@ class SalesController extends Controller
 
     public function customersDestroy(Request $request, User $customer)
     {
+        if ($customer->role !== 'customer') {
+            return response()->json(['success' => false, 'message' => 'Only customers can be deleted here.'], 403);
+        }
+
+        if (auth()->id() === $customer->id) {
+            return response()->json(['success' => false, 'message' => 'You cannot delete your own account.'], 403);
+        }
+
         $customer->delete();
 
         if ($request->ajax() || $request->wantsJson()) {
@@ -197,7 +205,9 @@ class SalesController extends Controller
             'ids.*' => 'integer|exists:users,id',
         ]);
 
-        User::whereIn('id', $validated['ids'])->where('role', 'customer')->delete();
+        $ids = array_diff($validated['ids'], [auth()->id()]);
+
+        User::whereIn('id', $ids)->where('role', 'customer')->delete();
 
         if ($request->ajax() || $request->wantsJson()) {
             return response()->json(['success' => true, 'message' => 'Selected customers deleted.']);

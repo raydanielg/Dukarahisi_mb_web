@@ -38,12 +38,15 @@ class AuthController extends Controller
 
         SmsService::sendOtp($user->phone_number, $otp);
 
+        $token = $user->createToken('mobile-app')->plainTextToken;
+
         return response()->json([
             'status' => 'success',
-            'message' => 'User registered. Please verify your phone number with the OTP sent.',
+            'message' => 'Account created successfully! Welcome to Dukarahisi.',
             'data' => [
                 'user_id' => $user->id,
                 'phone_number' => $user->phone_number,
+                'token' => $token,
             ],
         ], 201);
     }

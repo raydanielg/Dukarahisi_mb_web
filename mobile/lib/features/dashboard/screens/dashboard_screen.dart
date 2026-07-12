@@ -53,7 +53,18 @@ class _DashboardScreenState extends State<DashboardScreen>
       }
     } catch (e) {
       if (mounted) {
-        setState(() => _loading = false);
+        setState(() {
+          _userStats = {
+            'total_orders': 0,
+            'paid_orders': 0,
+            'pending_orders': 0,
+            'total_purchased_notes': 0,
+            'total_spent': 0.0,
+          };
+          _purchasedNotes = [];
+          _pendingPayments = [];
+          _loading = false;
+        });
       }
     }
   }
