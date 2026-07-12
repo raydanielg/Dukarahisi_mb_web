@@ -179,6 +179,24 @@ class SalesController extends Controller
         return redirect()->route('admin.sales.customers')->with('status', 'Password reset successfully.');
     }
 
+    public function customersBulkResetPassword(Request $request)
+    {
+        $validated = $request->validate([
+            'ids' => 'required|array',
+            'ids.*' => 'integer|exists:users,id',
+            'password' => 'required|string|min:8|confirmed',
+        ]);
+
+        $password = Hash::make($validated['password']);
+        $count = User::whereIn('id', $validated['ids'])->where('role', 'customer')->update(['password' => $password]);
+
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json(['success' => true, 'message' => "Password reset for {$count} customer(s)."]);
+        }
+
+        return redirect()->route('admin.sales.customers')->with('status', "Password reset for {$count} customer(s).");
+    }
+
     public function customersDestroy(Request $request, User $customer)
     {
         if ($customer->role !== 'customer') {

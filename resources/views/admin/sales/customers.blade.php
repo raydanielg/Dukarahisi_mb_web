@@ -380,6 +380,7 @@
         const formData = new FormData(this);
         const password = formData.get('password');
         const confirmation = formData.get('password_confirmation');
+        const submitBtn = this.querySelector('button[type="submit"]');
 
         if (password !== confirmation) {
             showToast('error', 'Passwords do not match');
@@ -398,34 +399,38 @@
             ids = [parseInt(idsValue)];
         }
 
-        // For now, reset passwords one by one. Backend supports single; bulk can be enhanced later.
-        let completed = 0;
-        let failed = 0;
-        ids.forEach(id => {
-            fetch(`{{ route('admin.sales.customers') }}/${id}/reset-password`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                    'Accept': 'application/json'
-                },
-                body: JSON.stringify({ password, password_confirmation: confirmation })
-            })
-            .then(response => response.json())
-            .then(result => {
-                if (result.success) completed++; else failed++;
-                if (completed + failed === ids.length) {
-                    showToast(failed ? 'warning' : 'success', `${completed} password(s) reset${failed ? `, ${failed} failed` : ''}`);
-                    closeResetPasswordModal();
-                }
-            })
-            .catch(() => {
-                failed++;
-                if (completed + failed === ids.length) {
-                    showToast('warning', `${completed} password(s) reset, ${failed} failed`);
-                    closeResetPasswordModal();
-                }
-            });
+        const originalBtnText = submitBtn.textContent;
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Resetting...';
+
+        const url = ids.length === 1
+            ? `{{ route('admin.sales.customers') }}/${ids[0]}/reset-password`
+            : `{{ route('admin.sales.customers.bulk-reset-password') }}`;
+
+        fetch(url, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({ ids, password, password_confirmation: confirmation })
+        })
+        .then(async response => {
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok) throw new Error(data.message || 'Reset failed');
+            return data;
+        })
+        .then(result => {
+            showToast('success', result.message || 'Password reset successfully');
+            closeResetPasswordModal();
+        })
+        .catch(error => {
+            showToast('error', error.message || 'Failed to reset password');
+        })
+        .finally(() => {
+            submitBtn.disabled = false;
+            submitBtn.textContent = originalBtnText;
         });
     });
 
@@ -437,24 +442,25 @@
             showCancelButton: true,
             confirmButtonColor: '#ef4444',
             cancelButtonColor: '#6b7280',
-            confirmButtonText: 'Yes, delete!'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                fetch(`{{ route('admin.sales.customers') }}/${id}`, {
+            confirmButtonText: 'Yes, delete!',
+            showLoaderOnConfirm: true,
+            preConfirm: () => {
+                return fetch(`{{ route('admin.sales.customers') }}/${id}`, {
                     method: 'DELETE',
                     headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'Accept': 'application/json' }
                 })
-                .then(response => response.json())
-                .then(result => {
-                    if (result.success) {
-                        showToast('success', result.message);
-                        const row = document.querySelector(`tr[data-id="${id}"]`);
-                        if (row) { row.remove(); updateSelectionUI(); updateCustomersCount(); checkEmptyTable(); }
-                    } else {
-                        showToast('error', result.message || 'Failed to delete');
-                    }
+                .then(async response => {
+                    const data = await response.json().catch(() => ({}));
+                    if (!response.ok) throw new Error(data.message || 'Delete failed');
+                    return data;
                 })
-                .catch(error => { showToast('error', 'Error deleting customer'); console.error(error); });
+                .catch(error => { Swal.showValidationMessage(error.message); });
+            }
+        }).then((result) => {
+            if (result.isConfirmed && result.value?.success) {
+                showToast('success', result.value.message);
+                const row = document.querySelector(`tr[data-id="${id}"]`);
+                if (row) { row.remove(); updateSelectionUI(); updateCustomersCount(); checkEmptyTable(); }
             }
         });
     }
@@ -469,10 +475,10 @@
             showCancelButton: true,
             confirmButtonColor: '#ef4444',
             cancelButtonColor: '#6b7280',
-            confirmButtonText: 'Yes, delete all!'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                fetch(`{{ route('admin.sales.customers') }}/bulk`, {
+            confirmButtonText: 'Yes, delete all!',
+            showLoaderOnConfirm: true,
+            preConfirm: () => {
+                return fetch(`{{ route('admin.sales.customers') }}/bulk`, {
                     method: 'DELETE',
                     headers: {
                         'Content-Type': 'application/json',
@@ -481,22 +487,23 @@
                     },
                     body: JSON.stringify({ ids })
                 })
-                .then(response => response.json())
-                .then(result => {
-                    if (result.success) {
-                        showToast('success', result.message);
-                        ids.forEach(id => {
-                            const row = document.querySelector(`tr[data-id="${id}"]`);
-                            if (row) row.remove();
-                        });
-                        updateSelectionUI();
-                        updateCustomersCount();
-                        checkEmptyTable();
-                    } else {
-                        showToast('error', result.message || 'Failed to delete');
-                    }
+                .then(async response => {
+                    const data = await response.json().catch(() => ({}));
+                    if (!response.ok) throw new Error(data.message || 'Delete failed');
+                    return data;
                 })
-                .catch(error => { showToast('error', 'Error deleting customers'); console.error(error); });
+                .catch(error => { Swal.showValidationMessage(error.message); });
+            }
+        }).then((result) => {
+            if (result.isConfirmed && result.value?.success) {
+                showToast('success', result.value.message);
+                ids.forEach(id => {
+                    const row = document.querySelector(`tr[data-id="${id}"]`);
+                    if (row) row.remove();
+                });
+                updateSelectionUI();
+                updateCustomersCount();
+                checkEmptyTable();
             }
         });
     }

@@ -75,6 +75,7 @@ Route::middleware(['auth', 'admin'])->group(function () {
         Route::post('/customers/bulk-upload', [SalesController::class, 'customersBulkUpload'])->name('customers.bulk-upload');
         Route::delete('/customers/bulk', [SalesController::class, 'customersBulkDestroy'])->name('customers.bulk-destroy');
         Route::put('/customers/{customer}/reset-password', [SalesController::class, 'customersResetPassword'])->name('customers.reset-password');
+        Route::put('/customers/bulk/reset-password', [SalesController::class, 'customersBulkResetPassword'])->name('customers.bulk-reset-password');
         Route::delete('/customers/{customer}', [SalesController::class, 'customersDestroy'])->name('customers.destroy');
         Route::get('/payments', [SalesController::class, 'paymentsIndex'])->name('payments');
         Route::patch('/payments/{payment}/status', [SalesController::class, 'paymentsUpdateStatus'])->name('payments.status');
