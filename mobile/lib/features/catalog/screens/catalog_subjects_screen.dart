@@ -4,37 +4,42 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/services/catalog_service.dart';
 import '../../../core/network/api_client.dart';
 
-class SubjectsScreen extends StatefulWidget {
-  const SubjectsScreen({super.key});
+class CatalogSubjectsScreen extends StatefulWidget {
+  const CatalogSubjectsScreen({super.key});
 
   @override
-  State<SubjectsScreen> createState() => _SubjectsScreenState();
+  State<CatalogSubjectsScreen> createState() => _CatalogSubjectsScreenState();
 }
 
-class _SubjectsScreenState extends State<SubjectsScreen> {
+class _CatalogSubjectsScreenState extends State<CatalogSubjectsScreen> {
   late final CatalogService _catalogService;
   List<Map<String, dynamic>>? _subjects;
   bool _loading = true;
   int? _classId;
+  String? _materialType;
 
   @override
   void initState() {
     super.initState();
     _catalogService = CatalogService(ApiClient());
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _classId = GoRouterState.of(context).extra as int?;
-      if (_classId != null) {
-        _loadSubjects();
+      final extra = GoRouterState.of(context).extra as Map<String, dynamic>?;
+      if (extra != null) {
+        _classId = extra['classId'] as int?;
+        _materialType = extra['materialType'] as String?;
+        if (_classId != null) {
+          _loadSubjects();
+        }
       }
     });
   }
 
   Future<void> _loadSubjects() async {
     try {
-      final response = await _catalogService.getSubjects(_classId!);
+      final response = await _catalogService.getSubjects(_classId!, materialType: _materialType);
       if (mounted) {
         setState(() {
-          _subjects = response['data'];
+          _subjects = (response['data'] as List).map((e) => e as Map<String, dynamic>).toList();
           _loading = false;
         });
       }
@@ -65,7 +70,7 @@ class _SubjectsScreenState extends State<SubjectsScreen> {
                   ),
                   const SizedBox(width: 8),
                   const Text(
-                    'Masomo',
+                    'Subjects',
                     style: TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
@@ -83,14 +88,15 @@ class _SubjectsScreenState extends State<SubjectsScreen> {
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Icon(
-                                Icons.menu_book_outlined,
-                                size: 64,
-                                color: AppColors.textMuted,
+                              Image.asset(
+                                'assets/icons/level.png',
+                                width: 80,
+                                height: 80,
+                                fit: BoxFit.contain,
                               ),
                               const SizedBox(height: 16),
                               Text(
-                                'Hakuna masomo bado',
+                                'No subjects yet',
                                 style: TextStyle(
                                   fontSize: 16,
                                   color: AppColors.textSecondary,
@@ -122,7 +128,10 @@ class _SubjectsScreenState extends State<SubjectsScreen> {
 
   Widget _buildSubjectCard(Map<String, dynamic> subject) {
     return GestureDetector(
-      onTap: () => context.push('/topics', extra: subject['id']),
+      onTap: () => context.push('/catalog-topics', extra: {
+        'subjectId': subject['id'],
+        'materialType': _materialType,
+      }),
       child: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
@@ -130,16 +139,16 @@ class _SubjectsScreenState extends State<SubjectsScreen> {
             end: Alignment.bottomRight,
             colors: [
               Colors.white,
-              Colors.white.withOpacity(0.95),
+              Colors.grey[50]!,
             ],
           ),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: Colors.white.withOpacity(0.3), width: 1.5),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: const Color(0xFF0EA5E9).withOpacity(0.2), width: 1),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.1),
-              blurRadius: 20,
-              offset: const Offset(0, 10),
+              color: const Color(0xFF0EA5E9).withOpacity(0.08),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
             ),
           ],
         ),
@@ -161,13 +170,13 @@ class _SubjectsScreenState extends State<SubjectsScreen> {
                   boxShadow: [
                     BoxShadow(
                       color: const Color(0xFF0EA5E9).withOpacity(0.3),
-                      blurRadius: 12,
+                      blurRadius: 8,
                       offset: const Offset(0, 4),
                     ),
                   ],
                 ),
                 child: const Icon(
-                  Icons.science,
+                  Icons.book,
                   color: Colors.white,
                   size: 32,
                 ),

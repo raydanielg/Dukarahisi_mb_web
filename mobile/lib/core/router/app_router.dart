@@ -19,7 +19,12 @@ import '../../features/reports/screens/reports_screen.dart';
 import '../../features/catalog/screens/classes_screen.dart';
 import '../../features/catalog/screens/subjects_screen.dart';
 import '../../features/catalog/screens/topics_screen.dart';
-import '../../features/catalog/screens/materials_screen.dart';
+import '../../features/catalog/screens/materials_screen.dart' as catalog;
+import '../../features/catalog/screens/catalog_levels_screen.dart';
+import '../../features/catalog/screens/catalog_classes_screen.dart';
+import '../../features/catalog/screens/catalog_subjects_screen.dart';
+import '../../features/catalog/screens/catalog_topics_screen.dart';
+import '../../features/catalog/screens/catalog_materials_screen.dart';
 import '../../core/storage/local_cache.dart';
 import '../../core/config/constants.dart';
 
@@ -172,7 +177,27 @@ class AppRouter {
         ),
         GoRoute(
           path: '/materials',
-          builder: (context, state) => const MaterialsScreen(),
+          builder: (context, state) => const catalog.MaterialsScreen(),
+        ),
+        GoRoute(
+          path: '/catalog-levels',
+          builder: (context, state) => const CatalogLevelsScreen(),
+        ),
+        GoRoute(
+          path: '/catalog-classes',
+          builder: (context, state) => const CatalogClassesScreen(),
+        ),
+        GoRoute(
+          path: '/catalog-subjects',
+          builder: (context, state) => const CatalogSubjectsScreen(),
+        ),
+        GoRoute(
+          path: '/catalog-topics',
+          builder: (context, state) => const CatalogTopicsScreen(),
+        ),
+        GoRoute(
+          path: '/catalog-materials',
+          builder: (context, state) => const CatalogMaterialsScreen(),
         ),
         GoRoute(
           path: '/404',

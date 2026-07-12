@@ -4,37 +4,42 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/services/catalog_service.dart';
 import '../../../core/network/api_client.dart';
 
-class TopicsScreen extends StatefulWidget {
-  const TopicsScreen({super.key});
+class CatalogTopicsScreen extends StatefulWidget {
+  const CatalogTopicsScreen({super.key});
 
   @override
-  State<TopicsScreen> createState() => _TopicsScreenState();
+  State<CatalogTopicsScreen> createState() => _CatalogTopicsScreenState();
 }
 
-class _TopicsScreenState extends State<TopicsScreen> {
+class _CatalogTopicsScreenState extends State<CatalogTopicsScreen> {
   late final CatalogService _catalogService;
   List<Map<String, dynamic>>? _topics;
   bool _loading = true;
   int? _subjectId;
+  String? _materialType;
 
   @override
   void initState() {
     super.initState();
     _catalogService = CatalogService(ApiClient());
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _subjectId = GoRouterState.of(context).extra as int?;
-      if (_subjectId != null) {
-        _loadTopics();
+      final extra = GoRouterState.of(context).extra as Map<String, dynamic>?;
+      if (extra != null) {
+        _subjectId = extra['subjectId'] as int?;
+        _materialType = extra['materialType'] as String?;
+        if (_subjectId != null) {
+          _loadTopics();
+        }
       }
     });
   }
 
   Future<void> _loadTopics() async {
     try {
-      final response = await _catalogService.getTopics(_subjectId!);
+      final response = await _catalogService.getTopics(_subjectId!, materialType: _materialType);
       if (mounted) {
         setState(() {
-          _topics = response['data'];
+          _topics = (response['data'] as List).map((e) => e as Map<String, dynamic>).toList();
           _loading = false;
         });
       }
@@ -65,7 +70,7 @@ class _TopicsScreenState extends State<TopicsScreen> {
                   ),
                   const SizedBox(width: 8),
                   const Text(
-                    'Vitengo',
+                    'Topics',
                     style: TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
@@ -83,14 +88,15 @@ class _TopicsScreenState extends State<TopicsScreen> {
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Icon(
-                                Icons.topic_outlined,
-                                size: 64,
-                                color: AppColors.textMuted,
+                              Image.asset(
+                                'assets/icons/level.png',
+                                width: 80,
+                                height: 80,
+                                fit: BoxFit.contain,
                               ),
                               const SizedBox(height: 16),
                               Text(
-                                'Hakuna vitengo bado',
+                                'No topics yet',
                                 style: TextStyle(
                                   fontSize: 16,
                                   color: AppColors.textSecondary,
@@ -116,54 +122,57 @@ class _TopicsScreenState extends State<TopicsScreen> {
 
   Widget _buildTopicCard(Map<String, dynamic> topic) {
     return GestureDetector(
-      onTap: () => context.push('/materials', extra: topic['id']),
+      onTap: () => context.push('/catalog-materials', extra: {
+        'topicId': topic['id'],
+        'materialType': _materialType,
+      }),
       child: Container(
-        margin: const EdgeInsets.only(bottom: 16),
+        margin: const EdgeInsets.only(bottom: 12),
         decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
               Colors.white,
-              Colors.white.withOpacity(0.95),
+              Colors.grey[50]!,
             ],
           ),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: Colors.white.withOpacity(0.3), width: 1.5),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: const Color(0xFF8B5CF6).withOpacity(0.2), width: 1),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.1),
-              blurRadius: 20,
-              offset: const Offset(0, 10),
+              color: const Color(0xFF8B5CF6).withOpacity(0.08),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
             ),
           ],
         ),
         child: Padding(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.all(16),
           child: Row(
             children: [
               Container(
-                width: 56,
-                height: 56,
+                width: 50,
+                height: 50,
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                     colors: [Color(0xFF8B5CF6), Color(0xFF7C3AED)],
                   ),
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(12),
                   boxShadow: [
                     BoxShadow(
                       color: const Color(0xFF8B5CF6).withOpacity(0.3),
-                      blurRadius: 12,
-                      offset: const Offset(0, 4),
+                      blurRadius: 6,
+                      offset: const Offset(0, 2),
                     ),
                   ],
                 ),
                 child: const Icon(
-                  Icons.article_outlined,
+                  Icons.topic,
                   color: Colors.white,
-                  size: 28,
+                  size: 24,
                 ),
               ),
               const SizedBox(width: 16),
@@ -192,10 +201,19 @@ class _TopicsScreenState extends State<TopicsScreen> {
                   ],
                 ),
               ),
-              Icon(
-                Icons.chevron_right_rounded,
-                color: AppColors.textMuted,
-                size: 24,
+              const SizedBox(width: 8),
+              Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF8B5CF6).withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.chevron_right_rounded,
+                  color: Color(0xFF8B5CF6),
+                  size: 20,
+                ),
               ),
             ],
           ),

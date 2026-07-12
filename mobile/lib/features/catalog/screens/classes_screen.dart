@@ -51,84 +51,70 @@ class _ClassesScreenState extends State<ClassesScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Color(0xFF024938),
-              Color(0xFF023D30),
-              Color(0xFF065F46),
-              Color(0xFF024938),
-            ],
-            stops: [0.0, 0.3, 0.7, 1.0],
-          ),
-        ),
-        child: SafeArea(
-          child: Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: Row(
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.arrow_back, color: Colors.white),
-                      onPressed: () => context.pop(),
+      backgroundColor: Colors.white,
+      body: SafeArea(
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
+                    onPressed: () => context.pop(),
+                  ),
+                  const SizedBox(width: 8),
+                  const Text(
+                    'Darasa',
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textPrimary,
                     ),
-                    const SizedBox(width: 8),
-                    const Text(
-                      'Darasa',
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-              Expanded(
-                child: _loading
-                    ? const Center(child: CircularProgressIndicator(color: Colors.white))
-                    : _classes == null || _classes!.isEmpty
-                        ? Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  Icons.class_outlined,
-                                  size: 64,
-                                  color: Colors.white.withOpacity(0.5),
+            ),
+            Expanded(
+              child: _loading
+                  ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
+                  : _classes == null || _classes!.isEmpty
+                      ? Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.class_outlined,
+                                size: 64,
+                                color: AppColors.textMuted,
+                              ),
+                              const SizedBox(height: 16),
+                              Text(
+                                'Hakuna darasa bado',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: AppColors.textSecondary,
                                 ),
-                                const SizedBox(height: 16),
-                                Text(
-                                  'Hakuna darasa bado',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    color: Colors.white.withOpacity(0.8),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          )
-                        : GridView.builder(
-                            padding: const EdgeInsets.all(16),
-                            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 2,
-                              crossAxisSpacing: 16,
-                              mainAxisSpacing: 16,
-                              childAspectRatio: 1.2,
-                            ),
-                            itemCount: _classes!.length,
-                            itemBuilder: (context, index) {
-                              final classItem = _classes![index];
-                              return _buildClassCard(classItem);
-                            },
+                              ),
+                            ],
                           ),
-              ),
-            ],
-          ),
+                        )
+                      : GridView.builder(
+                          padding: const EdgeInsets.all(16),
+                          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 2,
+                            crossAxisSpacing: 16,
+                            mainAxisSpacing: 16,
+                            childAspectRatio: 1.2,
+                          ),
+                          itemCount: _classes!.length,
+                          itemBuilder: (context, index) {
+                            final classItem = _classes![index];
+                            return _buildClassCard(classItem);
+                          },
+                        ),
+            ),
+          ],
         ),
       ),
     );

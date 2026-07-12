@@ -4,44 +4,49 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/services/catalog_service.dart';
 import '../../../core/network/api_client.dart';
 
-class MaterialsScreen extends StatefulWidget {
-  const MaterialsScreen({super.key});
+class CatalogLevelsScreen extends StatefulWidget {
+  const CatalogLevelsScreen({super.key});
 
   @override
-  State<MaterialsScreen> createState() => _MaterialsScreenState();
+  State<CatalogLevelsScreen> createState() => _CatalogLevelsScreenState();
 }
 
-class _MaterialsScreenState extends State<MaterialsScreen> {
+class _CatalogLevelsScreenState extends State<CatalogLevelsScreen> {
   late final CatalogService _catalogService;
-  List<Map<String, dynamic>>? _materials;
+  List<Map<String, dynamic>>? _levels;
   bool _loading = true;
-  int? _topicId;
+  String? _materialType;
 
   @override
   void initState() {
     super.initState();
     _catalogService = CatalogService(ApiClient());
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _topicId = GoRouterState.of(context).extra as int?;
-      if (_topicId != null) {
-        _loadMaterials();
-      }
+      _materialType = GoRouterState.of(context).extra as String?;
+      print('Material type received: $_materialType');
+      _loadLevels();
     });
   }
 
-  Future<void> _loadMaterials() async {
+  Future<void> _loadLevels() async {
     try {
-      final response = await _catalogService.getMaterials(_topicId!);
+      final response = await _catalogService.getLevels(materialType: _materialType);
+      print('Levels response: $response');
+      print('Levels data: ${response['data']}');
+      print('Levels data type: ${response['data'].runtimeType}');
       if (mounted) {
         setState(() {
-          _materials = response['data'];
+          _levels = (response['data'] as List).map((e) => e as Map<String, dynamic>).toList();
           _loading = false;
         });
+        print('Levels set: $_levels');
+        print('Levels is empty: ${_levels?.isEmpty}');
       }
     } catch (e) {
+      print('Error loading levels: $e');
       if (mounted) {
         setState(() {
-          _materials = [];
+          _levels = [];
           _loading = false;
         });
       }
@@ -65,7 +70,7 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
                   ),
                   const SizedBox(width: 8),
                   const Text(
-                    'Materials',
+                    'Levels',
                     style: TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
@@ -78,19 +83,20 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
             Expanded(
               child: _loading
                   ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
-                  : _materials == null || _materials!.isEmpty
+                  : _levels == null || _levels!.isEmpty
                       ? Center(
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Icon(
-                                Icons.folder_open_outlined,
-                                size: 64,
-                                color: AppColors.textMuted,
+                              Image.asset(
+                                'assets/icons/level.png',
+                                width: 80,
+                                height: 80,
+                                fit: BoxFit.contain,
                               ),
                               const SizedBox(height: 16),
                               Text(
-                                'No materials yet',
+                                'No levels yet',
                                 style: TextStyle(
                                   fontSize: 16,
                                   color: AppColors.textSecondary,
@@ -101,10 +107,10 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
                         )
                       : ListView.builder(
                           padding: const EdgeInsets.all(16),
-                          itemCount: _materials!.length,
+                          itemCount: _levels!.length,
                           itemBuilder: (context, index) {
-                            final material = _materials![index];
-                            return _buildMaterialCard(material);
+                            final level = _levels![index];
+                            return _buildLevelCard(level);
                           },
                         ),
             ),
@@ -114,14 +120,14 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
     );
   }
 
-  Widget _buildMaterialCard(Map<String, dynamic> material) {
-    final price = material['price']?.toString() ?? '0';
-    final isFree = price == '0' || price == '0.0';
+  Widget _buildLevelCard(Map<String, dynamic> level) {
+    final iconPath = level['icon']?.toString();
 
     return GestureDetector(
-      onTap: () {
-        // Navigate to material detail or purchase
-      },
+      onTap: () => context.push('/catalog-classes', extra: {
+        'levelId': level['id'],
+        'materialType': _materialType,
+      }),
       child: Container(
         margin: const EdgeInsets.only(bottom: 12),
         decoration: BoxDecoration(
@@ -133,13 +139,13 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
               Colors.grey[50]!,
             ],
           ),
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(8),
           border: Border.all(color: AppColors.primary.withOpacity(0.15), width: 1),
           boxShadow: [
             BoxShadow(
               color: AppColors.primary.withOpacity(0.08),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
             ),
           ],
         ),
@@ -148,18 +154,15 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
           child: Row(
             children: [
               Container(
-                width: 60,
-                height: 80,
+                width: 56,
+                height: 56,
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(
+                  gradient: const LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
-                    colors: [
-                      AppColors.primary,
-                      AppColors.primaryDark,
-                    ],
+                    colors: [AppColors.primary, AppColors.primaryDark],
                   ),
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(14),
                   boxShadow: [
                     BoxShadow(
                       color: AppColors.primary.withOpacity(0.3),
@@ -168,84 +171,43 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
                     ),
                   ],
                 ),
-                child: Icon(
-                  Icons.description_outlined,
-                  size: 32,
-                  color: Colors.white,
-                ),
+                child: iconPath != null && iconPath.isNotEmpty
+                    ? Padding(
+                        padding: const EdgeInsets.all(10),
+                        child: Image.asset(
+                          iconPath,
+                          fit: BoxFit.contain,
+                          color: Colors.white,
+                        ),
+                      )
+                    : const Icon(
+                        Icons.school,
+                        color: Colors.white,
+                        size: 28,
+                      ),
               ),
-              const SizedBox(width: 14),
+              const SizedBox(width: 16),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      material['title']?.toString() ?? 'Material',
+                      level['name']?.toString() ?? 'Level',
                       style: const TextStyle(
-                        fontSize: 15,
+                        fontSize: 16,
                         fontWeight: FontWeight.bold,
                         color: AppColors.textPrimary,
                       ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(height: 6),
+                    const SizedBox(height: 4),
                     Text(
-                      material['description']?.toString() ?? '',
+                      level['description']?.toString() ?? 'Select this level',
                       style: TextStyle(
                         fontSize: 12,
                         color: AppColors.textSecondary,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 10),
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: isFree
-                                  ? [AppColors.success, AppColors.success.withOpacity(0.8)]
-                                  : [AppColors.accent, AppColors.accent.withOpacity(0.8)],
-                            ),
-                            borderRadius: BorderRadius.circular(16),
-                            boxShadow: [
-                              BoxShadow(
-                                color: (isFree ? AppColors.success : AppColors.accent).withOpacity(0.3),
-                                blurRadius: 6,
-                                offset: const Offset(0, 2),
-                              ),
-                            ],
-                          ),
-                          child: Text(
-                            isFree ? 'FREE' : 'TSh $price',
-                            style: const TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: AppColors.primary.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: AppColors.primary.withOpacity(0.3), width: 1),
-                          ),
-                          child: Text(
-                            material['file_type']?.toString().toUpperCase() ?? 'PDF',
-                            style: const TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.primary,
-                            ),
-                          ),
-                        ),
-                      ],
                     ),
                   ],
                 ),
@@ -258,10 +220,10 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
                   color: AppColors.primary.withOpacity(0.1),
                   shape: BoxShape.circle,
                 ),
-                child: Icon(
+                child: const Icon(
                   Icons.chevron_right_rounded,
                   color: AppColors.primary,
-                  size: 20,
+                  size: 22,
                 ),
               ),
             ],

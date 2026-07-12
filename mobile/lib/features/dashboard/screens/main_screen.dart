@@ -35,15 +35,15 @@ class _MainScreenState extends State<MainScreen> {
           color: Colors.white,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.08),
-              blurRadius: 20,
-              offset: const Offset(0, -5),
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 10,
+              offset: const Offset(0, -2),
             ),
           ],
         ),
         child: SafeArea(
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
@@ -82,37 +82,34 @@ class _MainScreenState extends State<MainScreen> {
   }) {
     final isSelected = _currentIndex == index;
     
-    return GestureDetector(
-      onTap: () {
-        setState(() {
-          _currentIndex = index;
-        });
-      },
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        decoration: BoxDecoration(
-          color: isSelected ? AppColors.primary.withOpacity(0.1) : Colors.transparent,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              icon,
-              color: isSelected ? AppColors.primary : AppColors.textSecondary,
-              size: 24,
-            ),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+    return Expanded(
+      child: GestureDetector(
+        onTap: () {
+          setState(() {
+            _currentIndex = index;
+          });
+        },
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 6),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                icon,
                 color: isSelected ? AppColors.primary : AppColors.textSecondary,
+                size: 22,
               ),
-            ),
-          ],
+              const SizedBox(height: 2),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                  color: isSelected ? AppColors.primary : AppColors.textSecondary,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -127,120 +124,102 @@ class MaterialsScreen extends StatefulWidget {
 }
 
 class _MaterialsScreenState extends State<MaterialsScreen> {
-  late final CatalogService _catalogService;
-  List<Map<String, dynamic>>? _levels;
-  bool _loading = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _catalogService = CatalogService(ApiClient());
-    _loadLevels();
-  }
-
-  Future<void> _loadLevels() async {
-    try {
-      final response = await _catalogService.getLevels();
-      if (mounted) {
-        setState(() {
-          _levels = response['data'];
-          _loading = false;
-        });
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _levels = [];
-          _loading = false;
-        });
-      }
-    }
-  }
+  final List<Map<String, dynamic>> _materialTypes = [
+    {
+      'title': 'Notes',
+      'image': 'assets/icons/notes.png',
+      'color': AppColors.primary,
+      'route': '/notes',
+    },
+    {
+      'title': 'Books',
+      'image': 'assets/icons/books.png',
+      'color': const Color(0xFF0EA5E9),
+      'route': '/books',
+    },
+    {
+      'title': 'Lesson Plans',
+      'image': 'assets/icons/lessonplan.png',
+      'color': const Color(0xFF8B5CF6),
+      'route': '/lesson-plans',
+    },
+    {
+      'title': 'Syllabus',
+      'image': 'assets/images/sylabues.png',
+      'color': const Color(0xFFF59E0B),
+      'route': '/syllabus',
+    },
+    {
+      'title': 'Scheme of Work',
+      'image': 'assets/icons/schemeof work.png',
+      'color': const Color(0xFFEC4899),
+      'route': '/scheme-of-work',
+    },
+    {
+      'title': 'Logbooks',
+      'image': 'assets/icons/logbook.png',
+      'color': const Color(0xFF6366F1),
+      'route': '/logbooks',
+    },
+  ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Color(0xFF024938),
-              Color(0xFF023D30),
-              Color(0xFF065F46),
-              Color(0xFF024938),
-            ],
-            stops: [0.0, 0.3, 0.7, 1.0],
-          ),
-        ),
-        child: SafeArea(
-          child: Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: Row(
-                  children: [
-                    const Text(
-                      'Vitabu Vya Kujifunza',
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
+      backgroundColor: Colors.white,
+      body: SafeArea(
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  const Text(
+                    'Study Materials',
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textPrimary,
                     ),
-                  ],
+                  ),
+                ],
+              ),
+            ),
+            Expanded(
+              child: GridView.builder(
+                padding: const EdgeInsets.all(16),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  crossAxisSpacing: 16,
+                  mainAxisSpacing: 16,
+                  childAspectRatio: 1.1,
                 ),
+                itemCount: _materialTypes.length,
+                itemBuilder: (context, index) {
+                  final materialType = _materialTypes[index];
+                  return _buildMaterialTypeCard(materialType);
+                },
               ),
-              Expanded(
-                child: _loading
-                    ? const Center(child: CircularProgressIndicator(color: Colors.white))
-                    : _levels == null || _levels!.isEmpty
-                        ? Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  Icons.school_outlined,
-                                  size: 64,
-                                  color: Colors.white.withOpacity(0.5),
-                                ),
-                                const SizedBox(height: 16),
-                                Text(
-                                  'Hakuna viwango bado',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    color: Colors.white.withOpacity(0.8),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          )
-                        : GridView.builder(
-                            padding: const EdgeInsets.all(16),
-                            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 2,
-                              crossAxisSpacing: 16,
-                              mainAxisSpacing: 16,
-                              childAspectRatio: 1.2,
-                            ),
-                            itemCount: _levels!.length,
-                            itemBuilder: (context, index) {
-                              final level = _levels![index];
-                              return _buildLevelCard(level);
-                            },
-                          ),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildLevelCard(Map<String, dynamic> level) {
+  Widget _buildMaterialTypeCard(Map<String, dynamic> materialType) {
+    final color = materialType['color'] as Color;
+    final title = materialType['title'] as String;
+    final icon = materialType['icon'] as IconData?;
+    final image = materialType['image'] as String?;
+    final route = materialType['route'] as String;
+
     return GestureDetector(
-      onTap: () => context.push('/classes', extra: level['id']),
+      onTap: () {
+        // Navigate to levels screen with material type (remove leading slash)
+        final materialType = route.startsWith('/') ? route.substring(1) : route;
+        context.push('/catalog-levels', extra: materialType);
+      },
       child: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
@@ -248,16 +227,16 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
             end: Alignment.bottomRight,
             colors: [
               Colors.white,
-              Colors.white.withOpacity(0.95),
+              Colors.grey[50]!,
             ],
           ),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: Colors.white.withOpacity(0.3), width: 1.5),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: color.withOpacity(0.2), width: 1),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.1),
-              blurRadius: 20,
-              offset: const Offset(0, 10),
+              color: color.withOpacity(0.08),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
             ),
           ],
         ),
@@ -266,50 +245,27 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Container(
-                width: 60,
-                height: 60,
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [AppColors.primary, AppColors.primaryDark],
-                  ),
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.primary.withOpacity(0.3),
-                      blurRadius: 12,
-                      offset: const Offset(0, 4),
+              image != null
+                  ? Image.asset(
+                      image,
+                      width: 60,
+                      height: 60,
+                      fit: BoxFit.contain,
+                    )
+                  : Icon(
+                      icon,
+                      color: color,
+                      size: 60,
                     ),
-                  ],
-                ),
-                child: const Icon(
-                  Icons.school,
-                  color: Colors.white,
-                  size: 32,
-                ),
-              ),
               const SizedBox(height: 16),
               Text(
-                level['name']?.toString() ?? 'Level',
+                title,
                 style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
                   color: AppColors.textPrimary,
                 ),
                 textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 4),
-              Text(
-                level['description']?.toString() ?? '',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: AppColors.textSecondary,
-                ),
-                textAlign: TextAlign.center,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
               ),
             ],
           ),

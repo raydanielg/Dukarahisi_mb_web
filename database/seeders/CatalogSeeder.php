@@ -15,9 +15,9 @@ class CatalogSeeder extends Seeder
     public function run(): void
     {
         // Levels
-        $primary = Level::create(['name' => 'Primary School', 'order' => 1]);
-        $secondary = Level::create(['name' => 'Secondary School O-Level', 'order' => 2]);
-        $advanced = Level::create(['name' => 'Secondary School A-Level', 'order' => 3]);
+        $primary = Level::create(['name' => 'Primary School', 'icon' => 'assets/icons/primary.png', 'order' => 1]);
+        $secondary = Level::create(['name' => 'Secondary School O-Level', 'icon' => 'assets/icons/secondary.png', 'order' => 2]);
+        $advanced = Level::create(['name' => 'Secondary School A-Level', 'icon' => 'assets/icons/advanced.png', 'order' => 3]);
 
         // Primary classes
         $primaryClasses = [];

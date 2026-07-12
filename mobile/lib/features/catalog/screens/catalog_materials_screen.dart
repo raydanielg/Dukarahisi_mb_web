@@ -4,37 +4,42 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/services/catalog_service.dart';
 import '../../../core/network/api_client.dart';
 
-class MaterialsScreen extends StatefulWidget {
-  const MaterialsScreen({super.key});
+class CatalogMaterialsScreen extends StatefulWidget {
+  const CatalogMaterialsScreen({super.key});
 
   @override
-  State<MaterialsScreen> createState() => _MaterialsScreenState();
+  State<CatalogMaterialsScreen> createState() => _CatalogMaterialsScreenState();
 }
 
-class _MaterialsScreenState extends State<MaterialsScreen> {
+class _CatalogMaterialsScreenState extends State<CatalogMaterialsScreen> {
   late final CatalogService _catalogService;
   List<Map<String, dynamic>>? _materials;
   bool _loading = true;
   int? _topicId;
+  String? _materialType;
 
   @override
   void initState() {
     super.initState();
     _catalogService = CatalogService(ApiClient());
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _topicId = GoRouterState.of(context).extra as int?;
-      if (_topicId != null) {
-        _loadMaterials();
+      final extra = GoRouterState.of(context).extra as Map<String, dynamic>?;
+      if (extra != null) {
+        _topicId = extra['topicId'] as int?;
+        _materialType = extra['materialType'] as String?;
+        if (_topicId != null) {
+          _loadMaterials();
+        }
       }
     });
   }
 
   Future<void> _loadMaterials() async {
     try {
-      final response = await _catalogService.getMaterials(_topicId!);
+      final response = await _catalogService.getMaterials(_topicId!, materialType: _materialType);
       if (mounted) {
         setState(() {
-          _materials = response['data'];
+          _materials = (response['data'] as List).map((e) => e as Map<String, dynamic>).toList();
           _loading = false;
         });
       }
@@ -64,9 +69,9 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
                     onPressed: () => context.pop(),
                   ),
                   const SizedBox(width: 8),
-                  const Text(
-                    'Materials',
-                    style: TextStyle(
+                  Text(
+                    _getMaterialTypeTitle(),
+                    style: const TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
                       color: AppColors.textPrimary,
@@ -83,10 +88,11 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Icon(
-                                Icons.folder_open_outlined,
-                                size: 64,
-                                color: AppColors.textMuted,
+                              Image.asset(
+                                'assets/icons/level.png',
+                                width: 80,
+                                height: 80,
+                                fit: BoxFit.contain,
                               ),
                               const SizedBox(height: 16),
                               Text(
@@ -114,9 +120,31 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
     );
   }
 
+  String _getMaterialTypeTitle() {
+    switch (_materialType) {
+      case 'notes':
+        return 'Notes';
+      case 'books':
+        return 'Books';
+      case 'lesson-notes':
+        return 'Lesson Notes';
+      case 'lesson-plans':
+        return 'Lesson Plans';
+      case 'syllabus':
+        return 'Syllabus';
+      case 'scheme-of-work':
+        return 'Scheme of Work';
+      case 'logbooks':
+        return 'Logbooks';
+      default:
+        return 'Materials';
+    }
+  }
+
   Widget _buildMaterialCard(Map<String, dynamic> material) {
     final price = material['price']?.toString() ?? '0';
     final isFree = price == '0' || price == '0.0';
+    final hasPurchased = material['has_purchased'] ?? false;
 
     return GestureDetector(
       onTap: () {
@@ -133,7 +161,7 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
               Colors.grey[50]!,
             ],
           ),
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(8),
           border: Border.all(color: AppColors.primary.withOpacity(0.15), width: 1),
           boxShadow: [
             BoxShadow(
@@ -170,8 +198,8 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
                 ),
                 child: Icon(
                   Icons.description_outlined,
-                  size: 32,
                   color: Colors.white,
+                  size: 32,
                 ),
               ),
               const SizedBox(width: 14),

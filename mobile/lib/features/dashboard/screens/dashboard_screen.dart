@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shimmer/shimmer.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/services/dashboard_service.dart';
 import '../../../core/services/auth_service.dart';
@@ -100,166 +101,393 @@ class _DashboardScreenState extends State<DashboardScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Color(0xFF024938),
-              Color(0xFF023D30),
-              Color(0xFF065F46),
-              Color(0xFF024938),
-            ],
-            stops: [0.0, 0.3, 0.7, 1.0],
+        decoration: BoxDecoration(
+          border: Border.all(color: AppColors.primary.withOpacity(0.2), width: 2),
+        ),
+        child: SafeArea(
+          child: FadeTransition(
+            opacity: _fadeAnimation,
+            child: _loading
+                ? _buildSkeletonLoader()
+                : SingleChildScrollView(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildHeader(),
+                        const SizedBox(height: 24),
+                        _buildKPICards(),
+                        const SizedBox(height: 24),
+                        _buildPurchasedNotes(),
+                        const SizedBox(height: 24),
+                        _buildPendingPayments(),
+                        const SizedBox(height: 24),
+                        _buildRecentActivity(),
+                        const SizedBox(height: 100),
+                      ],
+                    ),
+                  ),
           ),
         ),
-        child: Stack(
+      ),
+    );
+  }
+
+  Widget _buildSkeletonLoader() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Shimmer.fromColors(
+        baseColor: Colors.grey[300]!,
+        highlightColor: Colors.grey[100]!,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            SafeArea(
-              child: FadeTransition(
-                opacity: _fadeAnimation,
-                child: _loading
-                    ? const Center(child: CircularProgressIndicator(color: Colors.white))
-                    : SingleChildScrollView(
-                        padding: const EdgeInsets.all(16),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // Header
-                            _buildHeader(),
-                            const SizedBox(height: 24),
-                            // KPI Cards
-                            _buildKPICards(),
-                            const SizedBox(height: 24),
-                            // Purchased Notes
-                            _buildPurchasedNotes(),
-                            const SizedBox(height: 24),
-                            // Pending Payments
-                            _buildPendingPayments(),
-                            const SizedBox(height: 24),
-                            // Quick Actions
-                            _buildQuickActions(),
-                            const SizedBox(height: 24),
-                            // Recent Activity
-                            _buildRecentActivity(),
-                            const SizedBox(height: 100), // Space for bottom nav
-                          ],
-                        ),
-                      ),
+            _buildHeaderSkeleton(),
+            const SizedBox(height: 24),
+            _buildKPICardsSkeleton(),
+            const SizedBox(height: 24),
+            _buildPurchasedNotesSkeleton(),
+            const SizedBox(height: 24),
+            _buildPendingPaymentsSkeleton(),
+            const SizedBox(height: 24),
+            _buildRecentActivitySkeleton(),
+            const SizedBox(height: 100),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeaderSkeleton() {
+    return Row(
+      children: [
+        Container(
+          width: 56,
+          height: 56,
+          decoration: BoxDecoration(
+            color: Colors.grey[300],
+            shape: BoxShape.circle,
+          ),
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 80,
+                height: 18,
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(4),
+                ),
               ),
+              const SizedBox(height: 8),
+              Container(
+                width: 150,
+                height: 22,
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(4),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Container(
+                width: 60,
+                height: 20,
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(20),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildKPICardsSkeleton() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          width: 120,
+          height: 18,
+          decoration: BoxDecoration(
+            color: Colors.grey[300],
+            borderRadius: BorderRadius.circular(4),
+          ),
+        ),
+        const SizedBox(height: 16),
+        GridView.count(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          crossAxisCount: 2,
+          mainAxisSpacing: 12,
+          crossAxisSpacing: 12,
+          childAspectRatio: 1.3,
+          children: List.generate(4, (index) {
+            return Container(
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+                borderRadius: BorderRadius.circular(16),
+              ),
+            );
+          }),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPurchasedNotesSkeleton() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.grey[50],
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.grey[300]!, width: 1.5),
+      ),
+      child: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Container(
+                  width: 140,
+                  height: 16,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
+                Container(
+                  width: 24,
+                  height: 24,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ],
             ),
-          // Notification Drawer
-          if (_showNotifications)
-            GestureDetector(
-              onTap: () => setState(() => _showNotifications = false),
-              child: Container(
-                color: Colors.black.withOpacity(0.5),
-                child: Stack(
+          ),
+          ListView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: 3,
+            itemBuilder: (context, index) {
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                child: Row(
                   children: [
-                    Positioned(
-                      right: 0,
-                      top: 0,
-                      bottom: 0,
-                      width: MediaQuery.of(context).size.width * 0.85,
-                      child: GestureDetector(
-                        onTap: () {},
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: const BorderRadius.only(
-                              topLeft: Radius.circular(24),
-                              bottomLeft: Radius.circular(24),
+                    Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: Colors.grey[300],
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            width: double.infinity,
+                            height: 14,
+                            decoration: BoxDecoration(
+                              color: Colors.grey[300],
+                              borderRadius: BorderRadius.circular(4),
                             ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.2),
-                                blurRadius: 20,
-                                offset: const Offset(-5, 0),
-                              ),
-                            ],
                           ),
-                          child: Column(
-                            children: [
-                              // Header
-                              Container(
-                                padding: const EdgeInsets.all(20),
-                                decoration: BoxDecoration(
-                                  color: AppColors.primary,
-                                  borderRadius: const BorderRadius.only(
-                                    topLeft: Radius.circular(24),
-                                    bottomRight: Radius.circular(24),
-                                  ),
-                                ),
-                                child: Row(
-                                  children: [
-                                    Icon(Icons.notifications_active, color: Colors.white, size: 24),
-                                    const SizedBox(width: 12),
-                                    const Text(
-                                      'Notifications',
-                                      style: TextStyle(
-                                        fontSize: 20,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.white,
-                                      ),
-                                    ),
-                                    const Spacer(),
-                                    GestureDetector(
-                                      onTap: () => setState(() => _showNotifications = false),
-                                      child: Container(
-                                        padding: const EdgeInsets.all(8),
-                                        decoration: BoxDecoration(
-                                          color: Colors.white.withOpacity(0.2),
-                                          borderRadius: BorderRadius.circular(8),
-                                        ),
-                                        child: Icon(Icons.close, color: Colors.white, size: 20),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              // Notifications List
-                              Expanded(
-                                child: _notifications == null || _notifications!.isEmpty
-                                    ? Center(
-                                        child: Column(
-                                          mainAxisAlignment: MainAxisAlignment.center,
-                                          children: [
-                                            Icon(
-                                              Icons.notifications_none_outlined,
-                                              size: 64,
-                                              color: AppColors.textMuted,
-                                            ),
-                                            const SizedBox(height: 16),
-                                            Text(
-                                              'Hakuna notifications',
-                                              style: TextStyle(
-                                                fontSize: 16,
-                                                color: AppColors.textSecondary,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      )
-                                    : ListView.builder(
-                                        padding: const EdgeInsets.all(16),
-                                        itemCount: _notifications!.length,
-                                        itemBuilder: (context, index) {
-                                          final notification = _notifications![index];
-                                          return _buildNotificationItemFromApi(notification);
-                                        },
-                                      ),
-                              ),
-                            ],
+                          const SizedBox(height: 8),
+                          Container(
+                            width: 100,
+                            height: 12,
+                            decoration: BoxDecoration(
+                              color: Colors.grey[300],
+                              borderRadius: BorderRadius.circular(4),
+                            ),
                           ),
-                        ),
+                        ],
                       ),
                     ),
                   ],
                 ),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPendingPaymentsSkeleton() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.grey[50],
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.grey[300]!, width: 1.5),
+      ),
+      child: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Container(
+                  width: 120,
+                  height: 16,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
+                Container(
+                  width: 24,
+                  height: 24,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          ListView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: 2,
+            itemBuilder: (context, index) {
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Container(
+                          width: 80,
+                          height: 12,
+                          decoration: BoxDecoration(
+                            color: Colors.grey[300],
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                        ),
+                        Container(
+                          width: 60,
+                          height: 14,
+                          decoration: BoxDecoration(
+                            color: Colors.grey[300],
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Container(
+                      width: 150,
+                      height: 12,
+                      decoration: BoxDecoration(
+                        color: Colors.grey[300],
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRecentActivitySkeleton() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.grey[50],
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.grey[300]!, width: 1.5),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: 160,
+              height: 16,
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+                borderRadius: BorderRadius.circular(4),
               ),
             ),
-        ],
+            const SizedBox(height: 16),
+            ListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: 3,
+              itemBuilder: (context, index) {
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 16),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 44,
+                        height: 44,
+                        decoration: BoxDecoration(
+                          color: Colors.grey[300],
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Container(
+                              width: double.infinity,
+                              height: 14,
+                              decoration: BoxDecoration(
+                                color: Colors.grey[300],
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Container(
+                              width: 150,
+                              height: 12,
+                              decoration: BoxDecoration(
+                                color: Colors.grey[300],
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Container(
+                        width: 40,
+                        height: 11,
+                        decoration: BoxDecoration(
+                          color: Colors.grey[300],
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -267,27 +495,18 @@ class _DashboardScreenState extends State<DashboardScreen>
   Widget _buildHeader() {
     final user = _userInfo;
     final displayName = user?['name']?.toString() ?? 'User';
-    final shortName = displayName.length > 15 ? '${displayName.substring(0, 15)}...' : displayName;
     
     return Row(
       children: [
         Container(
-          width: 50,
-          height: 50,
+          width: 56,
+          height: 56,
           decoration: BoxDecoration(
-            color: AppColors.primary,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.white, width: 2),
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.primary.withOpacity(0.3),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
-              ),
-            ],
+            color: AppColors.primaryLight,
+            shape: BoxShape.circle,
+            border: Border.all(color: AppColors.primary, width: 2),
           ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(10),
+          child: ClipOval(
             child: Image.asset(
               'assets/icons/useravatar.png',
               fit: BoxFit.cover,
@@ -298,7 +517,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                     child: Text(
                       displayName.isNotEmpty ? displayName[0].toUpperCase() : 'U',
                       style: TextStyle(
-                        fontSize: 20,
+                        fontSize: 24,
                         fontWeight: FontWeight.bold,
                         color: AppColors.primary,
                       ),
@@ -309,54 +528,62 @@ class _DashboardScreenState extends State<DashboardScreen>
             ),
           ),
         ),
-        const SizedBox(width: 12),
+        const SizedBox(width: 16),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Karibu, $shortName!',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.textPrimary,
+                'Welcome',
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textSecondary,
                 ),
               ),
               const SizedBox(height: 2),
               Text(
-                user?['email']?.toString() ?? '',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: AppColors.textSecondary,
+                displayName,
+                style: const TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.primary,
                 ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
               ),
             ],
           ),
         ),
         GestureDetector(
-          onTap: () => setState(() => _showNotifications = true),
+          onTap: () {
+            // Handle notification tap
+          },
           child: Container(
-            padding: const EdgeInsets.all(8),
+            width: 48,
+            height: 48,
             decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: AppColors.border),
+              color: AppColors.primaryLight,
+              shape: BoxShape.circle,
+              border: Border.all(color: AppColors.primary.withOpacity(0.3), width: 1.5),
             ),
             child: Stack(
               children: [
-                Icon(Icons.notifications_outlined, color: AppColors.textSecondary),
+                Center(
+                  child: Icon(
+                    Icons.notifications_outlined,
+                    color: AppColors.primary,
+                    size: 24,
+                  ),
+                ),
                 Positioned(
                   right: 0,
                   top: 0,
                   child: Container(
-                    width: 8,
-                    height: 8,
+                    width: 12,
+                    height: 12,
                     decoration: BoxDecoration(
                       color: AppColors.accent,
                       shape: BoxShape.circle,
-                      border: Border.all(color: Colors.white, width: 1.5),
+                      border: Border.all(color: Colors.white, width: 2),
                     ),
                   ),
                 ),
@@ -686,13 +913,13 @@ class _DashboardScreenState extends State<DashboardScreen>
             AppColors.primaryLight.withOpacity(0.3),
           ],
         ),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.primary.withOpacity(0.2), width: 1.5),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: AppColors.primary.withOpacity(0.2), width: 1),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primary.withOpacity(0.1),
-            blurRadius: 15,
-            offset: const Offset(0, 5),
+            color: AppColors.primary.withOpacity(0.08),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
           ),
         ],
       ),
@@ -704,7 +931,7 @@ class _DashboardScreenState extends State<DashboardScreen>
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 const Text(
-                  'Notes Zilizonunuliwa',
+                  'Purchased Notes',
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
@@ -730,15 +957,26 @@ class _DashboardScreenState extends State<DashboardScreen>
             ),
           ),
           if (notes.isEmpty)
-            const Padding(
-              padding: EdgeInsets.all(24),
-              child: Text(
-                'Hakuna notes zilizonunuliwa bado',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: AppColors.textSecondary,
-                ),
-                textAlign: TextAlign.center,
+            Padding(
+              padding: const EdgeInsets.all(32),
+              child: Column(
+                children: [
+                  Image.asset(
+                    'assets/images/notes.png',
+                    width: 80,
+                    height: 80,
+                    fit: BoxFit.contain,
+                  ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'No purchased notes yet',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: AppColors.textSecondary,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
               ),
             )
           else
@@ -860,13 +1098,13 @@ class _DashboardScreenState extends State<DashboardScreen>
             AppColors.accent.withOpacity(0.1),
           ],
         ),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.accent.withOpacity(0.3), width: 1.5),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: AppColors.accent.withOpacity(0.3), width: 0.5),
         boxShadow: [
           BoxShadow(
-            color: AppColors.accent.withOpacity(0.15),
-            blurRadius: 15,
-            offset: const Offset(0, 5),
+            color: AppColors.accent.withOpacity(0.08),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
           ),
         ],
       ),
@@ -878,7 +1116,7 @@ class _DashboardScreenState extends State<DashboardScreen>
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 const Text(
-                  'Inasubiri Malipo',
+                  'Pending Payments',
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
@@ -905,15 +1143,26 @@ class _DashboardScreenState extends State<DashboardScreen>
             ),
           ),
           if (payments.isEmpty)
-            const Padding(
-              padding: EdgeInsets.all(24),
-              child: Text(
-                'Hakuna malipo yanayosubiri',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: AppColors.textSecondary,
-                ),
-                textAlign: TextAlign.center,
+            Padding(
+              padding: const EdgeInsets.all(32),
+              child: Column(
+                children: [
+                  Image.asset(
+                    'assets/icons/payment.png',
+                    width: 80,
+                    height: 80,
+                    fit: BoxFit.contain,
+                  ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'No pending payments',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: AppColors.textSecondary,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
               ),
             )
           else
@@ -1002,121 +1251,6 @@ class _DashboardScreenState extends State<DashboardScreen>
     );
   }
 
-  Widget _buildQuickActions() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Vitendo Vifuatazo',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: AppColors.textPrimary,
-          ),
-        ),
-        const SizedBox(height: 16),
-        GridView.count(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          crossAxisCount: 4,
-          mainAxisSpacing: 12,
-          crossAxisSpacing: 12,
-          childAspectRatio: 1,
-          children: [
-            _buildQuickAction(
-              'Tafuta',
-              Icons.search_rounded,
-              AppColors.primary,
-              () => context.push('/search'),
-            ),
-            _buildQuickAction(
-              'Wishlist',
-              Icons.favorite_border_rounded,
-              const Color(0xFFEF4444),
-              () => context.push('/wishlist'),
-            ),
-            _buildQuickAction(
-              'Historia',
-              Icons.history_rounded,
-              const Color(0xFF0EA5E9),
-              () => context.push('/history'),
-            ),
-            _buildQuickAction(
-              'Msaada',
-              Icons.help_outline_rounded,
-              const Color(0xFF8B5CF6),
-              () => context.push('/help'),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildQuickAction(String label, IconData icon, Color color, VoidCallback? onTap) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Colors.white,
-              color.withOpacity(0.08),
-            ],
-          ),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: color.withOpacity(0.2), width: 1.5),
-          boxShadow: [
-            BoxShadow(
-              color: color.withOpacity(0.15),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    color,
-                    color.withOpacity(0.7),
-                  ],
-                ),
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: [
-                  BoxShadow(
-                    color: color.withOpacity(0.3),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: Icon(icon, color: Colors.white, size: 24),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
-                color: AppColors.textSecondary,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   Widget _buildRecentActivity() {
     return Container(
       decoration: BoxDecoration(
@@ -1144,7 +1278,7 @@ class _DashboardScreenState extends State<DashboardScreen>
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              'Shughuli za Hivi Karibuni',
+              'Recent Activity',
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
@@ -1153,21 +1287,24 @@ class _DashboardScreenState extends State<DashboardScreen>
             ),
             const SizedBox(height: 16),
             _activities == null || _activities!.isEmpty
-                ? Center(
+                ? Padding(
+                    padding: const EdgeInsets.all(32),
                     child: Column(
                       children: [
-                        Icon(
-                          Icons.history_outlined,
-                          size: 48,
-                          color: AppColors.textMuted,
+                        Image.asset(
+                          'assets/images/image.png',
+                          width: 80,
+                          height: 80,
+                          fit: BoxFit.contain,
                         ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Hakuna shughuli bado',
+                        const SizedBox(height: 16),
+                        const Text(
+                          'No recent activity',
                           style: TextStyle(
                             fontSize: 14,
                             color: AppColors.textSecondary,
                           ),
+                          textAlign: TextAlign.center,
                         ),
                       ],
                     ),
