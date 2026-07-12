@@ -164,7 +164,14 @@ class OrderController extends Controller
      */
     public function status(Request $request, Order $order)
     {
-        if ($order->user_id !== $request->user()->id) {
+        $authUser = $request->user();
+
+        if ($order->user_id !== $authUser->id) {
+            Log::warning('Order status unauthorized access attempt', [
+                'order_id' => $order->id,
+                'order_user_id' => $order->user_id,
+                'auth_user_id' => $authUser->id,
+            ]);
             return response()->json(['status' => 'error', 'message' => 'Unauthorized.'], 403);
         }
 

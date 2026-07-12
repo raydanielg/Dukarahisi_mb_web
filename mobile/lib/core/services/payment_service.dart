@@ -17,7 +17,11 @@ class PaymentService {
       });
       return response.data as Map<String, dynamic>;
     } on ApiException catch (e) {
-      return {'status': 'error', 'message': e.message};
+      return {
+        'status': 'error',
+        'message': e.message,
+        'code': e.statusCode,
+      };
     }
   }
 
@@ -32,7 +36,11 @@ class PaymentService {
       });
       return response.data as Map<String, dynamic>;
     } on ApiException catch (e) {
-      return {'status': 'error', 'message': e.message};
+      return {
+        'status': 'error',
+        'message': e.message,
+        'code': e.statusCode,
+      };
     }
   }
 
@@ -41,7 +49,11 @@ class PaymentService {
       final response = await _apiClient.get('/orders/$orderId/status');
       return response.data as Map<String, dynamic>;
     } on ApiException catch (e) {
-      return {'status': 'error', 'message': e.message};
+      return {
+        'status': 'error',
+        'message': e.message,
+        'code': e.statusCode,
+      };
     }
   }
 }
