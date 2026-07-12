@@ -10,6 +10,7 @@ import '../../features/auth/screens/terms_of_service_screen.dart';
 import '../../features/auth/screens/privacy_policy_screen.dart';
 import '../../features/catalogue/screens/home_screen.dart';
 import '../../features/profile/screens/profile_screen.dart';
+import '../../features/common/screens/not_found_screen.dart';
 import '../../core/storage/local_cache.dart';
 import '../../core/config/constants.dart';
 
@@ -74,6 +75,10 @@ class AppRouter {
         GoRoute(
           path: '/profile',
           builder: (context, state) => const ProfileScreen(),
+        ),
+        GoRoute(
+          path: '/404',
+          builder: (context, state) => const NotFoundScreen(),
         ),
       ],
     );

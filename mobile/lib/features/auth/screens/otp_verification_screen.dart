@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/services/auth_service.dart';
+import '../../../core/network/api_client.dart';
+import '../../../core/network/api_exceptions.dart';
 import '../../../core/widgets/custom_toast.dart';
 
 class OTPVerificationScreen extends StatefulWidget {
@@ -19,10 +22,17 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen>
   int _countdown = 60;
   late AnimationController _countdownController;
   late Animation<int> _countdownAnimation;
+  late final AuthService _authService;
+  String? _phoneNumber;
 
   @override
   void initState() {
     super.initState();
+    _authService = AuthService(ApiClient());
+    
+    // Get phone number from route extra
+    _phoneNumber = ModalRoute.of(context)?.settings.arguments as String?;
+    
     _countdownController = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 60),
@@ -57,21 +67,93 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen>
     }
   }
 
-  void _verifyOTP() {
+  void _verifyOTP() async {
     final otp = _controllers.map((c) => c.text).join();
     if (otp.length == 6) {
+      if (_phoneNumber == null || _phoneNumber!.isEmpty) {
+        CustomToast.show(
+          context,
+          message: 'Phone number not provided',
+          type: ToastType.error,
+        );
+        return;
+      }
+      
       setState(() => _loading = true);
-      Future.delayed(const Duration(seconds: 2), () {
+      
+      try {
+        final response = await _authService.verifyOtp(
+          phoneNumber: _phoneNumber!,
+          otpCode: otp,
+        );
+        
+        if (mounted) {
+          setState(() => _loading = false);
+          
+          if (response['status'] == 'success') {
+            CustomToast.show(
+              context,
+              message: response['message'] ?? 'OTP verified successfully!',
+              type: ToastType.success,
+            );
+            // Navigate to home after successful verification
+            Future.delayed(const Duration(milliseconds: 500), () {
+              if (mounted) context.go('/home');
+            });
+          } else {
+            CustomToast.show(
+              context,
+              message: response['message'] ?? 'OTP verification failed',
+              type: ToastType.error,
+            );
+          }
+        }
+      } on NetworkException catch (e) {
         if (mounted) {
           setState(() => _loading = false);
           CustomToast.show(
             context,
-            message: 'OTP verified successfully!',
-            type: ToastType.success,
+            message: e.message,
+            type: ToastType.error,
           );
-          context.push('/reset-password');
         }
-      });
+      } on ValidationException catch (e) {
+        if (mounted) {
+          setState(() => _loading = false);
+          String errorMessage = e.message;
+          if (e.errors.isNotEmpty) {
+            final firstError = e.errors.values.first;
+            if (firstError is List && firstError.isNotEmpty) {
+              errorMessage = firstError.first.toString();
+            } else if (firstError is String) {
+              errorMessage = firstError;
+            }
+          }
+          CustomToast.show(
+            context,
+            message: errorMessage,
+            type: ToastType.error,
+          );
+        }
+      } on ApiException catch (e) {
+        if (mounted) {
+          setState(() => _loading = false);
+          CustomToast.show(
+            context,
+            message: e.message,
+            type: ToastType.error,
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          setState(() => _loading = false);
+          CustomToast.show(
+            context,
+            message: 'An unexpected error occurred',
+            type: ToastType.error,
+          );
+        }
+      }
     } else {
       CustomToast.show(
         context,
@@ -81,18 +163,47 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen>
     }
   }
 
-  void _resendOTP() {
+  void _resendOTP() async {
     if (_countdown == 0) {
-      setState(() {
-        _countdown = 60;
-      });
-      _countdownController.reset();
-      _countdownController.forward();
-      CustomToast.show(
-        context,
-        message: 'OTP resent successfully!',
-        type: ToastType.success,
-      );
+      if (_phoneNumber == null || _phoneNumber!.isEmpty) {
+        CustomToast.show(
+          context,
+          message: 'Phone number not provided',
+          type: ToastType.error,
+        );
+        return;
+      }
+      
+      try {
+        final response = await _authService.forgotPassword(
+          phoneNumber: _phoneNumber!,
+        );
+        
+        if (response['status'] == 'success') {
+          setState(() {
+            _countdown = 60;
+          });
+          _countdownController.reset();
+          _countdownController.forward();
+          CustomToast.show(
+            context,
+            message: response['message'] ?? 'OTP resent successfully!',
+            type: ToastType.success,
+          );
+        } else {
+          CustomToast.show(
+            context,
+            message: response['message'] ?? 'Failed to resend OTP',
+            type: ToastType.error,
+          );
+        }
+      } catch (e) {
+        CustomToast.show(
+          context,
+          message: 'Failed to resend OTP',
+          type: ToastType.error,
+        );
+      }
     }
   }
 
@@ -117,15 +228,22 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen>
                 child: Column(
                   children: [
                     Container(
-                      width: 72,
-                      height: 72,
-                      padding: const EdgeInsets.all(14),
+                      width: 80,
+                      height: 80,
+                      padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
                         color: Colors.white.withOpacity(0.15),
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: Colors.white.withOpacity(0.2)),
+                        borderRadius: BorderRadius.circular(24),
+                        border: Border.all(color: Colors.white.withOpacity(0.25), width: 1.5),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.1),
+                            blurRadius: 20,
+                            offset: const Offset(0, 10),
+                          ),
+                        ],
                       ),
-                      child: const Icon(Icons.sms_rounded, color: Colors.white, size: 32),
+                      child: Image.asset('assets/images/verfyottp.png', fit: BoxFit.contain),
                     ),
                     const SizedBox(height: 20),
                     Text(

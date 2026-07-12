@@ -3,6 +3,9 @@ import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/validators.dart';
 import '../../../core/widgets/custom_toast.dart';
+import '../../../core/services/auth_service.dart';
+import '../../../core/network/api_client.dart';
+import '../../../core/network/api_exceptions.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -14,6 +17,7 @@ class RegisterScreen extends StatefulWidget {
 class _RegisterScreenState extends State<RegisterScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
+  final _emailController = TextEditingController();
   final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
@@ -21,32 +25,105 @@ class _RegisterScreenState extends State<RegisterScreen> {
   bool _obscureConfirm = true;
   bool _loading = false;
   bool _agreed = false;
+  late final AuthService _authService;
+
+  @override
+  void initState() {
+    super.initState();
+    _authService = AuthService(ApiClient());
+  }
 
   @override
   void dispose() {
     _nameController.dispose();
+    _emailController.dispose();
     _phoneController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     super.dispose();
   }
 
-  void _register() {
+  void _register() async {
     if ((_formKey.currentState?.validate() ?? false) && _agreed) {
       setState(() => _loading = true);
-      Future.delayed(const Duration(seconds: 2), () {
+      
+      try {
+        final response = await _authService.register(
+          name: _nameController.text.trim(),
+          phoneNumber: _phoneController.text.trim(),
+          email: _emailController.text.trim(),
+          password: _passwordController.text,
+        );
+        
+        if (mounted) {
+          setState(() => _loading = false);
+          
+          if (response['status'] == 'success') {
+            CustomToast.show(
+              context,
+              message: response['message'] ?? 'Account created successfully!',
+              type: ToastType.success,
+            );
+            // Navigate to OTP verification with phone number
+            Future.delayed(const Duration(milliseconds: 500), () {
+              if (mounted) {
+                context.push('/otp-verification', extra: _phoneController.text.trim());
+              }
+            });
+          } else {
+            CustomToast.show(
+              context,
+              message: response['message'] ?? 'Registration failed',
+              type: ToastType.error,
+            );
+          }
+        }
+      } on NetworkException catch (e) {
         if (mounted) {
           setState(() => _loading = false);
           CustomToast.show(
             context,
-            message: 'Account created successfully!',
-            type: ToastType.success,
+            message: e.message,
+            type: ToastType.error,
           );
-          Future.delayed(const Duration(milliseconds: 500), () {
-            if (mounted) context.go('/select-level');
-          });
         }
-      });
+      } on ValidationException catch (e) {
+        if (mounted) {
+          setState(() => _loading = false);
+          String errorMessage = e.message;
+          if (e.errors.isNotEmpty) {
+            final firstError = e.errors.values.first;
+            if (firstError is List && firstError.isNotEmpty) {
+              errorMessage = firstError.first.toString();
+            } else if (firstError is String) {
+              errorMessage = firstError;
+            }
+          }
+          CustomToast.show(
+            context,
+            message: errorMessage,
+            type: ToastType.error,
+          );
+        }
+      } on ApiException catch (e) {
+        if (mounted) {
+          setState(() => _loading = false);
+          CustomToast.show(
+            context,
+            message: e.message,
+            type: ToastType.error,
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          setState(() => _loading = false);
+          CustomToast.show(
+            context,
+            message: 'An unexpected error occurred',
+            type: ToastType.error,
+          );
+        }
+      }
     } else {
       if (!_agreed) {
         CustomToast.show(
@@ -100,7 +177,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           ),
                         ],
                       ),
-                      child: const Icon(Icons.person_add_rounded, color: Colors.white, size: 36),
+                      child: Image.asset('assets/images/register.png', fit: BoxFit.contain),
                     ),
                     const SizedBox(height: 24),
                     Text(
@@ -149,6 +226,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               prefixIcon: Icon(Icons.person_outline),
                             ),
                             validator: (value) => Validators.required(value, 'Full name'),
+                          ),
+                          const SizedBox(height: 18),
+                          TextFormField(
+                            controller: _emailController,
+                            keyboardType: TextInputType.emailAddress,
+                            decoration: const InputDecoration(
+                              labelText: 'Email Address',
+                              hintText: 'Enter your email',
+                              prefixIcon: Icon(Icons.email_outlined),
+                            ),
+                            validator: Validators.email,
                           ),
                           const SizedBox(height: 18),
                           TextFormField(

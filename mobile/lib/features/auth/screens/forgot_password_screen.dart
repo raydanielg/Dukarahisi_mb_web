@@ -3,6 +3,9 @@ import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/validators.dart';
 import '../../../core/widgets/custom_toast.dart';
+import '../../../core/services/auth_service.dart';
+import '../../../core/network/api_client.dart';
+import '../../../core/network/api_exceptions.dart';
 
 class ForgotPasswordScreen extends StatefulWidget {
   const ForgotPasswordScreen({super.key});
@@ -15,6 +18,13 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   final _formKey = GlobalKey<FormState>();
   final _phoneController = TextEditingController();
   bool _loading = false;
+  late final AuthService _authService;
+
+  @override
+  void initState() {
+    super.initState();
+    _authService = AuthService(ApiClient());
+  }
 
   @override
   void dispose() {
@@ -22,20 +32,79 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     super.dispose();
   }
 
-  void _sendOTP() {
+  void _sendOTP() async {
     if (_formKey.currentState?.validate() ?? false) {
       setState(() => _loading = true);
-      Future.delayed(const Duration(seconds: 2), () {
+      
+      try {
+        final response = await _authService.forgotPassword(
+          phoneNumber: _phoneController.text.trim(),
+        );
+        
+        if (mounted) {
+          setState(() => _loading = false);
+          
+          if (response['status'] == 'success') {
+            CustomToast.show(
+              context,
+              message: response['message'] ?? 'OTP sent successfully!',
+              type: ToastType.success,
+            );
+            context.push('/otp-verification', extra: _phoneController.text.trim());
+          } else {
+            CustomToast.show(
+              context,
+              message: response['message'] ?? 'Failed to send OTP',
+              type: ToastType.error,
+            );
+          }
+        }
+      } on NetworkException catch (e) {
         if (mounted) {
           setState(() => _loading = false);
           CustomToast.show(
             context,
-            message: 'OTP sent successfully!',
-            type: ToastType.success,
+            message: e.message,
+            type: ToastType.error,
           );
-          context.push('/otp-verification', extra: _phoneController.text);
         }
-      });
+      } on ValidationException catch (e) {
+        if (mounted) {
+          setState(() => _loading = false);
+          String errorMessage = e.message;
+          if (e.errors.isNotEmpty) {
+            final firstError = e.errors.values.first;
+            if (firstError is List && firstError.isNotEmpty) {
+              errorMessage = firstError.first.toString();
+            } else if (firstError is String) {
+              errorMessage = firstError;
+            }
+          }
+          CustomToast.show(
+            context,
+            message: errorMessage,
+            type: ToastType.error,
+          );
+        }
+      } on ApiException catch (e) {
+        if (mounted) {
+          setState(() => _loading = false);
+          CustomToast.show(
+            context,
+            message: e.message,
+            type: ToastType.error,
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          setState(() => _loading = false);
+          CustomToast.show(
+            context,
+            message: 'An unexpected error occurred',
+            type: ToastType.error,
+          );
+        }
+      }
     } else {
       CustomToast.show(
         context,
@@ -66,15 +135,22 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                 child: Column(
                   children: [
                     Container(
-                      width: 72,
-                      height: 72,
-                      padding: const EdgeInsets.all(14),
+                      width: 80,
+                      height: 80,
+                      padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
                         color: Colors.white.withOpacity(0.15),
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: Colors.white.withOpacity(0.2)),
+                        borderRadius: BorderRadius.circular(24),
+                        border: Border.all(color: Colors.white.withOpacity(0.25), width: 1.5),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.1),
+                            blurRadius: 20,
+                            offset: const Offset(0, 10),
+                          ),
+                        ],
                       ),
-                      child: const Icon(Icons.lock_reset_rounded, color: Colors.white, size: 32),
+                      child: const Icon(Icons.lock_reset_rounded, color: Colors.white, size: 36),
                     ),
                     const SizedBox(height: 20),
                     Text(

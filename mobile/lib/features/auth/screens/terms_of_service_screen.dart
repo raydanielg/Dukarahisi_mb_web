@@ -64,54 +64,74 @@ class TermsOfServiceScreen extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _buildSection(
-                          '1. Acceptance of Terms',
+                        _buildSectionCard(
+                          1,
+                          'Acceptance of Terms',
                           'By accessing and using Dukarahisi, you accept and agree to be bound by the terms and provisions of this agreement.',
+                          Icons.check_circle_outline,
                         ),
-                        const SizedBox(height: 24),
-                        _buildSection(
-                          '2. User Account',
+                        const SizedBox(height: 20),
+                        _buildSectionCard(
+                          2,
+                          'User Account',
                           'You are responsible for maintaining the confidentiality of your account and password. You agree to accept responsibility for all activities that occur under your account or password.',
+                          Icons.person_outline,
                         ),
-                        const SizedBox(height: 24),
-                        _buildSection(
-                          '3. Intellectual Property',
+                        const SizedBox(height: 20),
+                        _buildSectionCard(
+                          3,
+                          'Intellectual Property',
                           'All content included on Dukarahisi, such as text, graphics, logos, images, and software, is the property of Dukarahisi or its content suppliers and is protected by international copyright laws.',
+                          Icons.copyright_outlined,
                         ),
-                        const SizedBox(height: 24),
-                        _buildSection(
-                          '4. User Conduct',
+                        const SizedBox(height: 20),
+                        _buildSectionCard(
+                          4,
+                          'User Conduct',
                           'You agree not to use the service for any unlawful purpose, to solicit others to perform or participate in any unlawful acts, or to violate any international, federal, provincial, or state regulations.',
+                          Icons.gavel_outlined,
                         ),
-                        const SizedBox(height: 24),
-                        _buildSection(
-                          '5. Payment Terms',
+                        const SizedBox(height: 20),
+                        _buildSectionCard(
+                          5,
+                          'Payment Terms',
                           'All payments are processed through secure mobile payment platforms. By making a purchase, you agree to provide accurate and complete payment information.',
+                          Icons.payment_outlined,
                         ),
-                        const SizedBox(height: 24),
-                        _buildSection(
-                          '6. Privacy Policy',
+                        const SizedBox(height: 20),
+                        _buildSectionCard(
+                          6,
+                          'Privacy Policy',
                           'Your use of Dukarahisi is also subject to our Privacy Policy. Please review our Privacy Policy, which also governs the service and describes how we collect, use, and protect your data.',
+                          Icons.privacy_tip_outlined,
                         ),
-                        const SizedBox(height: 24),
-                        _buildSection(
-                          '7. Termination',
+                        const SizedBox(height: 20),
+                        _buildSectionCard(
+                          7,
+                          'Termination',
                           'We reserve the right to terminate or suspend your account and access to the service at our sole discretion, without prior notice, for conduct that we believe violates these Terms of Service.',
+                          Icons.block_outlined,
                         ),
-                        const SizedBox(height: 24),
-                        _buildSection(
-                          '8. Limitation of Liability',
+                        const SizedBox(height: 20),
+                        _buildSectionCard(
+                          8,
+                          'Limitation of Liability',
                           'In no event shall Dukarahisi be liable for any indirect, incidental, special, consequential, or punitive damages arising out of your access to or use of the service.',
+                          Icons.shield_outlined,
                         ),
-                        const SizedBox(height: 24),
-                        _buildSection(
-                          '9. Governing Law',
+                        const SizedBox(height: 20),
+                        _buildSectionCard(
+                          9,
+                          'Governing Law',
                           'These Terms of Service and any separate agreements whereby we provide you services shall be governed by and construed in accordance with the laws of Tanzania.',
+                          Icons.account_balance_outlined,
                         ),
-                        const SizedBox(height: 24),
-                        _buildSection(
-                          '10. Changes to Terms',
+                        const SizedBox(height: 20),
+                        _buildSectionCard(
+                          10,
+                          'Changes to Terms',
                           'We reserve the right to modify these terms at any time. We will notify users of any material changes by posting the new Terms of Service on this page.',
+                          Icons.update_outlined,
                         ),
                         const SizedBox(height: 32),
                         Container(
@@ -164,28 +184,77 @@ class TermsOfServiceScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildSection(String title, String content) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          title,
-          style: const TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: AppColors.textPrimary,
+  Widget _buildSectionCard(int number, String title, String content, IconData icon) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.border),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
           ),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          content,
-          style: const TextStyle(
-            fontSize: 15,
-            color: AppColors.textSecondary,
-            height: 1.5,
+        ],
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: AppColors.primaryLight,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Center(
+              child: Text(
+                number.toString(),
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.primary,
+                ),
+              ),
+            ),
           ),
-        ),
-      ],
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(icon, size: 18, color: AppColors.primary),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        title,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  content,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    color: AppColors.textSecondary,
+                    height: 1.5,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

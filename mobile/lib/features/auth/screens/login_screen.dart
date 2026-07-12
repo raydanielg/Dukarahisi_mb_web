@@ -4,6 +4,9 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/validators.dart';
 import '../../../core/utils/phone_formatter.dart';
 import '../../../core/widgets/custom_toast.dart';
+import '../../../core/services/auth_service.dart';
+import '../../../core/network/api_client.dart';
+import '../../../core/network/api_exceptions.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -14,34 +17,113 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _phoneController = TextEditingController();
+  final _emailOrPhoneController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
   bool _loading = false;
+  late final AuthService _authService;
+
+  @override
+  void initState() {
+    super.initState();
+    _authService = AuthService(ApiClient());
+  }
 
   @override
   void dispose() {
-    _phoneController.dispose();
+    _emailOrPhoneController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
 
-  void _login() {
+  void _login() async {
     if (_formKey.currentState?.validate() ?? false) {
       setState(() => _loading = true);
-      Future.delayed(const Duration(seconds: 2), () {
+      
+      try {
+        final response = await _authService.login(
+          phoneNumber: _emailOrPhoneController.text.trim(),
+          password: _passwordController.text,
+        );
+        
+        if (mounted) {
+          setState(() => _loading = false);
+          
+          if (response['status'] == 'success') {
+            CustomToast.show(
+              context,
+              message: response['message'] ?? 'Login successful!',
+              type: ToastType.success,
+            );
+            Future.delayed(const Duration(milliseconds: 500), () {
+              if (mounted) context.go('/home');
+            });
+          } else if (response['status'] == 'error' && response['data']['phone_verified'] == false) {
+            // Phone not verified, redirect to OTP verification
+            CustomToast.show(
+              context,
+              message: 'Please verify your phone number',
+              type: ToastType.warning,
+            );
+            Future.delayed(const Duration(milliseconds: 500), () {
+              if (mounted) {
+                context.push('/otp-verification', extra: _emailOrPhoneController.text.trim());
+              }
+            });
+          } else {
+            CustomToast.show(
+              context,
+              message: response['message'] ?? 'Login failed',
+              type: ToastType.error,
+            );
+          }
+        }
+      } on NetworkException catch (e) {
         if (mounted) {
           setState(() => _loading = false);
           CustomToast.show(
             context,
-            message: 'Login successful!',
-            type: ToastType.success,
+            message: e.message,
+            type: ToastType.error,
           );
-          Future.delayed(const Duration(milliseconds: 500), () {
-            if (mounted) context.go('/home');
-          });
         }
-      });
+      } on ValidationException catch (e) {
+        if (mounted) {
+          setState(() => _loading = false);
+          String errorMessage = e.message;
+          if (e.errors.isNotEmpty) {
+            final firstError = e.errors.values.first;
+            if (firstError is List && firstError.isNotEmpty) {
+              errorMessage = firstError.first.toString();
+            } else if (firstError is String) {
+              errorMessage = firstError;
+            }
+          }
+          CustomToast.show(
+            context,
+            message: errorMessage,
+            type: ToastType.error,
+          );
+        }
+      } on ApiException catch (e) {
+        if (mounted) {
+          setState(() => _loading = false);
+          CustomToast.show(
+            context,
+            message: e.message,
+            type: ToastType.error,
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          setState(() => _loading = false);
+          CustomToast.show(
+            context,
+            message: 'An unexpected error occurred',
+            type: ToastType.error,
+          );
+        }
+      }
     } else {
       CustomToast.show(
         context,
@@ -88,7 +170,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                         ],
                       ),
-                      child: const Icon(Icons.login_rounded, color: Colors.white, size: 36),
+                      child: Image.asset('assets/images/login.png', fit: BoxFit.contain),
                     ),
                     const SizedBox(height: 24),
                     Text(
@@ -131,14 +213,14 @@ class _LoginScreenState extends State<LoginScreen> {
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
                           TextFormField(
-                            controller: _phoneController,
-                            keyboardType: TextInputType.phone,
+                            controller: _emailOrPhoneController,
+                            keyboardType: TextInputType.emailAddress,
                             decoration: const InputDecoration(
-                              labelText: 'Phone Number',
-                              hintText: '07XX XXX XXX',
-                              prefixIcon: Icon(Icons.phone_outlined),
+                              labelText: 'Email or Phone',
+                              hintText: 'Enter email or phone number',
+                              prefixIcon: Icon(Icons.person_outline),
                             ),
-                            validator: Validators.phone,
+                            validator: Validators.emailOrPhone,
                           ),
                           const SizedBox(height: 18),
                           TextFormField(
