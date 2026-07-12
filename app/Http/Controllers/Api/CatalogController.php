@@ -356,14 +356,27 @@ class CatalogController extends Controller
             return response()->json(['status' => 'error', 'message' => 'File not found.'], 404);
         }
 
-        $path = str_replace('public/', '', $item->file_path);
-        $altPath = ltrim($item->file_path, '/');
+        $candidates = [
+            str_replace('public/', '', $item->file_path),
+            ltrim($item->file_path, '/'),
+            'private/' . ltrim($item->file_path, '/'),
+            'private/public/' . str_replace('public/', '', $item->file_path),
+            str_replace('public/', 'private/public/', $item->file_path),
+        ];
 
+        $resolvedDisk = null;
         $resolvedPath = null;
-        if (\Storage::disk('public')->exists($path)) {
-            $resolvedPath = $path;
-        } elseif (\Storage::disk('public')->exists($altPath)) {
-            $resolvedPath = $altPath;
+        foreach ($candidates as $candidate) {
+            if (\Storage::disk('public')->exists($candidate)) {
+                $resolvedDisk = 'public';
+                $resolvedPath = $candidate;
+                break;
+            }
+            if (\Storage::disk('local')->exists($candidate)) {
+                $resolvedDisk = 'local';
+                $resolvedPath = $candidate;
+                break;
+            }
         }
 
         if (!$resolvedPath) {
@@ -372,14 +385,14 @@ class CatalogController extends Controller
                 'message' => 'File not found on disk.',
                 'debug' => [
                     'file_path' => $item->file_path,
-                    'resolved_path' => $path,
-                    'alt_path' => $altPath,
-                    'storage_root' => storage_path('app/public'),
+                    'checked_paths' => $candidates,
+                    'storage_public_root' => storage_path('app/public'),
+                    'storage_local_root' => storage_path('app'),
                 ],
             ], 404);
         }
 
-        return \Storage::disk('public')->download($resolvedPath, $item->title . '.pdf');
+        return \Storage::disk($resolvedDisk)->download($resolvedPath, $item->title . '.pdf');
     }
 
     /**

@@ -280,21 +280,34 @@ class MaterialManageController extends Controller
             abort(404, 'File not found.');
         }
 
-        $path = str_replace('public/', '', $item->file_path);
-        $altPath = ltrim($item->file_path, '/');
+        $candidates = [
+            str_replace('public/', '', $item->file_path),
+            ltrim($item->file_path, '/'),
+            'private/' . ltrim($item->file_path, '/'),
+            'private/public/' . str_replace('public/', '', $item->file_path),
+            str_replace('public/', 'private/public/', $item->file_path),
+        ];
 
+        $resolvedDisk = null;
         $resolvedPath = null;
-        if (\Storage::disk('public')->exists($path)) {
-            $resolvedPath = $path;
-        } elseif (\Storage::disk('public')->exists($altPath)) {
-            $resolvedPath = $altPath;
+        foreach ($candidates as $candidate) {
+            if (\Storage::disk('public')->exists($candidate)) {
+                $resolvedDisk = 'public';
+                $resolvedPath = $candidate;
+                break;
+            }
+            if (\Storage::disk('local')->exists($candidate)) {
+                $resolvedDisk = 'local';
+                $resolvedPath = $candidate;
+                break;
+            }
         }
 
         if (!$resolvedPath) {
             abort(404, 'File not found on disk.');
         }
 
-        return \Storage::disk('public')->response($resolvedPath);
+        return \Storage::disk($resolvedDisk)->response($resolvedPath);
     }
 
     public function destroy(string $type, int $id)
