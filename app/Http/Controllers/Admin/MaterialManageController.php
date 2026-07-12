@@ -137,7 +137,18 @@ class MaterialManageController extends Controller
             'subject_id' => 'required|exists:subjects,id',
             'topic_id' => 'nullable|exists:topics,id',
             'title' => 'required|string|max:255',
-            'pdf_file' => 'nullable|file|mimes:pdf|max:51200',
+            'pdf_file' => [
+                'nullable',
+                'file',
+                'max:51200',
+                function ($attribute, $value, $fail) {
+                    $ext = strtolower($value->getClientOriginalExtension());
+                    $mime = $value->getMimeType();
+                    if ($ext !== 'pdf' && !str_contains($mime, 'pdf')) {
+                        $fail('The PDF file must be a valid PDF document.');
+                    }
+                },
+            ],
             'order' => 'required|integer|min:0',
         ]);
 
@@ -201,7 +212,18 @@ class MaterialManageController extends Controller
             'subject_id' => 'required|exists:subjects,id',
             'topic_id' => 'nullable|exists:topics,id',
             'title' => 'required|string|max:255',
-            'pdf_file' => 'nullable|file|mimes:pdf|max:51200',
+            'pdf_file' => [
+                'nullable',
+                'file',
+                'max:51200',
+                function ($attribute, $value, $fail) {
+                    $ext = strtolower($value->getClientOriginalExtension());
+                    $mime = $value->getMimeType();
+                    if ($ext !== 'pdf' && !str_contains($mime, 'pdf')) {
+                        $fail('The PDF file must be a valid PDF document.');
+                    }
+                },
+            ],
             'order' => 'required|integer|min:0',
             'is_active' => 'boolean',
         ]);

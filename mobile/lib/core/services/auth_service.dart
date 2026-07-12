@@ -17,7 +17,7 @@ class AuthService {
   }) async {
     try {
       final response = await _apiClient.post(
-        '/api/register',
+        '/register',
         data: {
           'name': name,
           'phone_number': phoneNumber,
@@ -38,7 +38,7 @@ class AuthService {
   }) async {
     try {
       final response = await _apiClient.post(
-        '/api/verify-otp',
+        '/verify-otp',
         data: {
           'phone_number': phoneNumber,
           'otp_code': otpCode,
@@ -64,7 +64,7 @@ class AuthService {
   }) async {
     try {
       final response = await _apiClient.post(
-        '/api/login',
+        '/login',
         data: {
           'phone_number': phoneNumber,
           'password': password,
@@ -89,7 +89,7 @@ class AuthService {
   }) async {
     try {
       final response = await _apiClient.post(
-        '/api/forgot-password',
+        '/forgot-password',
         data: {
           'phone_number': phoneNumber,
         },
@@ -108,7 +108,7 @@ class AuthService {
   }) async {
     try {
       final response = await _apiClient.post(
-        '/api/reset-password',
+        '/reset-password',
         data: {
           'phone_number': phoneNumber,
           'otp_code': otpCode,
@@ -125,7 +125,7 @@ class AuthService {
 
   Future<Map<String, dynamic>> me() async {
     try {
-      final response = await _apiClient.get('/api/me');
+      final response = await _apiClient.get('/me');
       return response.data;
     } on ApiException catch (e) {
       rethrow;
@@ -134,11 +134,11 @@ class AuthService {
 
   Future<Map<String, dynamic>> logout() async {
     try {
-      final response = await _apiClient.post('/api/logout');
+      final response = await _apiClient.post('/logout');
       
       // Clear local storage
-      await LocalCache.remove(Constants.tokenKey);
-      await LocalCache.remove(Constants.isLoggedInKey);
+      await LocalCache.delete(Constants.tokenKey);
+      await LocalCache.delete(Constants.isLoggedInKey);
       
       return response.data;
     } on ApiException catch (e) {

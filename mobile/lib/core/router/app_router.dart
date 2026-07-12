@@ -11,6 +11,7 @@ import '../../features/auth/screens/privacy_policy_screen.dart';
 import '../../features/catalogue/screens/home_screen.dart';
 import '../../features/profile/screens/profile_screen.dart';
 import '../../features/common/screens/not_found_screen.dart';
+import '../../features/dashboard/screens/main_screen.dart';
 import '../../core/storage/local_cache.dart';
 import '../../core/config/constants.dart';
 
@@ -21,7 +22,11 @@ class AppRouter {
 
   static Future<String> _getInitialLocation() async {
     final onboardingDone = LocalCache.get<bool>(Constants.onboardingCompletedKey) ?? false;
-    return onboardingDone ? '/login' : '/onboarding';
+    final isLoggedIn = LocalCache.get<bool>(Constants.isLoggedInKey) ?? false;
+    
+    if (!onboardingDone) return '/onboarding';
+    if (isLoggedIn) return '/main';
+    return '/login';
   }
 
   static GoRouter router() {
@@ -30,9 +35,26 @@ class AppRouter {
       initialLocation: '/onboarding',
       redirect: (context, state) async {
         final onboardingDone = LocalCache.get<bool>(Constants.onboardingCompletedKey) ?? false;
+        final isLoggedIn = LocalCache.get<bool>(Constants.isLoggedInKey) ?? false;
         final isOnboarding = state.matchedLocation == '/onboarding';
+        final isAuthRoute = state.matchedLocation == '/login' || 
+                           state.matchedLocation == '/register' ||
+                           state.matchedLocation == '/forgot-password' ||
+                           state.matchedLocation == '/otp-verification';
+        final isMainRoute = state.matchedLocation == '/main';
+        
+        // If onboarding not done, redirect to onboarding
         if (!onboardingDone && !isOnboarding) return '/onboarding';
-        if (onboardingDone && isOnboarding) return '/login';
+        
+        // If onboarding done and trying to access onboarding, redirect to login or main
+        if (onboardingDone && isOnboarding) return isLoggedIn ? '/main' : '/login';
+        
+        // If logged in and trying to access auth routes, redirect to main
+        if (isLoggedIn && isAuthRoute) return '/main';
+        
+        // If not logged in and trying to access main, redirect to login
+        if (!isLoggedIn && isMainRoute) return '/login';
+        
         return null;
       },
       routes: [
@@ -75,6 +97,10 @@ class AppRouter {
         GoRoute(
           path: '/profile',
           builder: (context, state) => const ProfileScreen(),
+        ),
+        GoRoute(
+          path: '/main',
+          builder: (context, state) => const MainScreen(),
         ),
         GoRoute(
           path: '/404',

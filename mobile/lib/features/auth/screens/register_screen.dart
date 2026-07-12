@@ -64,10 +64,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
               message: response['message'] ?? 'Account created successfully!',
               type: ToastType.success,
             );
-            // Navigate to OTP verification with phone number
+            // Navigate directly to main screen after successful registration
             Future.delayed(const Duration(milliseconds: 500), () {
               if (mounted) {
-                context.push('/otp-verification', extra: _phoneController.text.trim());
+                context.go('/main');
               }
             });
           } else {
@@ -280,29 +280,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             validator: (value) => Validators.confirmPassword(value, _passwordController.text),
                           ),
                           const SizedBox(height: 18),
-                          Container(
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              color: AppColors.primaryLight,
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: AppColors.primary.withOpacity(0.2)),
-                            ),
-                            child: Row(
-                              children: [
-                                Icon(Icons.info_outline, color: AppColors.primary, size: 20),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Text(
-                                    'We will send a verification code to your phone number',
-                                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                          color: AppColors.primary,
-                                          fontSize: 13,
-                                        ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
                           const SizedBox(height: 20),
                           Row(
                             children: [

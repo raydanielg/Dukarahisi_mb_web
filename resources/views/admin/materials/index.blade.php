@@ -190,23 +190,33 @@
 
             <div class="drawer-form-group">
                 <label for="materialPdfFile">PDF File (optional)</label>
-                <div class="relative border-2 border-dashed border-gray-300 rounded-lg p-4 hover:border-emerald-500 transition-colors bg-gray-50/50" id="pdfDropZone">
-                    <input type="file" id="materialPdfFile" name="pdf_file" accept="application/pdf" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
+                <div class="relative border-2 border-dashed border-emerald-200 rounded-lg p-5 hover:border-emerald-500 hover:bg-emerald-50/30 transition-all bg-emerald-50/20 group" id="pdfDropZone">
+                    <input type="file" id="materialPdfFile" name="pdf_file" accept="application/pdf" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10">
                     <div class="text-center pointer-events-none">
-                        <svg class="w-10 h-10 mx-auto text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
-                        <p class="text-sm text-gray-600 font-medium" id="pdfFileName">Click or drop PDF here</p>
-                        <p class="text-xs text-gray-500 mt-1">Max 50MB • PDF only</p>
+                        <div class="w-12 h-12 mx-auto rounded-full bg-emerald-100 flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
+                            <svg class="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+                        </div>
+                        <p class="text-sm font-semibold text-gray-700" id="pdfFileName">Click or drop PDF here</p>
+                        <p class="text-xs text-gray-500 mt-1.5">Maximum file size: <span class="font-medium text-emerald-600">50MB</span> • Only PDF files accepted</p>
                     </div>
                 </div>
                 <div id="currentPdfContainer" class="hidden mt-3 p-3 rounded-lg border border-emerald-100 bg-emerald-50/50">
                     <div class="flex items-center justify-between">
                         <div class="flex items-center gap-2 min-w-0">
-                            <svg class="w-5 h-5 text-red-500 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8" stroke="white" stroke-width="2" stroke-linecap="round"/></svg>
-                            <span class="text-sm text-gray-700 truncate" id="currentPdfName">Current PDF</span>
+                            <div class="w-8 h-8 rounded-lg bg-red-100 flex items-center justify-center flex-shrink-0">
+                                <svg class="w-4 h-4 text-red-500" fill="currentColor" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8" stroke="white" stroke-width="2" stroke-linecap="round"/></svg>
+                            </div>
+                            <div class="min-w-0">
+                                <span class="text-sm text-gray-700 truncate block" id="currentPdfName">Current PDF</span>
+                                <span class="text-[10px] text-gray-500" id="currentPdfSize"></span>
+                            </div>
                         </div>
-                        <a id="currentPdfLink" href="#" target="_blank" class="text-xs font-semibold text-emerald-600 hover:text-emerald-700 flex-shrink-0">View</a>
+                        <a id="currentPdfLink" href="#" target="_blank" class="text-xs font-semibold text-emerald-600 hover:text-emerald-700 flex-shrink-0 ml-2">View</a>
                     </div>
-                    <button type="button" onclick="removePdfFile()" class="mt-2 text-xs text-red-600 hover:text-red-700 font-medium">Remove and upload new PDF</button>
+                    <button type="button" onclick="removePdfFile()" class="mt-2 text-xs text-red-600 hover:text-red-700 font-medium flex items-center gap-1">
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                        Remove and upload new PDF
+                    </button>
                 </div>
                 <input type="hidden" id="pdfRemoved" name="pdf_removed" value="0">
             </div>
@@ -287,6 +297,7 @@
         document.getElementById('materialTitle').value = '';
         materialPdfFile.value = '';
         pdfFileName.textContent = 'Click or drop PDF here';
+        pdfFileName.classList.remove('text-emerald-700', 'font-semibold');
         currentPdfContainer.classList.add('hidden');
         currentPdfLink.href = '#';
         pdfRemoved.value = '0';
@@ -333,20 +344,47 @@
         document.body.style.overflow = 'hidden';
     }
 
+    function formatFileSize(bytes) {
+        if (!bytes || bytes === 0) return '';
+        const units = ['B', 'KB', 'MB', 'GB'];
+        let size = bytes;
+        let unitIndex = 0;
+        while (size >= 1024 && unitIndex < units.length - 1) {
+            size /= 1024;
+            unitIndex++;
+        }
+        return size.toFixed(1) + ' ' + units[unitIndex];
+    }
+
     function removePdfFile() {
         materialPdfFile.value = '';
         pdfFileName.textContent = 'Click or drop PDF here';
+        pdfFileName.classList.remove('text-emerald-700', 'font-semibold');
         currentPdfContainer.classList.add('hidden');
         pdfRemoved.value = '1';
     }
 
     materialPdfFile.addEventListener('change', function() {
         if (this.files && this.files[0]) {
-            pdfFileName.textContent = this.files[0].name;
+            const file = this.files[0];
+            pdfFileName.textContent = file.name;
+            pdfFileName.classList.add('text-emerald-700', 'font-semibold');
             pdfRemoved.value = '0';
             currentPdfContainer.classList.add('hidden');
+
+            // Validate size client-side (50MB)
+            if (file.size > 50 * 1024 * 1024) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'File too large',
+                    text: 'The PDF file must be smaller than 50MB.',
+                    confirmButtonColor: '#10B981'
+                });
+                removePdfFile();
+            }
         } else {
             pdfFileName.textContent = 'Click or drop PDF here';
+            pdfFileName.classList.remove('text-emerald-700', 'font-semibold');
         }
     });
 
@@ -544,7 +582,18 @@
             },
             body: formData
         })
-        .then(response => response.json())
+        .then(async response => {
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok) {
+                if (response.status === 422 && data.errors) {
+                    const firstErrors = Object.values(data.errors).flat();
+                    const message = firstErrors.length ? firstErrors[0] : (data.message || 'Validation failed');
+                    throw new Error(message);
+                }
+                throw new Error(data.message || 'Something went wrong');
+            }
+            return data;
+        })
         .then(result => {
             setLoading(false);
             if (result.success) {
@@ -557,7 +606,7 @@
         })
         .catch(error => {
             setLoading(false);
-            showToast('error', 'Failed to save ' + singularName.toLowerCase() + '. Please try again.');
+            showToast('error', error.message || 'Failed to save ' + singularName.toLowerCase() + '. Please try again.');
             console.error(error);
         });
     });
