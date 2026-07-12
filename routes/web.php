@@ -56,6 +56,9 @@ Route::middleware(['auth', 'admin'])->group(function () {
         Route::get("/materials/$type", function (\Illuminate\Http\Request $request) use ($type) {
             return app(MaterialManageController::class)->index($type, $request);
         })->name("admin.materials.$type");
+        Route::get("/materials/$type/{id}/preview", function ($id) use ($type) {
+            return app(MaterialManageController::class)->previewFile($type, $id);
+        })->name("admin.materials.$type.preview");
         Route::post("/materials/$type", function (\Illuminate\Http\Request $request) use ($type) {
             return app(MaterialManageController::class)->store($type, $request);
         })->name("admin.materials.$type.store");

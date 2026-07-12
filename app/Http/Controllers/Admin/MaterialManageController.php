@@ -271,6 +271,32 @@ class MaterialManageController extends Controller
         return redirect()->route("admin.materials.$type")->with('status', $config['singular'] . ' updated successfully.');
     }
 
+    public function previewFile(string $type, int $id)
+    {
+        $model = $this->getModel($type);
+        $item = $model::findOrFail($id);
+
+        if (!$item->file_path) {
+            abort(404, 'File not found.');
+        }
+
+        $path = str_replace('public/', '', $item->file_path);
+        $altPath = ltrim($item->file_path, '/');
+
+        $resolvedPath = null;
+        if (\Storage::disk('public')->exists($path)) {
+            $resolvedPath = $path;
+        } elseif (\Storage::disk('public')->exists($altPath)) {
+            $resolvedPath = $altPath;
+        }
+
+        if (!$resolvedPath) {
+            abort(404, 'File not found on disk.');
+        }
+
+        return \Storage::disk('public')->response($resolvedPath);
+    }
+
     public function destroy(string $type, int $id)
     {
         $config = $this->getConfig($type);
