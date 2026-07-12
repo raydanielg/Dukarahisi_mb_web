@@ -91,8 +91,9 @@ class DashboardService {
           
           pendingPayments.add({
             'id': order['id'],
-            'reference': order['reference'],
-            'total_amount': order['total_amount'],
+            'order_id': order['reference'],
+            'amount': order['total_amount'],
+            'status': order['status'],
             'notes': noteTitles,
             'created_at': order['created_at'],
           });

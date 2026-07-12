@@ -3,154 +3,45 @@ import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/services/catalog_service.dart';
 import '../../../core/network/api_client.dart';
-import 'dashboard_screen.dart';
-import '../../more/screens/more_screen.dart';
 
-class MainScreen extends StatefulWidget {
-  const MainScreen({super.key});
+class SubjectsScreen extends StatefulWidget {
+  const SubjectsScreen({super.key});
 
   @override
-  State<MainScreen> createState() => _MainScreenState();
+  State<SubjectsScreen> createState() => _SubjectsScreenState();
 }
 
-class _MainScreenState extends State<MainScreen> {
-  int _currentIndex = 0;
-
-  final List<Widget> _screens = [
-    const DashboardScreen(),
-    const MaterialsScreen(),
-    const OrdersScreen(),
-    const MoreScreen(),
-  ];
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: IndexedStack(
-        index: _currentIndex,
-        children: _screens,
-      ),
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.08),
-              blurRadius: 20,
-              offset: const Offset(0, -5),
-            ),
-          ],
-        ),
-        child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _buildNavItem(
-                  icon: Icons.home_rounded,
-                  label: 'Home',
-                  index: 0,
-                ),
-                _buildNavItem(
-                  icon: Icons.library_books_rounded,
-                  label: 'Materials',
-                  index: 1,
-                ),
-                _buildNavItem(
-                  icon: Icons.shopping_bag_rounded,
-                  label: 'Orders',
-                  index: 2,
-                ),
-                _buildNavItem(
-                  icon: Icons.more_horiz_rounded,
-                  label: 'More',
-                  index: 3,
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildNavItem({
-    required IconData icon,
-    required String label,
-    required int index,
-  }) {
-    final isSelected = _currentIndex == index;
-    
-    return GestureDetector(
-      onTap: () {
-        setState(() {
-          _currentIndex = index;
-        });
-      },
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        decoration: BoxDecoration(
-          color: isSelected ? AppColors.primary.withOpacity(0.1) : Colors.transparent,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              icon,
-              color: isSelected ? AppColors.primary : AppColors.textSecondary,
-              size: 24,
-            ),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                color: isSelected ? AppColors.primary : AppColors.textSecondary,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class MaterialsScreen extends StatefulWidget {
-  const MaterialsScreen({super.key});
-
-  @override
-  State<MaterialsScreen> createState() => _MaterialsScreenState();
-}
-
-class _MaterialsScreenState extends State<MaterialsScreen> {
+class _SubjectsScreenState extends State<SubjectsScreen> {
   late final CatalogService _catalogService;
-  List<Map<String, dynamic>>? _levels;
+  List<Map<String, dynamic>>? _subjects;
   bool _loading = true;
+  int? _classId;
 
   @override
   void initState() {
     super.initState();
     _catalogService = CatalogService(ApiClient());
-    _loadLevels();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _classId = GoRouterState.of(context).extra as int?;
+      if (_classId != null) {
+        _loadSubjects();
+      }
+    });
   }
 
-  Future<void> _loadLevels() async {
+  Future<void> _loadSubjects() async {
     try {
-      final response = await _catalogService.getLevels();
+      final response = await _catalogService.getSubjects(_classId!);
       if (mounted) {
         setState(() {
-          _levels = response['data'];
+          _subjects = response['data'];
           _loading = false;
         });
       }
     } catch (e) {
       if (mounted) {
         setState(() {
-          _levels = [];
+          _subjects = [];
           _loading = false;
         });
       }
@@ -181,8 +72,13 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
                 padding: const EdgeInsets.all(16),
                 child: Row(
                   children: [
+                    IconButton(
+                      icon: const Icon(Icons.arrow_back, color: Colors.white),
+                      onPressed: () => context.pop(),
+                    ),
+                    const SizedBox(width: 8),
                     const Text(
-                      'Vitabu Vya Kujifunza',
+                      'Masomo',
                       style: TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.bold,
@@ -195,19 +91,19 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
               Expanded(
                 child: _loading
                     ? const Center(child: CircularProgressIndicator(color: Colors.white))
-                    : _levels == null || _levels!.isEmpty
+                    : _subjects == null || _subjects!.isEmpty
                         ? Center(
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 Icon(
-                                  Icons.school_outlined,
+                                  Icons.menu_book_outlined,
                                   size: 64,
                                   color: Colors.white.withOpacity(0.5),
                                 ),
                                 const SizedBox(height: 16),
                                 Text(
-                                  'Hakuna viwango bado',
+                                  'Hakuna masomo bado',
                                   style: TextStyle(
                                     fontSize: 16,
                                     color: Colors.white.withOpacity(0.8),
@@ -224,10 +120,10 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
                               mainAxisSpacing: 16,
                               childAspectRatio: 1.2,
                             ),
-                            itemCount: _levels!.length,
+                            itemCount: _subjects!.length,
                             itemBuilder: (context, index) {
-                              final level = _levels![index];
-                              return _buildLevelCard(level);
+                              final subject = _subjects![index];
+                              return _buildSubjectCard(subject);
                             },
                           ),
               ),
@@ -238,9 +134,9 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
     );
   }
 
-  Widget _buildLevelCard(Map<String, dynamic> level) {
+  Widget _buildSubjectCard(Map<String, dynamic> subject) {
     return GestureDetector(
-      onTap: () => context.push('/classes', extra: level['id']),
+      onTap: () => context.push('/topics', extra: subject['id']),
       child: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
@@ -273,26 +169,26 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
                   gradient: const LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
-                    colors: [AppColors.primary, AppColors.primaryDark],
+                    colors: [Color(0xFF0EA5E9), Color(0xFF0284C7)],
                   ),
                   borderRadius: BorderRadius.circular(16),
                   boxShadow: [
                     BoxShadow(
-                      color: AppColors.primary.withOpacity(0.3),
+                      color: const Color(0xFF0EA5E9).withOpacity(0.3),
                       blurRadius: 12,
                       offset: const Offset(0, 4),
                     ),
                   ],
                 ),
                 child: const Icon(
-                  Icons.school,
+                  Icons.science,
                   color: Colors.white,
                   size: 32,
                 ),
               ),
               const SizedBox(height: 16),
               Text(
-                level['name']?.toString() ?? 'Level',
+                subject['name']?.toString() ?? 'Subject',
                 style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
@@ -302,7 +198,7 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
               ),
               const SizedBox(height: 4),
               Text(
-                level['description']?.toString() ?? '',
+                subject['description']?.toString() ?? '',
                 style: TextStyle(
                   fontSize: 12,
                   color: AppColors.textSecondary,
@@ -318,46 +214,3 @@ class _MaterialsScreenState extends State<MaterialsScreen> {
     );
   }
 }
-
-class OrdersScreen extends StatelessWidget {
-  const OrdersScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      body: SafeArea(
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                Icons.shopping_bag_rounded,
-                size: 80,
-                color: AppColors.primary.withOpacity(0.3),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'Orders',
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.textPrimary,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Coming Soon',
-                style: TextStyle(
-                  fontSize: 16,
-                  color: AppColors.textSecondary,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-

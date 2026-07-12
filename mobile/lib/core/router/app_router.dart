@@ -12,6 +12,14 @@ import '../../features/catalogue/screens/home_screen.dart';
 import '../../features/profile/screens/profile_screen.dart';
 import '../../features/common/screens/not_found_screen.dart';
 import '../../features/dashboard/screens/main_screen.dart';
+import '../../features/dashboard/screens/dashboard_screen.dart';
+import '../../features/more/screens/more_screen.dart';
+import '../../features/payments/screens/payments_screen.dart';
+import '../../features/reports/screens/reports_screen.dart';
+import '../../features/catalog/screens/classes_screen.dart';
+import '../../features/catalog/screens/subjects_screen.dart';
+import '../../features/catalog/screens/topics_screen.dart';
+import '../../features/catalog/screens/materials_screen.dart';
 import '../../core/storage/local_cache.dart';
 import '../../core/config/constants.dart';
 
@@ -95,12 +103,76 @@ class AppRouter {
           builder: (context, state) => const HomeScreen(),
         ),
         GoRoute(
+          path: '/main',
+          builder: (context, state) => const MainScreen(),
+        ),
+        GoRoute(
+          path: '/dashboard',
+          builder: (context, state) => const DashboardScreen(),
+        ),
+        GoRoute(
+          path: '/more',
+          builder: (context, state) => const MoreScreen(),
+        ),
+        GoRoute(
           path: '/profile',
           builder: (context, state) => const ProfileScreen(),
         ),
         GoRoute(
-          path: '/main',
-          builder: (context, state) => const MainScreen(),
+          path: '/payments',
+          builder: (context, state) => const PaymentsScreen(),
+        ),
+        GoRoute(
+          path: '/reports',
+          builder: (context, state) => const ReportsScreen(),
+        ),
+        GoRoute(
+          path: '/search',
+          builder: (context, state) => const HomeScreen(),
+        ),
+        GoRoute(
+          path: '/wishlist',
+          builder: (context, state) => const HomeScreen(),
+        ),
+        GoRoute(
+          path: '/history',
+          builder: (context, state) => const HomeScreen(),
+        ),
+        GoRoute(
+          path: '/help',
+          builder: (context, state) => const HomeScreen(),
+        ),
+        GoRoute(
+          path: '/contact',
+          builder: (context, state) => const HomeScreen(),
+        ),
+        GoRoute(
+          path: '/privacy',
+          builder: (context, state) => const PrivacyPolicyScreen(),
+        ),
+        GoRoute(
+          path: '/terms',
+          builder: (context, state) => const TermsOfServiceScreen(),
+        ),
+        GoRoute(
+          path: '/about',
+          builder: (context, state) => const HomeScreen(),
+        ),
+        GoRoute(
+          path: '/classes',
+          builder: (context, state) => const ClassesScreen(),
+        ),
+        GoRoute(
+          path: '/subjects',
+          builder: (context, state) => const SubjectsScreen(),
+        ),
+        GoRoute(
+          path: '/topics',
+          builder: (context, state) => const TopicsScreen(),
+        ),
+        GoRoute(
+          path: '/materials',
+          builder: (context, state) => const MaterialsScreen(),
         ),
         GoRoute(
           path: '/404',

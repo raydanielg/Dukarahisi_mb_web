@@ -80,4 +80,28 @@ class User extends Authenticatable
     {
         return $this->hasMany(Review::class);
     }
+
+    /**
+     * Notifications relationship
+     */
+    public function notifications()
+    {
+        return $this->hasMany(Notification::class)->orderBy('created_at', 'desc');
+    }
+
+    /**
+     * Unread notifications
+     */
+    public function unreadNotifications()
+    {
+        return $this->notifications()->where('read', false);
+    }
+
+    /**
+     * Activities relationship
+     */
+    public function activities()
+    {
+        return $this->hasMany(Activity::class)->orderBy('created_at', 'desc');
+    }
 }

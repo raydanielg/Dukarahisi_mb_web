@@ -91,6 +91,75 @@ class CatalogController extends Controller
     }
 
     /**
+     * List topics for a subject (using notes as topics).
+     */
+    public function topics(Request $request, $subjectId)
+    {
+        $subject = Subject::findOrFail($subjectId);
+        
+        $topics = $subject->notes()
+            ->where('status', 'published')
+            ->where('is_active', true)
+            ->orderBy('title')
+            ->get()
+            ->map(function (Note $note) {
+                return [
+                    'id' => $note->id,
+                    'name' => $note->title,
+                    'description' => $note->description,
+                    'subject_id' => $note->subject_id,
+                ];
+            });
+
+        return response()->json([
+            'status' => 'success',
+            'data' => $topics,
+        ]);
+    }
+
+    /**
+     * List materials for a topic (single note details).
+     */
+    public function materials(Request $request, $topicId)
+    {
+        $note = Note::findOrFail($topicId);
+        
+        if ($note->status !== 'published' || !$note->is_active) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Material not available.',
+            ], 404);
+        }
+
+        $user = $request->user();
+        $hasPurchased = false;
+
+        if ($user) {
+            $hasPurchased = OrderItem::whereHas('order', function ($q) use ($user) {
+                $q->where('user_id', $user->id)->where('status', 'paid');
+            })->where('note_id', $note->id)->exists() || $note->is_free;
+        }
+
+        return response()->json([
+            'status' => 'success',
+            'data' => [
+                [
+                    'id' => $note->id,
+                    'title' => $note->title,
+                    'description' => $note->description,
+                    'price' => $note->final_price,
+                    'is_free' => $note->is_free,
+                    'cover_image' => $note->cover_image_url,
+                    'file_url' => $hasPurchased ? $note->file_url : null,
+                    'file_type' => 'pdf',
+                    'has_purchased' => $hasPurchased,
+                    'subject_id' => $note->subject_id,
+                ],
+            ],
+        ]);
+    }
+
+    /**
      * Show single note details.
      */
     public function note(Request $request, Note $note)

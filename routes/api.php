@@ -1,7 +1,9 @@
 <?php
 
+use App\Http\Controllers\Api\ActivityController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CatalogController;
+use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\PaymentController;
 use Illuminate\Support\Facades\Route;
@@ -27,6 +29,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/catalog/subjects/{classRoom}', [CatalogController::class, 'subjects']);
     Route::get('/catalog/notes/{subject}', [CatalogController::class, 'notes']);
     Route::get('/catalog/note/{note}', [CatalogController::class, 'note']);
+    Route::get('/catalog/topics/{subjectId}', [CatalogController::class, 'topics']);
+    Route::get('/catalog/materials/{topicId}', [CatalogController::class, 'materials']);
 
     // Orders
     Route::get('/orders', [OrderController::class, 'index']);
@@ -34,4 +38,12 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
     // Payments
     Route::post('/payments/initiate', [PaymentController::class, 'initiate']);
+
+    // Notifications
+    Route::get('/notifications', [NotificationController::class, 'index']);
+    Route::post('/notifications/{id}/mark-read', [NotificationController::class, 'markAsRead']);
+    Route::post('/notifications/mark-all-read', [NotificationController::class, 'markAllAsRead']);
+
+    // Activities
+    Route::get('/activities', [ActivityController::class, 'index']);
 });
