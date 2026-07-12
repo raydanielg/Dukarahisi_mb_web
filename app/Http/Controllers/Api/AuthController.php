@@ -86,7 +86,7 @@ class AuthController extends Controller
     }
 
     /**
-     * Login user with phone number and password.
+     * Login user with phone number or email and password.
      */
     public function login(Request $request)
     {
@@ -95,7 +95,10 @@ class AuthController extends Controller
             'password' => 'required|string',
         ]);
 
-        $user = User::where('phone_number', $request->phone_number)->first();
+        // Check if input is email or phone number
+        $loginField = filter_var($request->phone_number, FILTER_VALIDATE_EMAIL) ? 'email' : 'phone_number';
+        
+        $user = User::where($loginField, $request->phone_number)->first();
 
         if (!$user || !Hash::check($request->password, $user->password)) {
             throw ValidationException::withMessages(['phone_number' => 'Invalid phone number or password.']);

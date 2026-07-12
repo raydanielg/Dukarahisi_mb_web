@@ -8,6 +8,9 @@ use App\Models\Payment;
 use App\Models\Review;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 
 class SalesController extends Controller
 {
@@ -159,5 +162,130 @@ class SalesController extends Controller
         }
 
         return redirect()->route('admin.sales.reviews')->with('status', 'Review deleted.');
+    }
+
+    public function customersResetPassword(Request $request, User $customer)
+    {
+        $validated = $request->validate([
+            'password' => 'required|string|min:8|confirmed',
+        ]);
+
+        $customer->update(['password' => Hash::make($validated['password'])]);
+
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json(['success' => true, 'message' => 'Password reset successfully.']);
+        }
+
+        return redirect()->route('admin.sales.customers')->with('status', 'Password reset successfully.');
+    }
+
+    public function customersDestroy(Request $request, User $customer)
+    {
+        $customer->delete();
+
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json(['success' => true, 'message' => 'Customer deleted.']);
+        }
+
+        return redirect()->route('admin.sales.customers')->with('status', 'Customer deleted.');
+    }
+
+    public function customersBulkDestroy(Request $request)
+    {
+        $validated = $request->validate([
+            'ids' => 'required|array',
+            'ids.*' => 'integer|exists:users,id',
+        ]);
+
+        User::whereIn('id', $validated['ids'])->where('role', 'customer')->delete();
+
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json(['success' => true, 'message' => 'Selected customers deleted.']);
+        }
+
+        return redirect()->route('admin.sales.customers')->with('status', 'Selected customers deleted.');
+    }
+
+    public function customersBulkUpload(Request $request)
+    {
+        $validated = $request->validate([
+            'csv_file' => 'required|file|mimes:csv,txt|max:2048',
+        ]);
+
+        $file = $request->file('csv_file');
+        $path = $file->getRealPath();
+        $handle = fopen($path, 'r');
+
+        if (! $handle) {
+            return response()->json(['success' => false, 'message' => 'Unable to read CSV file.'], 422);
+        }
+
+        $headers = fgetcsv($handle);
+        if (! $headers) {
+            fclose($handle);
+            return response()->json(['success' => false, 'message' => 'CSV file is empty.'], 422);
+        }
+
+        $headers = array_map('strtolower', array_map('trim', $headers));
+        $required = ['name', 'email', 'phone_number', 'password'];
+        $missing = array_diff($required, $headers);
+
+        if (! empty($missing)) {
+            fclose($handle);
+            return response()->json(['success' => false, 'message' => 'Missing columns: ' . implode(', ', $missing)], 422);
+        }
+
+        $created = 0;
+        $errors = [];
+        $rowNumber = 1;
+
+        while (($row = fgetcsv($handle)) !== false) {
+            $rowNumber++;
+            if (count($row) < count($headers)) {
+                continue;
+            }
+
+            $data = array_combine($headers, $row);
+            if (! is_array($data)) {
+                continue;
+            }
+
+            $data = array_map('trim', $data);
+
+            $validator = Validator::make($data, [
+                'name' => 'required|string|max:255',
+                'email' => 'required|email|unique:users,email',
+                'phone_number' => 'required|string|max:20|unique:users,phone_number',
+                'password' => 'required|string|min:8',
+            ]);
+
+            if ($validator->fails()) {
+                $errors[] = "Row {$rowNumber}: " . $validator->errors()->first();
+                continue;
+            }
+
+            User::create([
+                'name' => $data['name'],
+                'email' => $data['email'],
+                'phone_number' => $data['phone_number'],
+                'password' => Hash::make($data['password']),
+                'role' => 'customer',
+            ]);
+
+            $created++;
+        }
+
+        fclose($handle);
+
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'success' => empty($errors),
+                'message' => $created . ' customer' . ($created === 1 ? '' : 's') . ' imported.',
+                'created' => $created,
+                'errors' => $errors,
+            ]);
+        }
+
+        return redirect()->route('admin.sales.customers')->with('status', $created . ' customer' . ($created === 1 ? '' : 's') . ' imported.');
     }
 }

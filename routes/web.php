@@ -72,6 +72,10 @@ Route::middleware(['auth', 'admin'])->group(function () {
         Route::get('/orders', [SalesController::class, 'ordersIndex'])->name('orders');
         Route::patch('/orders/{order}/status', [SalesController::class, 'ordersUpdateStatus'])->name('orders.status');
         Route::get('/customers', [SalesController::class, 'customersIndex'])->name('customers');
+        Route::post('/customers/bulk-upload', [SalesController::class, 'customersBulkUpload'])->name('customers.bulk-upload');
+        Route::delete('/customers/bulk', [SalesController::class, 'customersBulkDestroy'])->name('customers.bulk-destroy');
+        Route::put('/customers/{customer}/reset-password', [SalesController::class, 'customersResetPassword'])->name('customers.reset-password');
+        Route::delete('/customers/{customer}', [SalesController::class, 'customersDestroy'])->name('customers.destroy');
         Route::get('/payments', [SalesController::class, 'paymentsIndex'])->name('payments');
         Route::patch('/payments/{payment}/status', [SalesController::class, 'paymentsUpdateStatus'])->name('payments.status');
         Route::get('/reviews', [SalesController::class, 'reviewsIndex'])->name('reviews');
