@@ -5,6 +5,7 @@ import '../../../core/services/catalog_service.dart';
 import '../../../core/network/api_client.dart';
 import 'dashboard_screen.dart';
 import '../../more/screens/more_screen.dart';
+import '../../payments/screens/payments_screen.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -280,40 +281,7 @@ class OrdersScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      body: SafeArea(
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                Icons.shopping_bag_rounded,
-                size: 80,
-                color: AppColors.primary.withOpacity(0.3),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'Orders',
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.textPrimary,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Coming Soon',
-                style: TextStyle(
-                  fontSize: 16,
-                  color: AppColors.textSecondary,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
+    return const PaymentsScreen();
   }
 }
 

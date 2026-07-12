@@ -173,15 +173,20 @@ class PaymentGatewayService
 
         $eventType = $payload['type'] ?? '';
         $paymentStatus = 'pending';
+        $orderStatus = 'pending';
 
         if (str_contains($eventType, 'completed')) {
             $paymentStatus = 'success';
+            $orderStatus = 'paid';
         } elseif (str_contains($eventType, 'failed')) {
             $paymentStatus = 'failed';
+            $orderStatus = 'failed';
         } elseif (str_contains($eventType, 'expired')) {
-            $paymentStatus = 'expired';
+            $paymentStatus = 'failed';
+            $orderStatus = 'cancelled';
         } elseif (str_contains($eventType, 'voided')) {
-            $paymentStatus = 'voided';
+            $paymentStatus = 'refunded';
+            $orderStatus = 'cancelled';
         }
 
         $payment->method = $data['channel']['type'] ?? 'mobile_money';
@@ -192,7 +197,7 @@ class PaymentGatewayService
 
         $order = $payment->order;
         if ($order) {
-            $order->status = $paymentStatus === 'success' ? 'paid' : $paymentStatus;
+            $order->status = $orderStatus;
             $order->save();
         }
 
