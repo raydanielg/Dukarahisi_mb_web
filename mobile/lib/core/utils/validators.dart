@@ -32,4 +32,18 @@ class Validators {
     if (value != password) return 'Passwords do not match';
     return null;
   }
+
+  static String? emailOrPhone(String? value) {
+    if (value == null || value.trim().isEmpty) return 'Email or phone number is required';
+    
+    // Check if it's an email
+    final emailRegex = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
+    if (emailRegex.hasMatch(value)) return null;
+    
+    // Check if it's a phone number
+    final digits = value.replaceAll(RegExp(r'[^0-9]'), '');
+    if (digits.length >= 10) return null;
+    
+    return 'Enter a valid email or phone number';
+  }
 }

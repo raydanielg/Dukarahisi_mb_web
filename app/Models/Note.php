@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Note extends Model
 {
     protected $fillable = [
-        'subject_id', 'title', 'slug', 'description', 'price',
+        'subject_id', 'topic_id', 'title', 'slug', 'description', 'price',
         'is_free', 'file_path', 'cover_image', 'downloads_count',
         'status', 'is_active', 'order'
     ];
@@ -25,6 +25,11 @@ class Note extends Model
     public function subject(): BelongsTo
     {
         return $this->belongsTo(Subject::class);
+    }
+
+    public function topic(): BelongsTo
+    {
+        return $this->belongsTo(Topic::class);
     }
 
     public function orderItems(): HasMany

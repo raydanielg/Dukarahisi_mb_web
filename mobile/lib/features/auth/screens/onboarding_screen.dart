@@ -17,19 +17,34 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   final List<_OnboardingPage> _pages = const [
     _OnboardingPage(
-      image: 'assets/images/login.png',
+      icon: 'assets/icons/easy.png',
       title: 'Welcome to Dukarahisi',
       description: 'Your digital learning companion. Access notes, books, and lesson materials anytime, anywhere.',
+      badge: 'Learning Made Easy',
     ),
     _OnboardingPage(
-      image: 'assets/images/notes.png',
+      icon: 'assets/icons/subjects.png',
       title: 'All Subjects Covered',
       description: 'Find well-organized notes for Mathematics, Sciences, Languages, and more for every level.',
+      badge: 'Comprehensive',
     ),
     _OnboardingPage(
-      image: 'assets/images/payment.png',
+      icon: 'assets/icons/payment.png',
       title: 'Simple Mobile Payment',
       description: 'Purchase materials instantly using mobile money. Secure, fast, and reliable.',
+      badge: 'Easy Payment',
+    ),
+    _OnboardingPage(
+      icon: 'assets/icons/flexible.png',
+      title: 'Learn Anywhere',
+      description: 'Study at your own pace, whether at home, school, or on the go. Your classroom is always with you.',
+      badge: 'Flexible',
+    ),
+    _OnboardingPage(
+      icon: 'assets/icons/getstartd.png',
+      title: 'Start Your Journey',
+      description: 'Join thousands of students using Dukarahisi to excel in their studies. Let\'s get started!',
+      badge: 'Get Started',
     ),
   ];
 
@@ -49,184 +64,164 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Stack(
-        children: [
-          // Background gradient
-          Container(
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [AppColors.primary, AppColors.primaryDark, Color(0xFF065F46)],
-              ),
-            ),
-          ),
-          // Decorative circles
-          Positioned(
-            top: -80,
-            right: -80,
-            child: Container(
-              width: 240,
-              height: 240,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: Colors.white.withOpacity(0.08),
-              ),
-            ),
-          ),
-          Positioned(
-            bottom: -100,
-            left: -100,
-            child: Container(
-              width: 300,
-              height: 300,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: Colors.white.withOpacity(0.05),
-              ),
-            ),
-          ),
-          SafeArea(
-            child: Column(
-              children: [
-                // Top bar with logo
-                Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.15),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: const Icon(Icons.auto_stories, color: Colors.white, size: 24),
-                      ),
-                      const SizedBox(width: 12),
-                      Text(
-                        'Dukarahisi',
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                            ),
-                      ),
-                    ],
-                  ),
-                ),
-                // Page content
-                Expanded(
-                  child: PageView.builder(
-                    controller: _controller,
-                    itemCount: _pages.length,
-                    onPageChanged: (index) => setState(() => _currentIndex = index),
-                    itemBuilder: (context, index) => _buildPage(_pages[index]),
-                  ),
-                ),
-                // Bottom card matching web auth style
-                Container(
-                  margin: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(24),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.2),
-                        blurRadius: 30,
-                        offset: const Offset(0, 10),
-                      ),
-                    ],
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(28),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: List.generate(_pages.length, (index) {
-                            final active = index == _currentIndex;
-                            return AnimatedContainer(
-                              duration: const Duration(milliseconds: 300),
-                              margin: const EdgeInsets.symmetric(horizontal: 4),
-                              width: active ? 28 : 8,
-                              height: 8,
-                              decoration: BoxDecoration(
-                                color: active ? AppColors.primary : AppColors.border,
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                            );
-                          }),
-                        ),
-                        const SizedBox(height: 28),
-                        Text(
-                          _pages[_currentIndex].title,
-                          textAlign: TextAlign.center,
-                          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.textPrimary,
-                              ),
-                        ),
-                        const SizedBox(height: 12),
-                        Text(
-                          _pages[_currentIndex].description,
-                          textAlign: TextAlign.center,
-                          style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: AppColors.textSecondary),
-                        ),
-                        const SizedBox(height: 28),
-                        ElevatedButton(
-                          onPressed: _next,
-                          child: Text(_currentIndex == _pages.length - 1 ? 'Get Started' : 'Next'),
-                        ),
-                        const SizedBox(height: 12),
-                        if (_currentIndex < _pages.length - 1)
-                          TextButton(
-                            onPressed: _finish,
-                            child: const Text('Skip', style: TextStyle(color: AppColors.textSecondary)),
-                          ),
-                      ],
+      backgroundColor: AppColors.background,
+      body: SafeArea(
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12),
                     ),
+                    child: const Icon(Icons.auto_stories, color: AppColors.primary, size: 24),
                   ),
-                ),
-              ],
+                  const SizedBox(width: 12),
+                  const Text('Dukarahisi', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: AppColors.primary)),
+                  const Spacer(),
+                  GestureDetector(
+                    onTap: _finish,
+                    child: const Text('Skip', style: TextStyle(fontSize: 14, color: AppColors.textSecondary, fontWeight: FontWeight.w500)),
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+            Expanded(
+              child: PageView.builder(
+                controller: _controller,
+                onPageChanged: (i) => setState(() => _currentIndex = i),
+                itemCount: _pages.length,
+                itemBuilder: (_, i) => _SlideContent(slide: _pages[i]),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
+              child: Column(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: List.generate(_pages.length, (i) => AnimatedContainer(
+                      duration: const Duration(milliseconds: 300),
+                      margin: const EdgeInsets.symmetric(horizontal: 4),
+                      width: _currentIndex == i ? 24 : 8,
+                      height: 8,
+                      decoration: BoxDecoration(
+                        color: _currentIndex == i ? AppColors.primary : AppColors.border,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                    )),
+                  ),
+                  const SizedBox(height: 28),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: _finish,
+                          style: OutlinedButton.styleFrom(
+                            side: const BorderSide(color: AppColors.border),
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                          ),
+                          child: const Text('Skip', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        flex: 2,
+                        child: ElevatedButton(
+                          onPressed: _next,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primary,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                          ),
+                          child: Text(_currentIndex == _pages.length - 1 ? 'Get Started' : 'Next', style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildPage(_OnboardingPage page) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 40),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            width: 180,
-            height: 180,
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.15),
-              borderRadius: BorderRadius.circular(28),
-              border: Border.all(color: Colors.white.withOpacity(0.2)),
-            ),
-            child: Image.asset(page.image, fit: BoxFit.contain),
-          ),
-          const SizedBox(height: 32),
-        ],
-      ),
-    );
-  }
 }
 
 class _OnboardingPage {
-  final String image;
+  final String icon;
   final String title;
   final String description;
+  final String badge;
 
   const _OnboardingPage({
-    required this.image,
+    required this.icon,
     required this.title,
     required this.description,
+    required this.badge,
   });
+}
+
+class _SlideContent extends StatelessWidget {
+  final _OnboardingPage slide;
+  const _SlideContent({required this.slide});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: Column(
+        children: [
+          const SizedBox(height: 20),
+          Expanded(
+            child: Center(
+              child: SizedBox(
+                width: 200,
+                height: 200,
+                child: Image.asset(
+                  slide.icon,
+                  fit: BoxFit.contain,
+                  errorBuilder: (context, error, stackTrace) {
+                    return const Icon(Icons.auto_stories, size: 100, color: AppColors.primary);
+                  },
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 24),
+          Text(
+            'Welcome to Dukarahisi',
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w800, color: AppColors.textPrimary),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            slide.description,
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 15, color: AppColors.textSecondary, height: 1.5),
+          ),
+          const SizedBox(height: 16),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            decoration: BoxDecoration(
+              color: AppColors.primaryLight,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: AppColors.primary.withOpacity(0.3), width: 1),
+            ),
+            child: Text(
+              slide.badge,
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.primary),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }

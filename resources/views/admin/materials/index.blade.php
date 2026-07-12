@@ -49,6 +49,12 @@
                     <option value="{{ $subject->id }}" data-class-id="{{ $subject->class_room_id }}">{{ $subject->name }} ({{ $subject->classRoom->name }})</option>
                 @endforeach
             </select>
+            <select id="topicFilter" class="pl-4 pr-10 py-2.5 rounded-lg border border-gray-200 text-sm focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none bg-white min-w-[160px]">
+                <option value="">All Topics</option>
+                @foreach($topics as $topic)
+                    <option value="{{ $topic->id }}" data-subject-id="{{ $topic->subject_id }}">{{ $topic->name }} ({{ $topic->subject->name }})</option>
+                @endforeach
+            </select>
         </div>
     </div>
 
@@ -66,7 +72,7 @@
                     <th class="px-6 py-3 font-medium">Level</th>
                     <th class="px-6 py-3 font-medium">Class</th>
                     <th class="px-6 py-3 font-medium">Subject</th>
-                    <th class="px-6 py-3 font-medium">Description</th>
+                    <th class="px-6 py-3 font-medium">Topic</th>
                     <th class="px-6 py-3 font-medium">Order</th>
                     <th class="px-6 py-3 font-medium">Status</th>
                     <th class="px-6 py-3 font-medium text-right">Actions</th>
@@ -80,7 +86,15 @@
                                 <div class="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center text-emerald-700 font-bold text-xs">
                                     {{ strtoupper(substr($item->title, 0, 1)) }}
                                 </div>
-                                <p class="text-sm font-semibold text-gray-900">{{ $item->title }}</p>
+                                <div>
+                                    <p class="text-sm font-semibold text-gray-900">{{ $item->title }}</p>
+                                    @if($item->file_path)
+                                        <a href="{{ asset(str_replace('public/', 'storage/', $item->file_path)) }}" target="_blank" class="text-[10px] text-red-600 hover:text-red-700 font-medium inline-flex items-center gap-1 mt-0.5">
+                                            <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8" stroke="white" stroke-width="2" stroke-linecap="round"/></svg>
+                                            PDF
+                                        </a>
+                                    @endif
+                                </div>
                             </div>
                         </td>
                         <td class="px-6 py-3">
@@ -93,7 +107,7 @@
                             <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-medium bg-sky-50 text-sky-700 border border-sky-100">{{ $item->subject->name }}</span>
                         </td>
                         <td class="px-6 py-3">
-                            <p class="text-xs text-gray-500 max-w-xs truncate">{{ $item->description ?? 'No description' }}</p>
+                            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-medium bg-purple-50 text-purple-700 border border-purple-100">{{ $item->topic->name ?? 'No topic' }}</span>
                         </td>
                         <td class="px-6 py-3">
                             <span class="inline-flex items-center px-2 py-1 rounded-md bg-gray-100 text-xs font-medium text-gray-700">{{ $item->order ?? 0 }}</span>
@@ -105,7 +119,7 @@
                         </td>
                         <td class="px-6 py-3 text-right">
                             <div class="flex items-center justify-end gap-2">
-                                <button onclick="editMaterial({{ $item->id }}, {{ $item->subject_id }}, {{ $item->subject->classRoom->level_id }}, {{ $item->subject->classRoom->id }}, '{{ addslashes($item->title) }}', '{{ addslashes($item->description ?? '') }}', {{ $item->order ?? 0 }}, {{ $item->is_active ? 1 : 0 }})" class="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors" title="Edit">
+                                <button onclick="editMaterial({{ $item->id }}, {{ $item->subject_id }}, {{ $item->subject->classRoom->level_id }}, {{ $item->subject->classRoom->id }}, {{ $item->topic_id ?? 'null' }}, '{{ addslashes($item->title) }}', {{ $item->order ?? 0 }}, {{ $item->is_active ? 1 : 0 }}, '{{ addslashes($item->file_path ?? '') }}')" class="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors" title="Edit">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.433-4.333A2.001 2.001 0 0119 10a2.001 2.001 0 01-.433 1.333L12.5 17.5l-4 1 1-4 6.067-6.167z"/></svg>
                                 </button>
                                 <button onclick="deleteMaterial({{ $item->id }})" class="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="Delete">
@@ -163,18 +177,38 @@
             </div>
 
             <div class="drawer-form-group">
+                <label for="materialTopic">Topic</label>
+                <select id="materialTopic" name="topic_id" disabled>
+                    <option value="">Select a subject first</option>
+                </select>
+            </div>
+
+            <div class="drawer-form-group">
                 <label for="materialTitle">Title</label>
                 <input type="text" id="materialTitle" name="title" required placeholder="e.g. Introduction to Algebra">
             </div>
 
             <div class="drawer-form-group">
-                <label for="materialDescription">Description</label>
-                <textarea id="materialDescription" name="description" rows="4" placeholder="Short description..."></textarea>
-            </div>
-
-            <div class="drawer-form-group">
-                <label for="materialFile">File Path / URL (optional)</label>
-                <input type="text" id="materialFile" name="file_path" placeholder="e.g. storage/materials/file.pdf">
+                <label for="materialPdfFile">PDF File (optional)</label>
+                <div class="relative border-2 border-dashed border-gray-300 rounded-lg p-4 hover:border-emerald-500 transition-colors bg-gray-50/50" id="pdfDropZone">
+                    <input type="file" id="materialPdfFile" name="pdf_file" accept="application/pdf" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
+                    <div class="text-center pointer-events-none">
+                        <svg class="w-10 h-10 mx-auto text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+                        <p class="text-sm text-gray-600 font-medium" id="pdfFileName">Click or drop PDF here</p>
+                        <p class="text-xs text-gray-500 mt-1">Max 50MB • PDF only</p>
+                    </div>
+                </div>
+                <div id="currentPdfContainer" class="hidden mt-3 p-3 rounded-lg border border-emerald-100 bg-emerald-50/50">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2 min-w-0">
+                            <svg class="w-5 h-5 text-red-500 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8" stroke="white" stroke-width="2" stroke-linecap="round"/></svg>
+                            <span class="text-sm text-gray-700 truncate" id="currentPdfName">Current PDF</span>
+                        </div>
+                        <a id="currentPdfLink" href="#" target="_blank" class="text-xs font-semibold text-emerald-600 hover:text-emerald-700 flex-shrink-0">View</a>
+                    </div>
+                    <button type="button" onclick="removePdfFile()" class="mt-2 text-xs text-red-600 hover:text-red-700 font-medium">Remove and upload new PDF</button>
+                </div>
+                <input type="hidden" id="pdfRemoved" name="pdf_removed" value="0">
             </div>
 
             <div class="drawer-form-group">
@@ -216,14 +250,23 @@
     const levelFilter = document.getElementById('levelFilter');
     const classFilter = document.getElementById('classFilter');
     const subjectFilter = document.getElementById('subjectFilter');
+    const topicFilter = document.getElementById('topicFilter');
     const itemsCount = document.getElementById('itemsCount');
     const materialLevel = document.getElementById('materialLevel');
     const materialClass = document.getElementById('materialClass');
     const materialSubject = document.getElementById('materialSubject');
+    const materialTopic = document.getElementById('materialTopic');
+    const materialPdfFile = document.getElementById('materialPdfFile');
+    const pdfFileName = document.getElementById('pdfFileName');
+    const currentPdfContainer = document.getElementById('currentPdfContainer');
+    const currentPdfName = document.getElementById('currentPdfName');
+    const currentPdfLink = document.getElementById('currentPdfLink');
+    const pdfRemoved = document.getElementById('pdfRemoved');
 
     const allLevels = @json($levels);
     const allClassRooms = @json($classRooms);
     const allSubjects = @json($subjects);
+    const allTopics = @json($topics);
     const materialType = '{{ $type }}';
     const singularName = '{{ $config['singular'] }}';
 
@@ -239,9 +282,14 @@
         materialClass.disabled = true;
         materialSubject.innerHTML = '<option value="">Select a class first</option>';
         materialSubject.disabled = true;
+        materialTopic.innerHTML = '<option value="">Select a subject first</option>';
+        materialTopic.disabled = true;
         document.getElementById('materialTitle').value = '';
-        document.getElementById('materialDescription').value = '';
-        document.getElementById('materialFile').value = '';
+        materialPdfFile.value = '';
+        pdfFileName.textContent = 'Click or drop PDF here';
+        currentPdfContainer.classList.add('hidden');
+        currentPdfLink.href = '#';
+        pdfRemoved.value = '0';
         document.getElementById('materialOrder').value = 0;
         document.getElementById('materialActive').checked = true;
         document.getElementById('saveText').textContent = 'Save ' + singularName;
@@ -257,22 +305,50 @@
         editingId = null;
     }
 
-    function editMaterial(id, subjectId, levelId, classRoomId, title, description, order, isActive) {
+    function editMaterial(id, subjectId, levelId, classRoomId, topicId, title, order, isActive, filePath) {
         editingId = id;
         drawerTitle.textContent = 'Edit ' + singularName;
         document.getElementById('materialId').value = id;
         materialLevel.value = levelId;
         populateMaterialClasses(levelId, classRoomId);
         populateMaterialSubjects(classRoomId, subjectId);
+        populateMaterialTopics(subjectId, topicId);
         document.getElementById('materialTitle').value = title;
-        document.getElementById('materialDescription').value = description;
         document.getElementById('materialOrder').value = order;
         document.getElementById('materialActive').checked = isActive === 1;
+        materialPdfFile.value = '';
+        pdfFileName.textContent = 'Click or drop PDF here';
+        pdfRemoved.value = '0';
+        if (filePath) {
+            currentPdfContainer.classList.remove('hidden');
+            currentPdfName.textContent = filePath.split('/').pop();
+            currentPdfLink.href = '{{ asset('') }}' + filePath.replace('public/', 'storage/');
+        } else {
+            currentPdfContainer.classList.add('hidden');
+            currentPdfLink.href = '#';
+        }
         document.getElementById('saveText').textContent = 'Update ' + singularName;
         materialDrawer.classList.add('open');
         materialSidebar.classList.add('open');
         document.body.style.overflow = 'hidden';
     }
+
+    function removePdfFile() {
+        materialPdfFile.value = '';
+        pdfFileName.textContent = 'Click or drop PDF here';
+        currentPdfContainer.classList.add('hidden');
+        pdfRemoved.value = '1';
+    }
+
+    materialPdfFile.addEventListener('change', function() {
+        if (this.files && this.files[0]) {
+            pdfFileName.textContent = this.files[0].name;
+            pdfRemoved.value = '0';
+            currentPdfContainer.classList.add('hidden');
+        } else {
+            pdfFileName.textContent = 'Click or drop PDF here';
+        }
+    });
 
     function populateMaterialClasses(levelId, selectedClassId = null) {
         materialClass.innerHTML = '<option value="">Select a class</option>';
@@ -300,14 +376,35 @@
         materialSubject.disabled = filteredSubjects.length === 0;
     }
 
+    function populateMaterialTopics(subjectId, selectedTopicId = null) {
+        materialTopic.innerHTML = '<option value="">Select a topic (optional)</option>';
+        const filteredTopics = allTopics.filter(t => t.subject_id == subjectId);
+        filteredTopics.forEach(t => {
+            const option = document.createElement('option');
+            option.value = t.id;
+            option.textContent = t.name;
+            if (selectedTopicId && t.id == selectedTopicId) option.selected = true;
+            materialTopic.appendChild(option);
+        });
+        materialTopic.disabled = filteredTopics.length === 0;
+    }
+
     materialLevel.addEventListener('change', function() {
         populateMaterialClasses(this.value);
         materialSubject.innerHTML = '<option value="">Select a class first</option>';
         materialSubject.disabled = true;
+        materialTopic.innerHTML = '<option value="">Select a subject first</option>';
+        materialTopic.disabled = true;
     });
 
     materialClass.addEventListener('change', function() {
         populateMaterialSubjects(this.value);
+        materialTopic.innerHTML = '<option value="">Select a subject first</option>';
+        materialTopic.disabled = true;
+    });
+
+    materialSubject.addEventListener('change', function() {
+        populateMaterialTopics(this.value);
     });
 
     function setLoading(loading) {
@@ -336,9 +433,12 @@
         return name ? name.charAt(0).toUpperCase() : 'M';
     }
 
-    function addMaterialToTable(item, index) {
+    function addMaterialToTable(item, index = null) {
         const emptyRow = document.getElementById('emptyRow');
         if (emptyRow) emptyRow.remove();
+        if (index === null) {
+            index = materialsTable.querySelectorAll('tr[data-id]').length + 1;
+        }
 
         const activeClass = item.is_active ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-red-50 text-red-700 border-red-100';
         const activeText = item.is_active ? 'Active' : 'Inactive';
@@ -350,8 +450,10 @@
         const subjectName = subject ? subject.name : 'Unknown';
         const classRoomId = classRoom ? classRoom.id : '';
         const levelId = level ? level.id : '';
-        const description = item.description || 'No description';
+        const topicName = item.topic ? item.topic.name : 'No topic';
+        const topicId = item.topic ? item.topic.id : 'null';
         const order = item.order ?? 0;
+        const filePath = item.file_path ? escapeHtml(item.file_path) : '';
 
         const row = document.createElement('tr');
         row.className = 'border-t border-gray-100 transition-colors animate-fade';
@@ -365,20 +467,23 @@
             <td class="px-6 py-3">
                 <div class="flex items-center gap-2">
                     <div class="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center text-emerald-700 font-bold text-xs">${getInitials(item.title)}</div>
-                    <p class="text-sm font-semibold text-gray-900">${item.title}</p>
+                    <div>
+                        <p class="text-sm font-semibold text-gray-900">${item.title}</p>
+                        ${item.file_path ? `<a href="{{ asset('') }}${item.file_path.replace('public/', 'storage/')}" target="_blank" class="text-[10px] text-red-600 hover:text-red-700 font-medium inline-flex items-center gap-1 mt-0.5"><svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8" stroke="white" stroke-width="2" stroke-linecap="round"/></svg>PDF</a>` : ''}
+                    </div>
                 </div>
             </td>
             <td class="px-6 py-3"><span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-100">${levelName}</span></td>
             <td class="px-6 py-3"><span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-medium bg-amber-50 text-amber-700 border border-amber-100">${className}</span></td>
             <td class="px-6 py-3"><span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-medium bg-sky-50 text-sky-700 border border-sky-100">${subjectName}</span></td>
-            <td class="px-6 py-3"><p class="text-xs text-gray-500 max-w-xs truncate">${description}</p></td>
+            <td class="px-6 py-3"><span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-medium bg-purple-50 text-purple-700 border border-purple-100">${topicName}</span></td>
             <td class="px-6 py-3"><span class="inline-flex items-center px-2 py-1 rounded-md bg-gray-100 text-xs font-medium text-gray-700">${order}</span></td>
             <td class="px-6 py-3">
                 <button onclick="toggleMaterialStatus(${item.id})" class="status-badge inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-medium border ${activeClass}">${activeText}</button>
             </td>
             <td class="px-6 py-3 text-right">
                 <div class="flex items-center justify-end gap-2">
-                    <button onclick="editMaterial(${item.id}, ${item.subject_id}, ${levelId}, ${classRoomId}, '${escapeHtml(item.title)}', '${escapeHtml(item.description)}', ${order}, ${item.is_active ? 1 : 0})" class="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors" title="Edit">
+                    <button onclick="editMaterial(${item.id}, ${item.subject_id}, ${levelId}, ${classRoomId}, ${topicId}, '${escapeHtml(item.title)}', ${order}, ${item.is_active ? 1 : 0}, '${filePath}')" class="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors" title="Edit">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.433-4.333A2.001 2.001 0 0119 10a2.001 2.001 0 01-.433 1.333L12.5 17.5l-4 1 1-4 6.067-6.167z"/></svg>
                     </button>
                     <button onclick="deleteMaterial(${item.id})" class="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="Delete">
@@ -418,29 +523,26 @@
         setLoading(true);
 
         const formData = new FormData(materialForm);
-        const data = {
-            subject_id: parseInt(formData.get('subject_id')) || 0,
-            title: formData.get('title'),
-            description: formData.get('description'),
-            file_path: formData.get('file_path'),
-            order: parseInt(formData.get('order')) || 0,
-            is_active: formData.get('is_active') ? 1 : 0,
-            _token: formData.get('_token')
-        };
+        formData.set('order', parseInt(formData.get('order')) || 0);
+        formData.set('is_active', formData.get('is_active') ? 1 : 0);
+        formData.delete('_token');
 
         const url = editingId
             ? `{{ url('admin/materials') }}/${materialType}/${editingId}`
             : `{{ url('admin/materials') }}/${materialType}`;
-        const method = editingId ? 'PUT' : 'POST';
+        const method = editingId ? 'POST' : 'POST';
+
+        if (editingId) {
+            formData.append('_method', 'PUT');
+        }
 
         fetch(url, {
             method: method,
             headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': data._token,
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
                 'Accept': 'application/json'
             },
-            body: JSON.stringify(data)
+            body: formData
         })
         .then(response => response.json())
         .then(result => {
@@ -521,7 +623,6 @@
             body: JSON.stringify({
                 subject_id: parseInt(subjectId),
                 title: row.querySelector('td:nth-child(2) p').textContent,
-                description: row.querySelector('td:nth-child(6) p').textContent === 'No description' ? '' : row.querySelector('td:nth-child(6) p').textContent,
                 order: parseInt(row.querySelector('td:nth-child(7) span').textContent),
                 is_active: isActive ? 0 : 1
             })
@@ -548,12 +649,14 @@
         const levelId = levelFilter.value;
         const classRoomId = classFilter.value;
         const subjectId = subjectFilter.value;
+        const topicId = topicFilter.value;
 
         const url = new URL('{{ url('admin/materials') }}/' + materialType, window.location.origin);
         if (term) url.searchParams.append('search', term);
         if (levelId) url.searchParams.append('level_id', levelId);
         if (classRoomId) url.searchParams.append('class_room_id', classRoomId);
         if (subjectId) url.searchParams.append('subject_id', subjectId);
+        if (topicId) url.searchParams.append('topic_id', topicId);
 
         fetch(url, {
             method: 'GET',
@@ -597,8 +700,10 @@
             const subjectName = subject ? subject.name : 'Unknown';
             const classRoomId = classRoom ? classRoom.id : '';
             const levelId = level ? level.id : '';
-            const description = item.description || 'No description';
+            const topicName = item.topic ? item.topic.name : 'No topic';
+            const topicId = item.topic ? item.topic.id : 'null';
             const order = item.order ?? 0;
+            const filePath = item.file_path ? escapeHtml(item.file_path) : '';
 
             const row = document.createElement('tr');
             row.className = 'border-t border-gray-100 transition-colors animate-fade';
@@ -613,20 +718,23 @@
                 <td class="px-6 py-3">
                     <div class="flex items-center gap-2">
                         <div class="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center text-emerald-700 font-bold text-xs">${getInitials(item.title)}</div>
-                        <p class="text-sm font-semibold text-gray-900">${item.title}</p>
+                        <div>
+                            <p class="text-sm font-semibold text-gray-900">${item.title}</p>
+                            ${item.file_path ? `<a href="{{ asset('') }}${item.file_path.replace('public/', 'storage/')}" target="_blank" class="text-[10px] text-red-600 hover:text-red-700 font-medium inline-flex items-center gap-1 mt-0.5"><svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8" stroke="white" stroke-width="2" stroke-linecap="round"/></svg>PDF</a>` : ''}
+                        </div>
                     </div>
                 </td>
                 <td class="px-6 py-3"><span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-100">${levelName}</span></td>
                 <td class="px-6 py-3"><span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-medium bg-amber-50 text-amber-700 border border-amber-100">${className}</span></td>
                 <td class="px-6 py-3"><span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-medium bg-sky-50 text-sky-700 border border-sky-100">${subjectName}</span></td>
-                <td class="px-6 py-3"><p class="text-xs text-gray-500 max-w-xs truncate">${description}</p></td>
+                <td class="px-6 py-3"><span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-medium bg-purple-50 text-purple-700 border border-purple-100">${topicName}</span></td>
                 <td class="px-6 py-3"><span class="inline-flex items-center px-2 py-1 rounded-md bg-gray-100 text-xs font-medium text-gray-700">${order}</span></td>
                 <td class="px-6 py-3">
                     <button onclick="toggleMaterialStatus(${item.id})" class="status-badge inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-medium border ${activeClass}">${activeText}</button>
                 </td>
                 <td class="px-6 py-3 text-right">
                     <div class="flex items-center justify-end gap-2">
-                        <button onclick="editMaterial(${item.id}, ${item.subject_id}, ${levelId}, ${classRoomId}, '${escapeHtml(item.title)}', '${escapeHtml(item.description)}', ${order}, ${item.is_active ? 1 : 0})" class="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors" title="Edit">
+                        <button onclick="editMaterial(${item.id}, ${item.subject_id}, ${levelId}, ${classRoomId}, ${topicId}, '${escapeHtml(item.title)}', ${order}, ${item.is_active ? 1 : 0}, '${filePath}')" class="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors" title="Edit">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.433-4.333A2.001 2.001 0 0119 10a2.001 2.001 0 01-.433 1.333L12.5 17.5l-4 1 1-4 6.067-6.167z"/></svg>
                         </button>
                         <button onclick="deleteMaterial(${item.id})" class="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="Delete">
@@ -667,6 +775,21 @@
             if (s.id == selectedSubject) option.selected = true;
             subjectFilter.appendChild(option);
         });
+        populateFilterTopics();
+    }
+
+    function populateFilterTopics() {
+        const subjectId = subjectFilter.value;
+        const selectedTopic = topicFilter.value;
+        topicFilter.innerHTML = '<option value="">All Topics</option>';
+        allTopics.filter(t => !subjectId || t.subject_id == subjectId).forEach(t => {
+            const option = document.createElement('option');
+            option.value = t.id;
+            option.textContent = t.name + ' (' + (t.subject ? t.subject.name : '') + ')';
+            option.setAttribute('data-subject-id', t.subject_id);
+            if (t.id == selectedTopic) option.selected = true;
+            topicFilter.appendChild(option);
+        });
     }
 
     materialSearch.addEventListener('input', function() {
@@ -685,6 +808,11 @@
     });
 
     subjectFilter.addEventListener('change', function() {
+        populateFilterTopics();
+        loadMaterials();
+    });
+
+    topicFilter.addEventListener('change', function() {
         loadMaterials();
     });
 

@@ -13,6 +13,7 @@ use App\Models\Note;
 use App\Models\SchemeOfWork;
 use App\Models\Subject;
 use App\Models\Syllabus;
+use App\Models\Topic;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
@@ -84,11 +85,16 @@ class MaterialManageController extends Controller
         $levels = Level::orderBy('order')->get();
         $classRooms = ClassRoom::with('level')->orderBy('order')->get();
         $subjects = Subject::with('classRoom.level')->orderBy('order')->get();
+        $topics = Topic::with('subject.classRoom.level')->orderBy('order')->get();
 
-        $query = $model::with('subject.classRoom.level')->orderBy('order');
+        $query = $model::with(['subject.classRoom.level', 'topic'])->orderBy('order');
 
         if ($request->filled('subject_id')) {
             $query->where('subject_id', $request->subject_id);
+        }
+
+        if ($request->filled('topic_id')) {
+            $query->where('topic_id', $request->topic_id);
         }
 
         if ($request->filled('class_room_id')) {
@@ -107,7 +113,9 @@ class MaterialManageController extends Controller
             $search = $request->input('search');
             $query->where(function ($q) use ($search) {
                 $q->where('title', 'like', "%{$search}%")
-                  ->orWhere('description', 'like', "%{$search}%");
+                  ->orWhereHas('topic', function ($tq) use ($search) {
+                      $tq->where('name', 'like', "%{$search}%");
+                  });
             });
         }
 
@@ -117,7 +125,7 @@ class MaterialManageController extends Controller
             return response()->json(['success' => true, 'items' => $items]);
         }
 
-        return view('admin.materials.index', compact('items', 'levels', 'classRooms', 'subjects', 'type', 'config'));
+        return view('admin.materials.index', compact('items', 'levels', 'classRooms', 'subjects', 'topics', 'type', 'config'));
     }
 
     public function store(string $type, Request $request)
@@ -127,16 +135,17 @@ class MaterialManageController extends Controller
 
         $validated = $request->validate([
             'subject_id' => 'required|exists:subjects,id',
+            'topic_id' => 'nullable|exists:topics,id',
             'title' => 'required|string|max:255',
-            'description' => 'nullable|string|max:500',
-            'file_path' => 'nullable|string|max:500',
+            'pdf_file' => 'nullable|file|mimes:pdf|max:51200',
             'order' => 'required|integer|min:0',
         ]);
 
         $data = [
             'subject_id' => $validated['subject_id'],
+            'topic_id' => $validated['topic_id'] ?? null,
             'title' => $validated['title'],
-            'description' => $validated['description'] ?? null,
+            'description' => null,
             'order' => $validated['order'],
             'is_active' => true,
         ];
@@ -148,12 +157,14 @@ class MaterialManageController extends Controller
             $data['status'] = 'published';
         }
 
-        if (isset($validated['file_path'])) {
-            $data['file_path'] = $validated['file_path'];
+        $item = $model::create($data);
+
+        if ($request->hasFile('pdf_file')) {
+            $item->file_path = $this->storePdfFile($request->file('pdf_file'), $type, $item);
+            $item->save();
         }
 
-        $item = $model::create($data);
-        $item->load('subject.classRoom.level');
+        $item->load(['subject.classRoom.level', 'topic']);
 
         if ($request->ajax() || $request->wantsJson()) {
             return response()->json([
@@ -166,6 +177,20 @@ class MaterialManageController extends Controller
         return redirect()->route("admin.materials.$type")->with('status', $config['singular'] . ' added successfully.');
     }
 
+    protected function storePdfFile($file, string $type, $item): string
+    {
+        $slug = Str::slug($item->title);
+        $filename = "{$type}_{$item->id}_{$slug}_" . time() . '.pdf';
+        return $file->storeAs("public/materials/{$type}", $filename);
+    }
+
+    protected function deletePdfFile($item): void
+    {
+        if ($item->file_path && \Storage::exists($item->file_path)) {
+            \Storage::delete($item->file_path);
+        }
+    }
+
     public function update(string $type, int $id, Request $request)
     {
         $config = $this->getConfig($type);
@@ -174,27 +199,39 @@ class MaterialManageController extends Controller
 
         $validated = $request->validate([
             'subject_id' => 'required|exists:subjects,id',
+            'topic_id' => 'nullable|exists:topics,id',
             'title' => 'required|string|max:255',
-            'description' => 'nullable|string|max:500',
-            'file_path' => 'nullable|string|max:500',
+            'pdf_file' => 'nullable|file|mimes:pdf|max:51200',
             'order' => 'required|integer|min:0',
             'is_active' => 'boolean',
         ]);
 
         $data = [
             'subject_id' => $validated['subject_id'],
+            'topic_id' => $validated['topic_id'] ?? null,
             'title' => $validated['title'],
-            'description' => $validated['description'] ?? null,
+            'description' => null,
             'order' => $validated['order'],
             'is_active' => $validated['is_active'] ?? true,
         ];
 
-        if (isset($validated['file_path'])) {
-            $data['file_path'] = $validated['file_path'];
+        if ($type === 'notes' && isset($validated['title'])) {
+            $data['slug'] = Str::slug($validated['title']) . '-' . time();
         }
 
         $item->update($data);
-        $item->load('subject.classRoom.level');
+
+        if ($request->hasFile('pdf_file')) {
+            $this->deletePdfFile($item);
+            $item->file_path = $this->storePdfFile($request->file('pdf_file'), $type, $item);
+            $item->save();
+        } elseif ($request->boolean('pdf_removed')) {
+            $this->deletePdfFile($item);
+            $item->file_path = null;
+            $item->save();
+        }
+
+        $item->load(['subject.classRoom.level', 'topic']);
 
         if ($request->ajax() || $request->wantsJson()) {
             return response()->json([
@@ -212,6 +249,7 @@ class MaterialManageController extends Controller
         $config = $this->getConfig($type);
         $model = $config['model'];
         $item = $model::findOrFail($id);
+        $this->deletePdfFile($item);
         $item->delete();
 
         if (request()->ajax() || request()->wantsJson()) {

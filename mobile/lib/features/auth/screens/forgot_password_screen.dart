@@ -2,31 +2,27 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/validators.dart';
-import '../../../core/utils/phone_formatter.dart';
 import '../../../core/widgets/custom_toast.dart';
 
-class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+class ForgotPasswordScreen extends StatefulWidget {
+  const ForgotPasswordScreen({super.key});
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  State<ForgotPasswordScreen> createState() => _ForgotPasswordScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   final _formKey = GlobalKey<FormState>();
   final _phoneController = TextEditingController();
-  final _passwordController = TextEditingController();
-  bool _obscurePassword = true;
   bool _loading = false;
 
   @override
   void dispose() {
     _phoneController.dispose();
-    _passwordController.dispose();
     super.dispose();
   }
 
-  void _login() {
+  void _sendOTP() {
     if (_formKey.currentState?.validate() ?? false) {
       setState(() => _loading = true);
       Future.delayed(const Duration(seconds: 2), () {
@@ -34,18 +30,16 @@ class _LoginScreenState extends State<LoginScreen> {
           setState(() => _loading = false);
           CustomToast.show(
             context,
-            message: 'Login successful!',
+            message: 'OTP sent successfully!',
             type: ToastType.success,
           );
-          Future.delayed(const Duration(milliseconds: 500), () {
-            if (mounted) context.go('/home');
-          });
+          context.push('/otp-verification', extra: _phoneController.text);
         }
       });
     } else {
       CustomToast.show(
         context,
-        message: 'Please fill in all fields correctly',
+        message: 'Please enter a valid phone number',
         type: ToastType.error,
       );
     }
@@ -67,53 +61,40 @@ class _LoginScreenState extends State<LoginScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const SizedBox(height: 40),
-              // Header matching web auth
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24),
                 child: Column(
                   children: [
                     Container(
-                      width: 80,
-                      height: 80,
-                      padding: const EdgeInsets.all(16),
+                      width: 72,
+                      height: 72,
+                      padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
                         color: Colors.white.withOpacity(0.15),
-                        borderRadius: BorderRadius.circular(24),
-                        border: Border.all(color: Colors.white.withOpacity(0.25), width: 1.5),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.1),
-                            blurRadius: 20,
-                            offset: const Offset(0, 10),
-                          ),
-                        ],
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: Colors.white.withOpacity(0.2)),
                       ),
-                      child: const Icon(Icons.login_rounded, color: Colors.white, size: 36),
+                      child: const Icon(Icons.lock_reset_rounded, color: Colors.white, size: 32),
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 20),
                     Text(
-                      'Welcome Back',
+                      'Forgot Password?',
                       textAlign: TextAlign.center,
                       style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                             fontWeight: FontWeight.bold,
                             color: Colors.white,
-                            fontSize: 24,
                           ),
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 6),
                     Text(
-                      'Sign in to continue to Dukarahisi',
+                      'Enter your phone number to receive a verification code',
                       textAlign: TextAlign.center,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: Colors.white70,
-                            fontSize: 14,
-                          ),
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.white70),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: 40),
-              // White card body matching web auth
+              const SizedBox(height: 32),
               Expanded(
                 child: Container(
                   decoration: const BoxDecoration(
@@ -124,7 +105,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                   child: SingleChildScrollView(
-                    padding: const EdgeInsets.fromLTRB(28, 32, 28, 28),
+                    padding: const EdgeInsets.all(28),
                     child: Form(
                       key: _formKey,
                       child: Column(
@@ -140,40 +121,9 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                             validator: Validators.phone,
                           ),
-                          const SizedBox(height: 18),
-                          TextFormField(
-                            controller: _passwordController,
-                            obscureText: _obscurePassword,
-                            decoration: InputDecoration(
-                              labelText: 'Password',
-                              hintText: 'Enter your password',
-                              prefixIcon: const Icon(Icons.lock_outline),
-                              suffixIcon: IconButton(
-                                icon: Icon(_obscurePassword ? Icons.visibility_off : Icons.visibility),
-                                onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
-                              ),
-                            ),
-                            validator: Validators.password,
-                          ),
-                          const SizedBox(height: 16),
-                          Align(
-                            alignment: Alignment.centerRight,
-                            child: TextButton(
-                              onPressed: () => context.push('/forgot-password'),
-                              style: TextButton.styleFrom(
-                                foregroundColor: AppColors.primary,
-                              ),
-                              child: const Text(
-                                'Forgot Password?',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 28),
+                          const SizedBox(height: 24),
                           ElevatedButton(
-                            onPressed: _loading ? null : _login,
+                            onPressed: _loading ? null : _sendOTP,
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppColors.primary,
                               foregroundColor: Colors.white,
@@ -193,7 +143,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                     ),
                                   )
                                 : const Text(
-                                    'Login',
+                                    'Send OTP',
                                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                                   ),
                           ),
@@ -201,10 +151,10 @@ class _LoginScreenState extends State<LoginScreen> {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              const Text("Don't have an account?", style: TextStyle(color: AppColors.textSecondary)),
+                              const Text('Remember your password?', style: TextStyle(color: AppColors.textSecondary)),
                               TextButton(
-                                onPressed: () => context.push('/register'),
-                                child: const Text('Register'),
+                                onPressed: () => context.pop(),
+                                child: const Text('Login'),
                               ),
                             ],
                           ),

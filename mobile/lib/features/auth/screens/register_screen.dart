@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/validators.dart';
+import '../../../core/widgets/custom_toast.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -36,9 +37,30 @@ class _RegisterScreenState extends State<RegisterScreen> {
       Future.delayed(const Duration(seconds: 2), () {
         if (mounted) {
           setState(() => _loading = false);
-          context.go('/select-level');
+          CustomToast.show(
+            context,
+            message: 'Account created successfully!',
+            type: ToastType.success,
+          );
+          Future.delayed(const Duration(milliseconds: 500), () {
+            if (mounted) context.go('/select-level');
+          });
         }
       });
+    } else {
+      if (!_agreed) {
+        CustomToast.show(
+          context,
+          message: 'Please agree to the Terms of Service',
+          type: ToastType.warning,
+        );
+      } else {
+        CustomToast.show(
+          context,
+          message: 'Please fill in all fields correctly',
+          type: ToastType.error,
+        );
+      }
     }
   }
 
@@ -63,35 +85,46 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 child: Column(
                   children: [
                     Container(
-                      width: 72,
-                      height: 72,
-                      padding: const EdgeInsets.all(14),
+                      width: 80,
+                      height: 80,
+                      padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
                         color: Colors.white.withOpacity(0.15),
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: Colors.white.withOpacity(0.2)),
+                        borderRadius: BorderRadius.circular(24),
+                        border: Border.all(color: Colors.white.withOpacity(0.25), width: 1.5),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.1),
+                            blurRadius: 20,
+                            offset: const Offset(0, 10),
+                          ),
+                        ],
                       ),
-                      child: Image.asset('assets/images/register.png', fit: BoxFit.contain),
+                      child: const Icon(Icons.person_add_rounded, color: Colors.white, size: 36),
                     ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 24),
                     Text(
                       'Create Account',
                       textAlign: TextAlign.center,
                       style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                             fontWeight: FontWeight.bold,
                             color: Colors.white,
+                            fontSize: 24,
                           ),
                     ),
-                    const SizedBox(height: 6),
+                    const SizedBox(height: 8),
                     Text(
-                      'Get started with Dukarahisi',
+                      'Join thousands of students learning with Dukarahisi',
                       textAlign: TextAlign.center,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.white70),
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: Colors.white70,
+                            fontSize: 14,
+                          ),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: 32),
+              const SizedBox(height: 40),
               Expanded(
                 child: Container(
                   decoration: const BoxDecoration(
@@ -102,7 +135,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     ),
                   ),
                   child: SingleChildScrollView(
-                    padding: const EdgeInsets.all(28),
+                    padding: const EdgeInsets.fromLTRB(28, 32, 28, 28),
                     child: Form(
                       key: _formKey,
                       child: Column(
@@ -112,12 +145,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             controller: _nameController,
                             decoration: const InputDecoration(
                               labelText: 'Full Name',
-                              hintText: 'John Doe',
+                              hintText: 'Enter your full name',
                               prefixIcon: Icon(Icons.person_outline),
                             ),
                             validator: (value) => Validators.required(value, 'Full name'),
                           ),
-                          const SizedBox(height: 16),
+                          const SizedBox(height: 18),
                           TextFormField(
                             controller: _phoneController,
                             keyboardType: TextInputType.phone,
@@ -128,13 +161,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             ),
                             validator: Validators.phone,
                           ),
-                          const SizedBox(height: 16),
+                          const SizedBox(height: 18),
                           TextFormField(
                             controller: _passwordController,
                             obscureText: _obscurePassword,
                             decoration: InputDecoration(
                               labelText: 'Password',
-                              hintText: 'Create a password',
+                              hintText: 'Create a strong password',
                               prefixIcon: const Icon(Icons.lock_outline),
                               suffixIcon: IconButton(
                                 icon: Icon(_obscurePassword ? Icons.visibility_off : Icons.visibility),
@@ -143,7 +176,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             ),
                             validator: Validators.password,
                           ),
-                          const SizedBox(height: 16),
+                          const SizedBox(height: 18),
                           TextFormField(
                             controller: _confirmPasswordController,
                             obscureText: _obscureConfirm,
@@ -158,33 +191,114 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             ),
                             validator: (value) => Validators.confirmPassword(value, _passwordController.text),
                           ),
-                          const SizedBox(height: 16),
+                          const SizedBox(height: 18),
+                          Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: AppColors.primaryLight,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: AppColors.primary.withOpacity(0.2)),
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(Icons.info_outline, color: AppColors.primary, size: 20),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Text(
+                                    'We will send a verification code to your phone number',
+                                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                          color: AppColors.primary,
+                                          fontSize: 13,
+                                        ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 20),
                           Row(
                             children: [
                               Checkbox(
                                 value: _agreed,
                                 onChanged: (value) => setState(() => _agreed = value ?? false),
+                                activeColor: AppColors.primary,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
                               ),
                               Expanded(
-                                child: Text(
-                                  'I agree to the Terms of Service and Privacy Policy',
-                                  style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.textSecondary),
+                                child: Wrap(
+                                  children: [
+                                    Text(
+                                      'I agree to the ',
+                                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                            color: AppColors.textSecondary,
+                                            fontSize: 13,
+                                          ),
+                                    ),
+                                    GestureDetector(
+                                      onTap: () => context.push('/terms-of-service'),
+                                      child: Text(
+                                        'Terms of Service',
+                                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                              color: AppColors.primary,
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.w600,
+                                              decoration: TextDecoration.underline,
+                                            ),
+                                      ),
+                                    ),
+                                    Text(
+                                      ' and ',
+                                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                            color: AppColors.textSecondary,
+                                            fontSize: 13,
+                                          ),
+                                    ),
+                                    GestureDetector(
+                                      onTap: () => context.push('/privacy-policy'),
+                                      child: Text(
+                                        'Privacy Policy',
+                                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                              color: AppColors.primary,
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.w600,
+                                              decoration: TextDecoration.underline,
+                                            ),
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
                             ],
                           ),
-                          const SizedBox(height: 24),
+                          const SizedBox(height: 28),
                           ElevatedButton(
                             onPressed: _loading ? null : _register,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.primary,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              elevation: 2,
+                            ),
                             child: _loading
                                 ? const SizedBox(
-                                    height: 20,
-                                    width: 20,
-                                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                                    height: 22,
+                                    width: 22,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2.5,
+                                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                    ),
                                   )
-                                : const Text('Register'),
+                                : const Text(
+                                    'Register',
+                                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                                  ),
                           ),
-                          const SizedBox(height: 24),
+                          const SizedBox(height: 28),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [

@@ -4,6 +4,10 @@ import '../../features/auth/screens/login_screen.dart';
 import '../../features/auth/screens/onboarding_screen.dart';
 import '../../features/auth/screens/register_screen.dart';
 import '../../features/auth/screens/select_level_screen.dart';
+import '../../features/auth/screens/forgot_password_screen.dart';
+import '../../features/auth/screens/otp_verification_screen.dart';
+import '../../features/auth/screens/terms_of_service_screen.dart';
+import '../../features/auth/screens/privacy_policy_screen.dart';
 import '../../features/catalogue/screens/home_screen.dart';
 import '../../features/profile/screens/profile_screen.dart';
 import '../../core/storage/local_cache.dart';
@@ -42,6 +46,22 @@ class AppRouter {
         GoRoute(
           path: '/register',
           builder: (context, state) => const RegisterScreen(),
+        ),
+        GoRoute(
+          path: '/forgot-password',
+          builder: (context, state) => const ForgotPasswordScreen(),
+        ),
+        GoRoute(
+          path: '/otp-verification',
+          builder: (context, state) => const OTPVerificationScreen(),
+        ),
+        GoRoute(
+          path: '/terms-of-service',
+          builder: (context, state) => const TermsOfServiceScreen(),
+        ),
+        GoRoute(
+          path: '/privacy-policy',
+          builder: (context, state) => const PrivacyPolicyScreen(),
         ),
         GoRoute(
           path: '/select-level',
