@@ -163,7 +163,7 @@ class CatalogController extends Controller
                     'price' => $note->final_price,
                     'is_free' => $note->is_free,
                     'cover_image' => $note->cover_image_url,
-                    'file_url' => $hasPurchased ? str_replace('/storage/public/', '/storage/', $note->file_url) : null,
+                    'file_url' => $hasPurchased ? url("/api/catalog/materials/notes/{$note->id}/download") : null,
                     'file_type' => 'pdf',
                     'has_purchased' => $hasPurchased,
                     'material_type' => 'notes',
@@ -190,7 +190,7 @@ class CatalogController extends Controller
                     'price' => $book->final_price,
                     'is_free' => $book->is_free,
                     'cover_image' => null,
-                    'file_url' => $book->file_path ? asset('storage/' . str_replace('public/', '', $book->file_path)) : null,
+                    'file_url' => $book->file_path ? url("/api/catalog/materials/books/{$book->id}/download") : null,
                     'file_type' => 'pdf',
                     'has_purchased' => true,
                     'material_type' => 'books',
@@ -217,7 +217,7 @@ class CatalogController extends Controller
                     'price' => $lessonPlan->final_price,
                     'is_free' => $lessonPlan->is_free,
                     'cover_image' => null,
-                    'file_url' => $lessonPlan->file_path ? asset('storage/' . str_replace('public/', '', $lessonPlan->file_path)) : null,
+                    'file_url' => $lessonPlan->file_path ? url("/api/catalog/materials/lesson-plans/{$lessonPlan->id}/download") : null,
                     'file_type' => 'pdf',
                     'has_purchased' => true,
                     'material_type' => 'lesson-plans',
@@ -244,7 +244,7 @@ class CatalogController extends Controller
                     'price' => $syllabus->final_price,
                     'is_free' => $syllabus->is_free,
                     'cover_image' => null,
-                    'file_url' => $syllabus->file_path ? asset('storage/' . str_replace('public/', '', $syllabus->file_path)) : null,
+                    'file_url' => $syllabus->file_path ? url("/api/catalog/materials/syllabus/{$syllabus->id}/download") : null,
                     'file_type' => 'pdf',
                     'has_purchased' => true,
                     'material_type' => 'syllabus',
@@ -271,7 +271,7 @@ class CatalogController extends Controller
                     'price' => $scheme->final_price,
                     'is_free' => $scheme->is_free,
                     'cover_image' => null,
-                    'file_url' => $scheme->file_path ? asset('storage/' . str_replace('public/', '', $scheme->file_path)) : null,
+                    'file_url' => $scheme->file_path ? url("/api/catalog/materials/scheme-of-work/{$scheme->id}/download") : null,
                     'file_type' => 'pdf',
                     'has_purchased' => true,
                     'material_type' => 'scheme-of-work',
@@ -298,7 +298,7 @@ class CatalogController extends Controller
                     'price' => $logbook->final_price,
                     'is_free' => $logbook->is_free,
                     'cover_image' => null,
-                    'file_url' => $logbook->file_path ? asset('storage/' . str_replace('public/', '', $logbook->file_path)) : null,
+                    'file_url' => $logbook->file_path ? url("/api/catalog/materials/logbooks/{$logbook->id}/download") : null,
                     'file_type' => 'pdf',
                     'has_purchased' => true,
                     'material_type' => 'logbooks',
@@ -320,6 +320,49 @@ class CatalogController extends Controller
         return OrderItem::whereHas('order', function ($q) use ($user) {
             $q->where('user_id', $user->id)->where('status', 'paid');
         })->where('note_id', $note->id)->exists() || $note->is_free;
+    }
+
+    /**
+     * Download a material file securely through the API.
+     */
+    public function downloadMaterial(Request $request, string $type, int $id)
+    {
+        $models = [
+            'notes' => Note::class,
+            'books' => Book::class,
+            'lesson-plans' => LessonPlan::class,
+            'syllabus' => Syllabus::class,
+            'scheme-of-work' => SchemeOfWork::class,
+            'logbooks' => Logbook::class,
+        ];
+
+        if (!isset($models[$type])) {
+            return response()->json(['status' => 'error', 'message' => 'Invalid material type.'], 404);
+        }
+
+        $modelClass = $models[$type];
+        $item = $modelClass::findOrFail($id);
+
+        // Access check for paid notes
+        if ($type === 'notes') {
+            $user = $request->user();
+            $hasAccess = $this->checkPurchase($item, $user);
+            if (!$hasAccess) {
+                return response()->json(['status' => 'error', 'message' => 'Purchase required.'], 403);
+            }
+        }
+
+        if (!$item->file_path) {
+            return response()->json(['status' => 'error', 'message' => 'File not found.'], 404);
+        }
+
+        $path = str_replace('public/', '', $item->file_path);
+
+        if (!\Storage::disk('public')->exists($path)) {
+            return response()->json(['status' => 'error', 'message' => 'File not found on disk.'], 404);
+        }
+
+        return \Storage::disk('public')->download($path, $item->title . '.pdf');
     }
 
     /**

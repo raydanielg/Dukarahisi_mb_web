@@ -31,6 +31,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/catalog/note/{note}', [CatalogController::class, 'note']);
     Route::get('/catalog/topics/{subjectId}', [CatalogController::class, 'topics']);
     Route::get('/catalog/materials/{topicId}', [CatalogController::class, 'materials']);
+    Route::get('/catalog/materials/{type}/{id}/download', [CatalogController::class, 'downloadMaterial']);
 
     // Orders
     Route::get('/orders', [OrderController::class, 'index']);

@@ -1,7 +1,11 @@
+import 'dart:async';
+import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
-import 'package:pdfx/pdfx.dart';
+import 'package:dio/dio.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:flutter_pdfview/flutter_pdfview.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/services/catalog_service.dart';
 import '../../../core/network/api_client.dart';
@@ -40,10 +44,14 @@ class _CatalogMaterialsScreenState extends State<CatalogMaterialsScreen> {
     try {
       final response = await _catalogService.getMaterials(_topicId!, materialType: _materialType);
       if (mounted) {
+        final loadedMaterials = (response['data'] as List).map((e) => e as Map<String, dynamic>).toList();
         setState(() {
-          _materials = (response['data'] as List).map((e) => e as Map<String, dynamic>).toList();
+          _materials = loadedMaterials;
           _loading = false;
         });
+        if (loadedMaterials.length == 1) {
+          _openPdfViewer(loadedMaterials.first);
+        }
       }
     } catch (e) {
       if (mounted) {
@@ -53,6 +61,27 @@ class _CatalogMaterialsScreenState extends State<CatalogMaterialsScreen> {
         });
       }
     }
+  }
+
+  void _openPdfViewer(Map<String, dynamic> material) {
+    final bool hasAccess = material['has_purchased'] == true || material['is_free'] == true;
+    final String? fileUrl = material['file_url']?.toString();
+
+    if (!hasAccess || fileUrl == null || fileUrl.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Purchase this material to view the PDF'),
+          backgroundColor: AppColors.textPrimary,
+        ),
+      );
+      return;
+    }
+
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => _PdfViewerScreen(url: fileUrl, title: material['title']?.toString() ?? 'Document'),
+      ),
+    );
   }
 
   @override
@@ -192,7 +221,7 @@ class _CatalogMaterialsScreenState extends State<CatalogMaterialsScreen> {
             ),
             const SizedBox(width: 10),
             GestureDetector(
-              onTap: () => _handleViewMaterial(material),
+              onTap: () => _openPdfViewer(material),
               child: Container(
                 width: 40,
                 height: 40,
@@ -213,26 +242,6 @@ class _CatalogMaterialsScreenState extends State<CatalogMaterialsScreen> {
     );
   }
 
-  void _handleViewMaterial(Map<String, dynamic> material) {
-    final bool hasAccess = material['has_purchased'] == true || material['is_free'] == true;
-    final String? fileUrl = material['file_url']?.toString();
-
-    if (!hasAccess || fileUrl == null || fileUrl.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Purchase this material to view the PDF'),
-          backgroundColor: AppColors.textPrimary,
-        ),
-      );
-      return;
-    }
-
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => _PdfViewerScreen(url: fileUrl, title: material['title']?.toString() ?? 'Document'),
-      ),
-    );
-  }
 }
 
 class _PdfViewerScreen extends StatefulWidget {
@@ -246,23 +255,50 @@ class _PdfViewerScreen extends StatefulWidget {
 }
 
 class _PdfViewerScreenState extends State<_PdfViewerScreen> {
-  late final PdfControllerPinch _pdfController;
+  String? _localFilePath;
+  bool _loading = true;
+  String? _error;
+  int _pages = 0;
+  int _currentPage = 0;
+  bool _isReady = false;
+  final Completer<PDFViewController> _controller = Completer<PDFViewController>();
 
   @override
   void initState() {
     super.initState();
-    _pdfController = PdfControllerPinch(
-      document: PdfDocument.openData(
-        // ignore: invalid_return_type_for_catch_error
-        NetworkAssetBundle(Uri.parse(widget.url)).load(widget.url).then((byteData) => byteData.buffer.asUint8List()),
-      ),
-    );
+    _downloadPdf();
   }
 
-  @override
-  void dispose() {
-    _pdfController.dispose();
-    super.dispose();
+  Future<void> _downloadPdf() async {
+    try {
+      final apiClient = ApiClient();
+      final response = await apiClient.dio.get<List<int>>(
+        widget.url,
+        options: Options(responseType: ResponseType.bytes),
+      );
+      final bytes = Uint8List.fromList(response.data ?? []);
+
+      final dir = await getTemporaryDirectory();
+      final fileName = widget.url.split('/').last.isNotEmpty
+          ? widget.url.split('/').last
+          : 'document.pdf';
+      final file = File('${dir.path}/$fileName');
+      await file.writeAsBytes(bytes);
+
+      if (mounted) {
+        setState(() {
+          _localFilePath = file.path;
+          _loading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _error = 'Failed to load PDF: ${e.toString()}';
+          _loading = false;
+        });
+      }
+    }
   }
 
   @override
@@ -285,28 +321,51 @@ class _PdfViewerScreenState extends State<_PdfViewerScreen> {
           ),
         ),
       ),
-      body: PdfViewPinch(
-        controller: _pdfController,
-        builders: PdfViewPinchBuilders<DefaultBuilderOptions>(
-          options: const DefaultBuilderOptions(),
-          errorBuilder: (context, error) => Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.error_outline, color: Colors.red[400], size: 48),
-                const SizedBox(height: 16),
-                Text(
-                  'Failed to load PDF',
-                  style: TextStyle(color: AppColors.textSecondary),
+      body: _loading
+          ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
+          : _error != null
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.error_outline, color: Colors.red[400], size: 48),
+                      const SizedBox(height: 16),
+                      Text(
+                        _error!,
+                        style: TextStyle(color: AppColors.textSecondary),
+                      ),
+                    ],
+                  ),
+                )
+              : PDFView(
+                  filePath: _localFilePath,
+                  enableSwipe: true,
+                  swipeHorizontal: true,
+                  autoSpacing: false,
+                  pageFling: false,
+                  backgroundColor: Colors.grey[200],
+                  onRender: (pages) {
+                    setState(() {
+                      _pages = pages ?? 0;
+                      _isReady = true;
+                    });
+                  },
+                  onError: (error) {
+                    setState(() => _error = 'Failed to load PDF');
+                  },
+                  onPageError: (page, error) {
+                    setState(() => _error = 'Failed to load page $page');
+                  },
+                  onViewCreated: (PDFViewController pdfViewController) {
+                    _controller.complete(pdfViewController);
+                  },
+                  onPageChanged: (int? page, int? total) {
+                    setState(() {
+                      _currentPage = page ?? 0;
+                      _pages = total ?? 0;
+                    });
+                  },
                 ),
-              ],
-            ),
-          ),
-          documentLoaderBuilder: (context) => const Center(
-            child: CircularProgressIndicator(color: AppColors.primary),
-          ),
-        ),
-      ),
     );
   }
 }
