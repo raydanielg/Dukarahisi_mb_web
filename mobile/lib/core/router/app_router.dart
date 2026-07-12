@@ -15,6 +15,7 @@ import '../../features/dashboard/screens/main_screen.dart';
 import '../../features/dashboard/screens/dashboard_screen.dart';
 import '../../features/more/screens/more_screen.dart';
 import '../../features/payments/screens/payments_screen.dart';
+import '../../features/payments/screens/checkout_screen.dart';
 import '../../features/reports/screens/reports_screen.dart';
 import '../../features/catalog/screens/classes_screen.dart';
 import '../../features/catalog/screens/subjects_screen.dart';
@@ -126,6 +127,13 @@ class AppRouter {
         GoRoute(
           path: '/payments',
           builder: (context, state) => const PaymentsScreen(),
+        ),
+        GoRoute(
+          path: '/checkout',
+          builder: (context, state) {
+            final extra = state.extra as Map<String, dynamic>?;
+            return CheckoutScreen(payload: extra ?? {});
+          },
         ),
         GoRoute(
           path: '/reports',

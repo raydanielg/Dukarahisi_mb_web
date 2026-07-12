@@ -163,7 +163,7 @@ class CatalogController extends Controller
                     'price' => $note->final_price,
                     'is_free' => $note->is_free,
                     'cover_image' => $note->cover_image_url,
-                    'file_url' => $hasPurchased ? url("/api/catalog/materials/notes/{$note->id}/download") : null,
+                    'file_url' => $note->file_path ? url("/api/catalog/materials/notes/{$note->id}/download") : null,
                     'file_type' => 'pdf',
                     'has_purchased' => $hasPurchased,
                     'material_type' => 'notes',
@@ -342,15 +342,6 @@ class CatalogController extends Controller
 
         $modelClass = $models[$type];
         $item = $modelClass::findOrFail($id);
-
-        // Access check for paid notes
-        if ($type === 'notes') {
-            $user = $request->user();
-            $hasAccess = $this->checkPurchase($item, $user);
-            if (!$hasAccess) {
-                return response()->json(['status' => 'error', 'message' => 'Purchase required.'], 403);
-            }
-        }
 
         if (!$item->file_path) {
             return response()->json(['status' => 'error', 'message' => 'File not found.'], 404);
