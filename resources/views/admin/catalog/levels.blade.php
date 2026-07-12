@@ -389,9 +389,10 @@
                 'Accept': 'application/json'
             },
             body: JSON.stringify({
-                name: row.querySelector('td:nth-child(2) p').textContent,
-                description: row.querySelector('td:nth-child(3) p').textContent === 'No description' ? '' : row.querySelector('td:nth-child(3) p').textContent,
-                order: parseInt(row.querySelector('td:nth-child(4) span').textContent),
+                name: row.querySelector('td:nth-child(3) p').textContent,
+                description: row.querySelector('td:nth-child(4) p').textContent === 'No description' ? '' : row.querySelector('td:nth-child(4) p').textContent,
+                icon: row.querySelector('td:nth-child(2) img') ? row.querySelector('td:nth-child(2) img').getAttribute('src').replace('{{ asset('') }}', '') : '',
+                order: parseInt(row.querySelector('td:nth-child(5) span').textContent),
                 is_active: isActive ? 0 : 1
             })
         })
@@ -461,7 +462,7 @@
         levelsTable.innerHTML = '';
 
         if (levels.length === 0) {
-            levelsTable.innerHTML = '<tr id="emptyRow"><td colspan="6" class="px-6 py-12 text-center text-gray-400 text-sm">No levels found. Click "Add New Level" to create one.</td></tr>';
+            levelsTable.innerHTML = '<tr id="emptyRow"><td colspan="7" class="px-6 py-12 text-center text-gray-400 text-sm">No levels found. Click "Add New Level" to create one.</td></tr>';
             return;
         }
 
@@ -469,7 +470,11 @@
             const activeClass = level.is_active ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-red-50 text-red-700 border-red-100';
             const activeText = level.is_active ? 'Active' : 'Inactive';
             const description = level.description ? level.description.replace(/'/g, "\\'") : '';
+            const icon = level.icon ? level.icon.replace(/'/g, "\\'") : '';
             const displayDescription = level.description || 'No description';
+            const iconHtml = level.icon
+                ? `<img src="{{ asset('') }}${icon}" alt="${level.name}" class="w-10 h-10 rounded-lg object-contain bg-gray-50 p-1">`
+                : `<div class="w-10 h-10 rounded-lg bg-emerald-100 flex items-center justify-center text-emerald-600"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg></div>`;
 
             const row = document.createElement('tr');
             row.className = 'border-t border-gray-100 transition-colors animate-fade';
@@ -478,6 +483,7 @@
             row.setAttribute('data-name', level.name.toLowerCase());
             row.innerHTML = `
                 <td class="px-6 py-3 text-xs text-gray-500">${index + 1}</td>
+                <td class="px-6 py-3">${iconHtml}</td>
                 <td class="px-6 py-3"><p class="text-sm font-semibold text-gray-900">${level.name}</p></td>
                 <td class="px-6 py-3"><p class="text-xs text-gray-500 max-w-xs truncate">${displayDescription}</p></td>
                 <td class="px-6 py-3"><span class="inline-flex items-center px-2 py-1 rounded-md bg-gray-100 text-xs font-medium text-gray-700">${level.order}</span></td>
@@ -486,7 +492,7 @@
                 </td>
                 <td class="px-6 py-3 text-right">
                     <div class="flex items-center justify-end gap-2">
-                        <button onclick="editLevel(${level.id}, '${level.name.replace(/'/g, "\\'")}', '${description}', ${level.order}, ${level.is_active ? 1 : 0})" class="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors" title="Edit">
+                        <button onclick="editLevel(${level.id}, '${level.name.replace(/'/g, "\\'")}', '${description}', '${icon}', ${level.order}, ${level.is_active ? 1 : 0})" class="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors" title="Edit">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.433-4.333A2.001 2.001 0 0119 10a2.001 2.001 0 01-.433 1.333L12.5 17.5l-4 1 1-4 6.067-6.167z"/></svg>
                         </button>
                         <button onclick="deleteLevel(${level.id})" class="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="Delete">
