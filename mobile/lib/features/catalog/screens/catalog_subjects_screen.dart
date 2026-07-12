@@ -14,9 +14,11 @@ class CatalogSubjectsScreen extends StatefulWidget {
 class _CatalogSubjectsScreenState extends State<CatalogSubjectsScreen> {
   late final CatalogService _catalogService;
   List<Map<String, dynamic>>? _subjects;
+  List<Map<String, dynamic>> _filteredSubjects = [];
   bool _loading = true;
   int? _classId;
   String? _materialType;
+  final TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
@@ -40,6 +42,7 @@ class _CatalogSubjectsScreenState extends State<CatalogSubjectsScreen> {
       if (mounted) {
         setState(() {
           _subjects = (response['data'] as List).map((e) => e as Map<String, dynamic>).toList();
+          _filterSubjects();
           _loading = false;
         });
       }
@@ -47,9 +50,28 @@ class _CatalogSubjectsScreenState extends State<CatalogSubjectsScreen> {
       if (mounted) {
         setState(() {
           _subjects = [];
+          _filteredSubjects = [];
           _loading = false;
         });
       }
+    }
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _filterSubjects() {
+    final query = _searchController.text.toLowerCase().trim();
+    if (query.isEmpty) {
+      _filteredSubjects = List<Map<String, dynamic>>.from(_subjects ?? []);
+    } else {
+      _filteredSubjects = (_subjects ?? []).where((subject) {
+        final name = subject['name']?.toString().toLowerCase() ?? '';
+        return name.contains(query);
+      }).toList();
     }
   }
 
@@ -80,10 +102,49 @@ class _CatalogSubjectsScreenState extends State<CatalogSubjectsScreen> {
                 ],
               ),
             ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: TextField(
+                controller: _searchController,
+                onChanged: (value) => setState(() => _filterSubjects()),
+                decoration: InputDecoration(
+                  hintText: 'Search subjects',
+                  hintStyle: TextStyle(
+                    fontSize: 14,
+                    color: AppColors.textSecondary.withOpacity(0.5),
+                  ),
+                  prefixIcon: Icon(Icons.search, color: AppColors.primary.withOpacity(0.5), size: 20),
+                  suffixIcon: _searchController.text.isNotEmpty
+                      ? GestureDetector(
+                          onTap: () {
+                            _searchController.clear();
+                            setState(() => _filterSubjects());
+                          },
+                          child: Icon(Icons.clear, color: AppColors.primary.withOpacity(0.5), size: 18),
+                        )
+                      : null,
+                  filled: true,
+                  fillColor: Colors.grey[50],
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide(color: AppColors.primary.withOpacity(0.12)),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide(color: AppColors.primary.withOpacity(0.12)),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide(color: AppColors.primary.withOpacity(0.4)),
+                  ),
+                ),
+              ),
+            ),
             Expanded(
               child: _loading
                   ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
-                  : _subjects == null || _subjects!.isEmpty
+                  : _filteredSubjects.isEmpty
                       ? Center(
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
@@ -96,7 +157,9 @@ class _CatalogSubjectsScreenState extends State<CatalogSubjectsScreen> {
                               ),
                               const SizedBox(height: 16),
                               Text(
-                                'No subjects yet',
+                                _searchController.text.isEmpty
+                                    ? 'No subjects yet'
+                                    : 'No subjects found',
                                 style: TextStyle(
                                   fontSize: 16,
                                   color: AppColors.textSecondary,
@@ -105,18 +168,13 @@ class _CatalogSubjectsScreenState extends State<CatalogSubjectsScreen> {
                             ],
                           ),
                         )
-                      : GridView.builder(
+                      : ListView.separated(
                           padding: const EdgeInsets.all(16),
-                          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 2,
-                            crossAxisSpacing: 16,
-                            mainAxisSpacing: 16,
-                            childAspectRatio: 1.2,
-                          ),
-                          itemCount: _subjects!.length,
+                          itemCount: _filteredSubjects.length,
+                          separatorBuilder: (context, index) => const SizedBox(height: 12),
                           itemBuilder: (context, index) {
-                            final subject = _subjects![index];
-                            return _buildSubjectCard(subject);
+                            final subject = _filteredSubjects[index];
+                            return _buildSubjectListItem(subject, index + 1);
                           },
                         ),
             ),
@@ -126,7 +184,7 @@ class _CatalogSubjectsScreenState extends State<CatalogSubjectsScreen> {
     );
   }
 
-  Widget _buildSubjectCard(Map<String, dynamic> subject) {
+  Widget _buildSubjectListItem(Map<String, dynamic> subject, int orderNumber) {
     return GestureDetector(
       onTap: () => context.push('/catalog-topics', extra: {
         'subjectId': subject['id'],
@@ -134,73 +192,62 @@ class _CatalogSubjectsScreenState extends State<CatalogSubjectsScreen> {
       }),
       child: Container(
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Colors.white,
-              Colors.grey[50]!,
-            ],
-          ),
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: const Color(0xFF0EA5E9).withOpacity(0.2), width: 1),
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppColors.primary.withOpacity(0.12), width: 1.5),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFF0EA5E9).withOpacity(0.08),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
+              color: AppColors.primary.withOpacity(0.06),
+              blurRadius: 10,
+              offset: const Offset(0, 3),
             ),
           ],
         ),
         child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Container(
-                width: 60,
-                height: 60,
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [Color(0xFF0EA5E9), Color(0xFF0284C7)],
+              Image.asset(
+                'assets/foldericon.png',
+                width: 38,
+                height: 38,
+                fit: BoxFit.contain,
+                errorBuilder: (context, error, stackTrace) => Container(
+                  width: 38,
+                  height: 38,
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withOpacity(0.1),
+                    shape: BoxShape.circle,
                   ),
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFF0EA5E9).withOpacity(0.3),
-                      blurRadius: 8,
-                      offset: const Offset(0, 4),
+                  child: Center(
+                    child: Text(
+                      '$orderNumber',
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.primary,
+                      ),
                     ),
-                  ],
-                ),
-                child: const Icon(
-                  Icons.book,
-                  color: Colors.white,
-                  size: 32,
+                  ),
                 ),
               ),
-              const SizedBox(height: 16),
-              Text(
-                subject['name']?.toString() ?? 'Subject',
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.textPrimary,
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  subject['name']?.toString() ?? 'Subject',
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textPrimary,
+                  ),
                 ),
-                textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 4),
-              Text(
-                subject['description']?.toString() ?? '',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: AppColors.textSecondary,
-                ),
-                textAlign: TextAlign.center,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
+              const SizedBox(width: 6),
+              const Icon(
+                Icons.arrow_forward_ios,
+                color: AppColors.primary,
+                size: 16,
               ),
             ],
           ),

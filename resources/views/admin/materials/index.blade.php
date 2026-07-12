@@ -73,6 +73,7 @@
                     <th class="px-6 py-3 font-medium">Class</th>
                     <th class="px-6 py-3 font-medium">Subject</th>
                     <th class="px-6 py-3 font-medium">Topic</th>
+                    <th class="px-6 py-3 font-medium">Price</th>
                     <th class="px-6 py-3 font-medium">Order</th>
                     <th class="px-6 py-3 font-medium">Status</th>
                     <th class="px-6 py-3 font-medium text-right">Actions</th>
@@ -110,6 +111,13 @@
                             <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-medium bg-purple-50 text-purple-700 border border-purple-100">{{ $item->topic->name ?? 'No topic' }}</span>
                         </td>
                         <td class="px-6 py-3">
+                            @if($item->is_free || ($item->price ?? 0) <= 0)
+                                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-100">Free</span>
+                            @else
+                                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-medium bg-amber-50 text-amber-700 border border-amber-100">TZS {{ number_format($item->price, 2) }}</span>
+                            @endif
+                        </td>
+                        <td class="px-6 py-3">
                             <span class="inline-flex items-center px-2 py-1 rounded-md bg-gray-100 text-xs font-medium text-gray-700">{{ $item->order ?? 0 }}</span>
                         </td>
                         <td class="px-6 py-3">
@@ -119,7 +127,7 @@
                         </td>
                         <td class="px-6 py-3 text-right">
                             <div class="flex items-center justify-end gap-2">
-                                <button onclick="editMaterial({{ $item->id }}, {{ $item->subject_id }}, {{ $item->subject->classRoom->level_id }}, {{ $item->subject->classRoom->id }}, {{ $item->topic_id ?? 'null' }}, '{{ addslashes($item->title) }}', {{ $item->order ?? 0 }}, {{ $item->is_active ? 1 : 0 }}, '{{ addslashes($item->file_path ?? '') }}')" class="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors" title="Edit">
+                                <button onclick="editMaterial({{ $item->id }}, {{ $item->subject_id }}, {{ $item->subject->classRoom->level_id }}, {{ $item->subject->classRoom->id }}, {{ $item->topic_id ?? 'null' }}, '{{ addslashes($item->title) }}', {{ $item->price ?? 0 }}, {{ $item->order ?? 0 }}, {{ $item->is_active ? 1 : 0 }}, {{ $item->is_free ? 1 : 0 }}, '{{ addslashes($item->file_path ?? '') }}')" class="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors" title="Edit">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.433-4.333A2.001 2.001 0 0119 10a2.001 2.001 0 01-.433 1.333L12.5 17.5l-4 1 1-4 6.067-6.167z"/></svg>
                                 </button>
                                 <button onclick="deleteMaterial({{ $item->id }})" class="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="Delete">
@@ -129,7 +137,7 @@
                         </td>
                     </tr>
                     @empty
-                    <tr id="emptyRow"><td colspan="9" class="px-6 py-12 text-center text-gray-400 text-sm">No {{ strtolower($config['title']) }} found. Click "Add New {{ $config['singular'] }}" to create one.</td></tr>
+                    <tr id="emptyRow"><td colspan="10" class="px-6 py-12 text-center text-gray-400 text-sm">No {{ strtolower($config['title']) }} found. Click "Add New {{ $config['singular'] }}" to create one.</td></tr>
                     @endforelse
                 </tbody>
             </table>
@@ -186,6 +194,22 @@
             <div class="drawer-form-group">
                 <label for="materialTitle">Title</label>
                 <input type="text" id="materialTitle" name="title" required placeholder="e.g. Introduction to Algebra">
+            </div>
+
+            <div class="drawer-form-group">
+                <label for="materialPrice">Price (TZS)</label>
+                <input type="number" id="materialPrice" name="price" min="0" step="0.01" value="0" placeholder="0.00">
+                <p class="text-xs text-gray-500 mt-1">Enter 0 or check "Free" to make this document free</p>
+            </div>
+
+            <div class="drawer-form-group">
+                <label class="flex items-center gap-3 p-3 rounded-lg border border-gray-200 cursor-pointer hover:bg-gray-50 transition-colors">
+                    <input type="checkbox" id="materialFree" name="is_free" value="1" checked class="w-5 h-5 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500">
+                    <div>
+                        <span class="text-sm font-semibold text-gray-700 block">Free Document</span>
+                        <span class="text-xs text-gray-500">Users can access this without payment</span>
+                    </div>
+                </label>
             </div>
 
             <div class="drawer-form-group">
@@ -295,6 +319,8 @@
         materialTopic.innerHTML = '<option value="">Select a subject first</option>';
         materialTopic.disabled = true;
         document.getElementById('materialTitle').value = '';
+        document.getElementById('materialPrice').value = '0';
+        document.getElementById('materialFree').checked = true;
         materialPdfFile.value = '';
         pdfFileName.textContent = 'Click or drop PDF here';
         pdfFileName.classList.remove('text-emerald-700', 'font-semibold');
@@ -316,7 +342,7 @@
         editingId = null;
     }
 
-    function editMaterial(id, subjectId, levelId, classRoomId, topicId, title, order, isActive, filePath) {
+    function editMaterial(id, subjectId, levelId, classRoomId, topicId, title, price, order, isActive, isFree, filePath) {
         editingId = id;
         drawerTitle.textContent = 'Edit ' + singularName;
         document.getElementById('materialId').value = id;
@@ -325,6 +351,8 @@
         populateMaterialSubjects(classRoomId, subjectId);
         populateMaterialTopics(subjectId, topicId);
         document.getElementById('materialTitle').value = title;
+        document.getElementById('materialPrice').value = price || 0;
+        document.getElementById('materialFree').checked = isFree === 1;
         document.getElementById('materialOrder').value = order;
         document.getElementById('materialActive').checked = isActive === 1;
         materialPdfFile.value = '';
@@ -491,7 +519,12 @@
         const topicName = item.topic ? item.topic.name : 'No topic';
         const topicId = item.topic ? item.topic.id : 'null';
         const order = item.order ?? 0;
+        const price = parseFloat(item.price) || 0;
+        const isFree = item.is_free || price <= 0;
         const filePath = item.file_path ? escapeHtml(item.file_path) : '';
+        const priceBadge = isFree
+            ? `<span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-100">Free</span>`
+            : `<span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-medium bg-amber-50 text-amber-700 border border-amber-100">TZS ${price.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>`;
 
         const row = document.createElement('tr');
         row.className = 'border-t border-gray-100 transition-colors animate-fade';
@@ -500,6 +533,8 @@
         row.setAttribute('data-class-id', classRoomId);
         row.setAttribute('data-level-id', levelId);
         row.setAttribute('data-name', item.title.toLowerCase());
+        row.setAttribute('data-price', price);
+        row.setAttribute('data-is-free', isFree ? '1' : '0');
         row.innerHTML = `
             <td class="px-6 py-3 text-xs text-gray-500">${index}</td>
             <td class="px-6 py-3">
@@ -515,13 +550,14 @@
             <td class="px-6 py-3"><span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-medium bg-amber-50 text-amber-700 border border-amber-100">${className}</span></td>
             <td class="px-6 py-3"><span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-medium bg-sky-50 text-sky-700 border border-sky-100">${subjectName}</span></td>
             <td class="px-6 py-3"><span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-medium bg-purple-50 text-purple-700 border border-purple-100">${topicName}</span></td>
+            <td class="px-6 py-3">${priceBadge}</td>
             <td class="px-6 py-3"><span class="inline-flex items-center px-2 py-1 rounded-md bg-gray-100 text-xs font-medium text-gray-700">${order}</span></td>
             <td class="px-6 py-3">
                 <button onclick="toggleMaterialStatus(${item.id})" class="status-badge inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-medium border ${activeClass}">${activeText}</button>
             </td>
             <td class="px-6 py-3 text-right">
                 <div class="flex items-center justify-end gap-2">
-                    <button onclick="editMaterial(${item.id}, ${item.subject_id}, ${levelId}, ${classRoomId}, ${topicId}, '${escapeHtml(item.title)}', ${order}, ${item.is_active ? 1 : 0}, '${filePath}')" class="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors" title="Edit">
+                    <button onclick="editMaterial(${item.id}, ${item.subject_id}, ${levelId}, ${classRoomId}, ${topicId}, '${escapeHtml(item.title)}', ${price}, ${order}, ${item.is_active ? 1 : 0}, ${isFree ? 1 : 0}, '${filePath}')" class="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors" title="Edit">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.433-4.333A2.001 2.001 0 0119 10a2.001 2.001 0 01-.433 1.333L12.5 17.5l-4 1 1-4 6.067-6.167z"/></svg>
                     </button>
                     <button onclick="deleteMaterial(${item.id})" class="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="Delete">
@@ -547,7 +583,7 @@
             row.querySelector('td:first-child').textContent = index + 1;
         });
         if (rows.length === 0 && !document.getElementById('emptyRow')) {
-            materialsTable.innerHTML = '<tr id="emptyRow"><td colspan="9" class="px-6 py-12 text-center text-gray-400 text-sm">No ' + singularName.toLowerCase() + 's found. Click "Add New ' + singularName + '" to create one.</td></tr>';
+            materialsTable.innerHTML = '<tr id="emptyRow"><td colspan="10" class="px-6 py-12 text-center text-gray-400 text-sm">No ' + singularName.toLowerCase() + 's found. Click "Add New ' + singularName + '" to create one.</td></tr>';
         }
     }
 
@@ -562,6 +598,8 @@
 
         const formData = new FormData(materialForm);
         formData.set('order', parseInt(formData.get('order')) || 0);
+        formData.set('price', parseFloat(formData.get('price')) || 0);
+        formData.set('is_free', formData.get('is_free') ? 1 : 0);
         formData.set('is_active', formData.get('is_active') ? 1 : 0);
         formData.delete('_token');
 
@@ -661,6 +699,8 @@
         const badge = row.querySelector('.status-badge');
         const isActive = badge.textContent.trim() === 'Active';
         const subjectId = row.getAttribute('data-subject-id');
+        const currentPrice = parseFloat(row.getAttribute('data-price')) || 0;
+        const currentIsFree = row.getAttribute('data-is-free') === '1';
 
         fetch(`{{ url('materials') }}/${materialType}/${id}`, {
             method: 'PUT',
@@ -672,7 +712,9 @@
             body: JSON.stringify({
                 subject_id: parseInt(subjectId),
                 title: row.querySelector('td:nth-child(2) p').textContent,
-                order: parseInt(row.querySelector('td:nth-child(7) span').textContent),
+                price: currentPrice,
+                is_free: currentIsFree ? 1 : 0,
+                order: parseInt(row.querySelector('td:nth-child(8) span').textContent),
                 is_active: isActive ? 0 : 1
             })
         })

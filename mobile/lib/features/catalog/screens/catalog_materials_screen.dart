@@ -140,8 +140,9 @@ class _CatalogMaterialsScreenState extends State<CatalogMaterialsScreen> {
   }
 
   Widget _buildMaterialCard(Map<String, dynamic> material) {
-    final price = material['price']?.toString() ?? '0';
-    final isFree = price == '0' || price == '0.0';
+    final rawPrice = material['price'];
+    final double price = rawPrice is num ? rawPrice.toDouble() : (double.tryParse(rawPrice?.toString() ?? '0') ?? 0);
+    final bool isFree = material['is_free'] == true || price <= 0;
     final hasPurchased = material['has_purchased'] ?? false;
 
     return GestureDetector(
@@ -151,19 +152,12 @@ class _CatalogMaterialsScreenState extends State<CatalogMaterialsScreen> {
       child: Container(
         margin: const EdgeInsets.only(bottom: 12),
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Colors.white,
-              Colors.grey[50]!,
-            ],
-          ),
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: AppColors.primary.withOpacity(0.15), width: 1),
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppColors.primary.withOpacity(0.12), width: 1.5),
           boxShadow: [
             BoxShadow(
-              color: AppColors.primary.withOpacity(0.08),
+              color: AppColors.primary.withOpacity(0.06),
               blurRadius: 12,
               offset: const Offset(0, 4),
             ),
@@ -172,32 +166,19 @@ class _CatalogMaterialsScreenState extends State<CatalogMaterialsScreen> {
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Container(
-                width: 60,
-                height: 80,
+                width: 56,
+                height: 72,
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      AppColors.primary,
-                      AppColors.primaryDark,
-                    ],
-                  ),
+                  color: AppColors.primary.withOpacity(0.08),
                   borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.primary.withOpacity(0.3),
-                      blurRadius: 8,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
                 ),
                 child: Icon(
                   Icons.description_outlined,
-                  color: Colors.white,
-                  size: 32,
+                  color: AppColors.primary,
+                  size: 28,
                 ),
               ),
               const SizedBox(width: 14),
@@ -216,62 +197,50 @@ class _CatalogMaterialsScreenState extends State<CatalogMaterialsScreen> {
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 6),
-                    Text(
-                      material['description']?.toString() ?? '',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: AppColors.textSecondary,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 10),
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: isFree
-                                  ? [AppColors.success, AppColors.success.withOpacity(0.8)]
-                                  : [AppColors.accent, AppColors.accent.withOpacity(0.8)],
-                            ),
-                            borderRadius: BorderRadius.circular(16),
-                            boxShadow: [
-                              BoxShadow(
-                                color: (isFree ? AppColors.success : AppColors.accent).withOpacity(0.3),
-                                blurRadius: 6,
-                                offset: const Offset(0, 2),
+                    isFree
+                        ? Row(
+                            children: [
+                              Icon(Icons.check_circle, color: AppColors.success, size: 14),
+                              const SizedBox(width: 4),
+                              Text(
+                                'This source is free',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.success,
+                                ),
+                              ),
+                            ],
+                          )
+                        : Row(
+                            children: [
+                              Icon(Icons.monetization_on, color: AppColors.accent, size: 14),
+                              const SizedBox(width: 4),
+                              Text(
+                                'TZS ${price.toStringAsFixed(2)}',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.accent,
+                                ),
                               ),
                             ],
                           ),
-                          child: Text(
-                            isFree ? 'FREE' : 'TSh $price',
-                            style: const TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                            ),
-                          ),
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withOpacity(0.08),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        (material['file_type']?.toString() ?? 'PDF').toUpperCase(),
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.primary,
                         ),
-                        const SizedBox(width: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: AppColors.primary.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: AppColors.primary.withOpacity(0.3), width: 1),
-                          ),
-                          child: Text(
-                            material['file_type']?.toString().toUpperCase() ?? 'PDF',
-                            style: const TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.primary,
-                            ),
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
                   ],
                 ),
@@ -284,7 +253,7 @@ class _CatalogMaterialsScreenState extends State<CatalogMaterialsScreen> {
                   color: AppColors.primary.withOpacity(0.1),
                   shape: BoxShape.circle,
                 ),
-                child: Icon(
+                child: const Icon(
                   Icons.chevron_right_rounded,
                   color: AppColors.primary,
                   size: 20,

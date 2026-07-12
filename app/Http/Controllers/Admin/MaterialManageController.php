@@ -130,6 +130,8 @@ class MaterialManageController extends Controller
             'subject_id' => 'required|exists:subjects,id',
             'topic_id' => 'nullable|exists:topics,id',
             'title' => 'required|string|max:255',
+            'price' => 'nullable|numeric|min:0',
+            'is_free' => 'boolean',
             'pdf_file' => [
                 'nullable',
                 'file',
@@ -145,19 +147,22 @@ class MaterialManageController extends Controller
             'order' => 'required|integer|min:0',
         ]);
 
+        $price = isset($validated['price']) ? (float) $validated['price'] : 0;
+        $isFree = $request->boolean('is_free') || $price <= 0;
+
         $data = [
             'subject_id' => $validated['subject_id'],
             'topic_id' => $validated['topic_id'] ?? null,
             'title' => $validated['title'],
             'description' => null,
+            'price' => $isFree ? 0 : $price,
+            'is_free' => $isFree,
             'order' => $validated['order'],
             'is_active' => true,
         ];
 
         if ($type === 'notes') {
             $data['slug'] = Str::slug($validated['title']) . '-' . time();
-            $data['price'] = 0;
-            $data['is_free'] = true;
             $data['status'] = 'published';
         }
 
@@ -205,6 +210,8 @@ class MaterialManageController extends Controller
             'subject_id' => 'required|exists:subjects,id',
             'topic_id' => 'nullable|exists:topics,id',
             'title' => 'required|string|max:255',
+            'price' => 'nullable|numeric|min:0',
+            'is_free' => 'boolean',
             'pdf_file' => [
                 'nullable',
                 'file',
@@ -221,11 +228,16 @@ class MaterialManageController extends Controller
             'is_active' => 'boolean',
         ]);
 
+        $price = isset($validated['price']) ? (float) $validated['price'] : (float) ($item->price ?? 0);
+        $isFree = $request->boolean('is_free') || $price <= 0;
+
         $data = [
             'subject_id' => $validated['subject_id'],
             'topic_id' => $validated['topic_id'] ?? null,
             'title' => $validated['title'],
             'description' => null,
+            'price' => $isFree ? 0 : $price,
+            'is_free' => $isFree,
             'order' => $validated['order'],
             'is_active' => $validated['is_active'] ?? true,
         ];

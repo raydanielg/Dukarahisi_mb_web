@@ -105,18 +105,13 @@ class _CatalogClassesScreenState extends State<CatalogClassesScreen> {
                             ],
                           ),
                         )
-                      : GridView.builder(
+                      : ListView.separated(
                           padding: const EdgeInsets.all(16),
-                          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 2,
-                            crossAxisSpacing: 16,
-                            mainAxisSpacing: 16,
-                            childAspectRatio: 1.2,
-                          ),
                           itemCount: _classes!.length,
+                          separatorBuilder: (context, index) => const SizedBox(height: 12),
                           itemBuilder: (context, index) {
                             final classItem = _classes![index];
-                            return _buildClassCard(classItem);
+                            return _buildClassListItem(classItem, index + 1);
                           },
                         ),
             ),
@@ -126,7 +121,7 @@ class _CatalogClassesScreenState extends State<CatalogClassesScreen> {
     );
   }
 
-  Widget _buildClassCard(Map<String, dynamic> classItem) {
+  Widget _buildClassListItem(Map<String, dynamic> classItem, int orderNumber) {
     return GestureDetector(
       onTap: () => context.push('/catalog-subjects', extra: {
         'classId': classItem['id'],
@@ -134,73 +129,62 @@ class _CatalogClassesScreenState extends State<CatalogClassesScreen> {
       }),
       child: Container(
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Colors.white,
-              Colors.grey[50]!,
-            ],
-          ),
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: AppColors.accent.withOpacity(0.2), width: 1),
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppColors.primary.withOpacity(0.12), width: 1.5),
           boxShadow: [
             BoxShadow(
-              color: AppColors.accent.withOpacity(0.08),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
+              color: AppColors.primary.withOpacity(0.06),
+              blurRadius: 10,
+              offset: const Offset(0, 3),
             ),
           ],
         ),
         child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Container(
-                width: 60,
-                height: 60,
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [AppColors.accent, Color(0xFFE59E0B)],
+              Image.asset(
+                'assets/standards.png',
+                width: 46,
+                height: 46,
+                fit: BoxFit.contain,
+                errorBuilder: (context, error, stackTrace) => Container(
+                  width: 46,
+                  height: 46,
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withOpacity(0.1),
+                    shape: BoxShape.circle,
                   ),
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.accent.withOpacity(0.3),
-                      blurRadius: 8,
-                      offset: const Offset(0, 4),
+                  child: Center(
+                    child: Text(
+                      '$orderNumber',
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      classItem['name']?.toString() ?? 'Class',
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.textPrimary,
+                      ),
                     ),
                   ],
                 ),
-                child: const Icon(
-                  Icons.class_,
-                  color: Colors.white,
-                  size: 32,
-                ),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                classItem['name']?.toString() ?? 'Class',
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.textPrimary,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 4),
-              Text(
-                classItem['description']?.toString() ?? '',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: AppColors.textSecondary,
-                ),
-                textAlign: TextAlign.center,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
               ),
             ],
           ),

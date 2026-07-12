@@ -105,12 +105,13 @@ class _CatalogTopicsScreenState extends State<CatalogTopicsScreen> {
                             ],
                           ),
                         )
-                      : ListView.builder(
+                      : ListView.separated(
                           padding: const EdgeInsets.all(16),
                           itemCount: _topics!.length,
+                          separatorBuilder: (context, index) => const SizedBox(height: 12),
                           itemBuilder: (context, index) {
                             final topic = _topics![index];
-                            return _buildTopicCard(topic);
+                            return _buildTopicListItem(topic, index + 1);
                           },
                         ),
             ),
@@ -120,99 +121,57 @@ class _CatalogTopicsScreenState extends State<CatalogTopicsScreen> {
     );
   }
 
-  Widget _buildTopicCard(Map<String, dynamic> topic) {
+  Widget _buildTopicListItem(Map<String, dynamic> topic, int orderNumber) {
     return GestureDetector(
       onTap: () => context.push('/catalog-materials', extra: {
         'topicId': topic['id'],
         'materialType': _materialType,
       }),
       child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Colors.white,
-              Colors.grey[50]!,
-            ],
-          ),
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: const Color(0xFF8B5CF6).withOpacity(0.2), width: 1),
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: AppColors.primary.withOpacity(0.12), width: 1.5),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFF8B5CF6).withOpacity(0.08),
+              color: AppColors.primary.withOpacity(0.06),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
           ],
         ),
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Container(
-                width: 50,
-                height: 50,
+                width: 40,
+                height: 40,
                 decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [Color(0xFF8B5CF6), Color(0xFF7C3AED)],
-                  ),
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFF8B5CF6).withOpacity(0.3),
-                      blurRadius: 6,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
+                  color: AppColors.primary.withOpacity(0.1),
+                  shape: BoxShape.circle,
                 ),
-                child: const Icon(
-                  Icons.topic,
-                  color: Colors.white,
-                  size: 24,
+                child: Center(
+                  child: Text(
+                    '$orderNumber',
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.primary,
+                    ),
+                  ),
                 ),
               ),
               const SizedBox(width: 16),
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      topic['name']?.toString() ?? 'Topic',
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.textPrimary,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      topic['description']?.toString() ?? '',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: AppColors.textSecondary,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 8),
-              Container(
-                width: 32,
-                height: 32,
-                decoration: BoxDecoration(
-                  color: const Color(0xFF8B5CF6).withOpacity(0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.chevron_right_rounded,
-                  color: Color(0xFF8B5CF6),
-                  size: 20,
+                child: Text(
+                  topic['name']?.toString() ?? 'Topic',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textPrimary,
+                  ),
                 ),
               ),
             ],

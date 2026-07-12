@@ -7,12 +7,19 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Book extends Model
 {
-    protected $fillable = ['subject_id', 'topic_id', 'title', 'description', 'file_path', 'order', 'is_active'];
+    protected $fillable = ['subject_id', 'topic_id', 'title', 'description', 'price', 'is_free', 'file_path', 'order', 'is_active'];
 
     protected $casts = [
+        'price' => 'decimal:2',
+        'is_free' => 'boolean',
         'is_active' => 'boolean',
         'order' => 'integer',
     ];
+
+    public function getFinalPriceAttribute(): float
+    {
+        return $this->is_free ? 0 : (float) $this->price;
+    }
 
     public function subject(): BelongsTo
     {

@@ -153,53 +153,35 @@ class _CatalogLevelsScreenState extends State<CatalogLevelsScreen> {
           padding: const EdgeInsets.all(16),
           child: Row(
             children: [
-              Container(
-                width: 56,
-                height: 56,
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [AppColors.primary, AppColors.primaryDark],
-                  ),
-                  borderRadius: BorderRadius.circular(14),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.primary.withOpacity(0.3),
-                      blurRadius: 8,
-                      offset: const Offset(0, 4),
+              iconPath != null && iconPath.isNotEmpty
+                  ? iconPath.startsWith('http')
+                      ? Image.network(
+                          iconPath,
+                          width: 50,
+                          height: 50,
+                          fit: BoxFit.contain,
+                          errorBuilder: (context, error, stackTrace) => const Icon(
+                            Icons.school,
+                            color: AppColors.primary,
+                            size: 32,
+                          ),
+                        )
+                      : Image.asset(
+                          iconPath,
+                          width: 50,
+                          height: 50,
+                          fit: BoxFit.contain,
+                          errorBuilder: (context, error, stackTrace) => const Icon(
+                            Icons.school,
+                            color: AppColors.primary,
+                            size: 32,
+                          ),
+                        )
+                  : const Icon(
+                      Icons.school,
+                      color: AppColors.primary,
+                      size: 32,
                     ),
-                  ],
-                ),
-                child: iconPath != null && iconPath.isNotEmpty
-                    ? Padding(
-                        padding: const EdgeInsets.all(10),
-                        child: iconPath.startsWith('http')
-                            ? Image.network(
-                                iconPath,
-                                fit: BoxFit.contain,
-                                errorBuilder: (context, error, stackTrace) => const Icon(
-                                  Icons.school,
-                                  color: Colors.white,
-                                  size: 28,
-                                ),
-                              )
-                            : Image.asset(
-                                iconPath,
-                                fit: BoxFit.contain,
-                                errorBuilder: (context, error, stackTrace) => const Icon(
-                                  Icons.school,
-                                  color: Colors.white,
-                                  size: 28,
-                                ),
-                              ),
-                      )
-                    : const Icon(
-                        Icons.school,
-                        color: Colors.white,
-                        size: 28,
-                      ),
-              ),
               const SizedBox(width: 16),
               Expanded(
                 child: Column(
