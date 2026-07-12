@@ -88,10 +88,12 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       );
 
       if (paymentResponse['status'] != 'success') {
-        throw Exception(paymentResponse['message']?.toString() ?? 'Payment initiation failed');
+        final msg = paymentResponse['message']?.toString() ?? 'Payment initiation failed';
+        throw Exception(msg);
       }
 
       setState(() => _status = _CheckoutStatus.processing);
+      _showAuthorizePrompt();
       _startPolling();
     } catch (e) {
       if (mounted) {
@@ -101,6 +103,16 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         });
       }
     }
+  }
+
+  void _showAuthorizePrompt() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Please authorize the payment on your phone when the USSD push arrives.'),
+        duration: Duration(seconds: 6),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
   }
 
   void _startPolling() {
@@ -317,7 +329,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         statusText = 'Initiating payment...';
         break;
       case _CheckoutStatus.processing:
-        statusText = 'Waiting for payment confirmation...';
+        statusText = 'Waiting for USSD confirmation on your phone...';
         break;
       default:
         statusText = '';
@@ -401,20 +413,43 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         const SizedBox(height: 24),
         if (isBusy)
           Container(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
               color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(20),
               border: Border.all(color: Colors.grey.shade200),
             ),
             child: Column(
               children: [
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withOpacity(0.08),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.phone_android,
+                    size: 40,
+                    color: AppColors.primary,
+                  ),
+                ),
+                const SizedBox(height: 20),
                 const CircularProgressIndicator(color: AppColors.primary),
-                const SizedBox(height: 16),
+                const SizedBox(height: 20),
                 Text(
                   statusText,
                   textAlign: TextAlign.center,
-                  style: TextStyle(color: AppColors.textSecondary),
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'A USSD push has been sent to your mobile money number. Please enter your PIN to authorize the payment.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
                 ),
               ],
             ),

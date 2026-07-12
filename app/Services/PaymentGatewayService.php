@@ -112,16 +112,25 @@ class PaymentGatewayService
     }
 
     /**
-     * Verify webhook signature.
+     * Verify Snippe webhook signature.
+     *
+     * Signature = hex(HMAC-SHA256(signing_key, "{timestamp}.{raw_body}"))
      */
-    public static function verifyWebhookSignature(array $payload, string $signature): bool
+    public static function verifyWebhookSignature(string $rawBody, string $timestamp, string $signature): bool
     {
         $secret = config('services.payment.webhook_secret');
         if (!$secret) {
             return false;
         }
 
-        $computed = hash_hmac('sha256', json_encode($payload), $secret);
+        // Optional: reject stale events older than 5 minutes
+        if (abs(time() - (int) $timestamp) > 300) {
+            Log::warning('Snippe webhook timestamp too old', ['timestamp' => $timestamp]);
+            return false;
+        }
+
+        $message = $timestamp . '.' . $rawBody;
+        $computed = hash_hmac('sha256', $message, $secret);
         return hash_equals($computed, $signature);
     }
 
@@ -130,21 +139,37 @@ class PaymentGatewayService
      */
     public static function processWebhook(array $payload): ?Payment
     {
-        $metadata = $payload['data']['metadata'] ?? ($payload['metadata'] ?? []);
-        $orderId = $metadata['order_id'] ?? null;
-        $orderReference = $metadata['order_reference'] ?? null;
+        $data = $payload['data'] ?? [];
+        $gatewayReference = $data['reference'] ?? ($data['external_reference'] ?? null);
 
-        $order = null;
-        if ($orderId) {
-            $order = Order::find($orderId);
-        }
-        if (!$order && $orderReference) {
-            $order = Order::where('reference', $orderReference)->first();
-        }
-
-        if (!$order) {
-            Log::warning('Snippe webhook: order not found', ['payload' => $payload]);
+        if (!$gatewayReference) {
+            Log::warning('Snippe webhook: no gateway reference found', ['payload' => $payload]);
             return null;
+        }
+
+        $payment = Payment::where('reference', $gatewayReference)
+            ->orWhere('reference', $data['external_reference'] ?? null)
+            ->first();
+
+        if (!$payment) {
+            $metadata = $data['metadata'] ?? ($payload['metadata'] ?? []);
+            $orderId = $metadata['order_id'] ?? null;
+            $orderReference = $metadata['order_reference'] ?? null;
+
+            $order = null;
+            if ($orderId) {
+                $order = Order::find($orderId);
+            }
+            if (!$order && $orderReference) {
+                $order = Order::where('reference', $orderReference)->first();
+            }
+
+            if (!$order) {
+                Log::warning('Snippe webhook: payment/order not found', ['payload' => $payload]);
+                return null;
+            }
+
+            $payment = new Payment(['order_id' => $order->id]);
         }
 
         $eventType = $payload['type'] ?? '';
@@ -160,18 +185,17 @@ class PaymentGatewayService
             $paymentStatus = 'voided';
         }
 
-        $payment = Payment::updateOrCreate(
-            ['order_id' => $order->id],
-            [
-                'method' => $payload['data']['channel']['type'] ?? 'mobile_money',
-                'reference' => $payload['data']['reference'] ?? ($payload['data']['external_reference'] ?? $order->reference),
-                'status' => $paymentStatus,
-                'raw_response' => $payload,
-            ]
-        );
+        $payment->method = $data['channel']['type'] ?? 'mobile_money';
+        $payment->reference = $data['reference'] ?? ($data['external_reference'] ?? $payment->reference);
+        $payment->status = $paymentStatus;
+        $payment->raw_response = $payload;
+        $payment->save();
 
-        $order->status = $paymentStatus === 'success' ? 'paid' : $paymentStatus;
-        $order->save();
+        $order = $payment->order;
+        if ($order) {
+            $order->status = $paymentStatus === 'success' ? 'paid' : $paymentStatus;
+            $order->save();
+        }
 
         return $payment;
     }
