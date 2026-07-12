@@ -357,12 +357,29 @@ class CatalogController extends Controller
         }
 
         $path = str_replace('public/', '', $item->file_path);
+        $altPath = ltrim($item->file_path, '/');
 
-        if (!\Storage::disk('public')->exists($path)) {
-            return response()->json(['status' => 'error', 'message' => 'File not found on disk.'], 404);
+        $resolvedPath = null;
+        if (\Storage::disk('public')->exists($path)) {
+            $resolvedPath = $path;
+        } elseif (\Storage::disk('public')->exists($altPath)) {
+            $resolvedPath = $altPath;
         }
 
-        return \Storage::disk('public')->download($path, $item->title . '.pdf');
+        if (!$resolvedPath) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'File not found on disk.',
+                'debug' => [
+                    'file_path' => $item->file_path,
+                    'resolved_path' => $path,
+                    'alt_path' => $altPath,
+                    'storage_root' => storage_path('app/public'),
+                ],
+            ], 404);
+        }
+
+        return \Storage::disk('public')->download($resolvedPath, $item->title . '.pdf');
     }
 
     /**
