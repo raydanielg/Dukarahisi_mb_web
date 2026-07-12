@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import '../network/api_client.dart';
 import '../network/api_exceptions.dart';
 import '../storage/local_cache.dart';
+import '../storage/secure_store.dart';
 import '../config/constants.dart';
 
 class AuthService {
@@ -48,7 +49,7 @@ class AuthService {
       // Save token if verification successful
       if (response.data['status'] == 'success') {
         final token = response.data['data']['token'];
-        await LocalCache.set(Constants.tokenKey, token);
+        await SecureStore.setToken(token);
         await LocalCache.set(Constants.isLoggedInKey, true);
       }
       
@@ -74,7 +75,7 @@ class AuthService {
       // Save token if login successful
       if (response.data['status'] == 'success') {
         final token = response.data['data']['token'];
-        await LocalCache.set(Constants.tokenKey, token);
+        await SecureStore.setToken(token);
         await LocalCache.set(Constants.isLoggedInKey, true);
       }
       
@@ -137,7 +138,7 @@ class AuthService {
       final response = await _apiClient.post('/logout');
       
       // Clear local storage
-      await LocalCache.delete(Constants.tokenKey);
+      await SecureStore.deleteToken();
       await LocalCache.delete(Constants.isLoggedInKey);
       
       return response.data;
@@ -151,6 +152,6 @@ class AuthService {
   }
 
   Future<String?> getToken() async {
-    return LocalCache.get<String>(Constants.tokenKey);
+    return await SecureStore.getToken();
   }
 }

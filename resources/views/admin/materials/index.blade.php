@@ -566,8 +566,8 @@
         formData.delete('_token');
 
         const url = editingId
-            ? `{{ url('admin/materials') }}/${materialType}/${editingId}`
-            : `{{ url('admin/materials') }}/${materialType}`;
+            ? `{{ url('materials') }}/${materialType}/${editingId}`
+            : `{{ url('materials') }}/${materialType}`;
         const method = editingId ? 'POST' : 'POST';
 
         if (editingId) {
@@ -623,7 +623,7 @@
             cancelButtonText: 'Cancel'
         }).then((result) => {
             if (result.isConfirmed) {
-                fetch(`{{ url('admin/materials') }}/${materialType}/${id}`, {
+                fetch(`{{ url('materials') }}/${materialType}/${id}`, {
                     method: 'DELETE',
                     headers: {
                         'X-CSRF-TOKEN': '{{ csrf_token() }}',
@@ -662,7 +662,7 @@
         const isActive = badge.textContent.trim() === 'Active';
         const subjectId = row.getAttribute('data-subject-id');
 
-        fetch(`{{ url('admin/materials') }}/${materialType}/${id}`, {
+        fetch(`{{ url('materials') }}/${materialType}/${id}`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
@@ -700,7 +700,7 @@
         const subjectId = subjectFilter.value;
         const topicId = topicFilter.value;
 
-        const url = new URL('{{ url('admin/materials') }}/' + materialType, window.location.origin);
+        const url = new URL('{{ url('materials') }}/' + materialType, window.location.origin);
         if (term) url.searchParams.append('search', term);
         if (levelId) url.searchParams.append('level_id', levelId);
         if (classRoomId) url.searchParams.append('class_room_id', classRoomId);
