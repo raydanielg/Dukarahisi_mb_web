@@ -4,6 +4,18 @@
 @section('page_title', 'Manage Education Levels')
 
 @section('content')
+@php
+    $levelsData = [];
+    if ($withSubLevels ?? true) {
+        foreach ($levels as $l) {
+            $levelsData[$l->id] = [
+                'id' => $l->id,
+                'name' => $l->name,
+                'subLevels' => $l->relationLoaded('subLevels') ? $l->subLevels->map(fn($s) => ['id' => $s->id, 'name' => $s->name, 'description' => $s->description, 'order' => $s->order, 'is_active' => $s->is_active]) : [],
+            ];
+        }
+    }
+@endphp
 <div class="space-y-6">
     {{-- Header Card --}}
     <div class="hover-lift dashboard-card bg-white rounded-xl border border-gray-100 p-6">
@@ -196,7 +208,7 @@
 
     let editingId = null;
 
-    const allLevelsData = @json($withSubLevels ?? true ? $levels->mapWithKeys(fn($l) => [$l->id => ['id' => $l->id, 'name' => $l->name, 'subLevels' => $l->relationLoaded('subLevels') ? $l->subLevels->map(fn($s) => ['id' => $s->id, 'name' => $s->name, 'description' => $s->description, 'order' => $s->order, 'is_active' => $s->is_active]) : []]]) : []);
+    const allLevelsData = @json($levelsData);
 
     function openLevelDrawer() {
         editingId = null;

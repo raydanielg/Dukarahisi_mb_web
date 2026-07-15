@@ -4,6 +4,14 @@
 @section('page_title', 'Manage Classes')
 
 @section('content')
+@php
+    $levelsForSub = [];
+    if ($withSubLevels ?? true) {
+        foreach ($levels as $l) {
+            $levelsForSub[$l->id] = $l->relationLoaded('subLevels') ? $l->subLevels->map(fn($s) => ['id' => $s->id, 'name' => $s->name]) : [];
+        }
+    }
+@endphp
 <div class="space-y-6">
     {{-- Header Card --}}
     <div class="hover-lift dashboard-card bg-white rounded-xl border border-gray-100 p-6">
@@ -528,7 +536,7 @@
         updateClassesCount();
     }
 
-    const allLevelsForSub = @json(($withSubLevels ?? true) ? $levels->mapWithKeys(fn($l) => [$l->id => $l->relationLoaded('subLevels') ? $l->subLevels->map(fn($s) => ['id' => $s->id, 'name' => $s->name]) : []]) : []);
+    const allLevelsForSub = @json($levelsForSub);
 
     function populateSubLevels(levelId, selectedSubLevelId = null) {
         const select = document.getElementById('classSubLevel');
