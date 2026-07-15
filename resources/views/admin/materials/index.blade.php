@@ -4,6 +4,14 @@
 @section('page_title', 'Manage ' . $config['title'])
 
 @section('content')
+@php
+    $levelsSubData = [];
+    if ($withSubLevels ?? false) {
+        foreach ($levels as $l) {
+            $levelsSubData[$l->id] = $l->relationLoaded('subLevels') ? $l->subLevels->map(fn($s) => ['id' => $s->id, 'name' => $s->name])->toArray() : [];
+        }
+    }
+@endphp
 <div class="space-y-6">
     {{-- Header Card --}}
     <div class="hover-lift dashboard-card bg-white rounded-xl border border-gray-100 p-6">
@@ -37,6 +45,11 @@
                     <option value="{{ $level->id }}">{{ $level->name }}</option>
                 @endforeach
             </select>
+            @if($withSubLevels ?? false)
+            <select id="subLevelFilter" class="pl-4 pr-10 py-2.5 rounded-lg border border-gray-200 text-sm focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none bg-white min-w-[160px]">
+                <option value="">All Sub-Levels</option>
+            </select>
+            @endif
             <select id="classFilter" class="pl-4 pr-10 py-2.5 rounded-lg border border-gray-200 text-sm focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 outline-none bg-white min-w-[160px]">
                 <option value="">All Classes</option>
                 @foreach($classRooms as $classRoom)
@@ -70,6 +83,7 @@
                     <th class="px-6 py-3 font-medium">#</th>
                     <th class="px-6 py-3 font-medium">Title</th>
                     <th class="px-6 py-3 font-medium">Level</th>
+                    @if($withSubLevels ?? false)<th class="px-6 py-3 font-medium">Sub-Level</th>@endif
                     <th class="px-6 py-3 font-medium">Class</th>
                     <th class="px-6 py-3 font-medium">Subject</th>
                     <th class="px-6 py-3 font-medium">Topic</th>
@@ -101,6 +115,15 @@
                         <td class="px-6 py-3">
                             <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-100">{{ $item->subject->classRoom->level->name }}</span>
                         </td>
+                        @if($withSubLevels ?? false)
+                        <td class="px-6 py-3">
+                            @if($item->subject->classRoom->sub_level_id && $item->subject->classRoom->subLevel)
+                                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-medium bg-blue-50 text-blue-700 border border-blue-100">{{ $item->subject->classRoom->subLevel->name }}</span>
+                            @else
+                                <span class="text-xs text-gray-400">—</span>
+                            @endif
+                        </td>
+                        @endif
                         <td class="px-6 py-3">
                             <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-medium bg-amber-50 text-amber-700 border border-amber-100">{{ $item->subject->classRoom->name }}</span>
                         </td>
@@ -137,7 +160,7 @@
                         </td>
                     </tr>
                     @empty
-                    <tr id="emptyRow"><td colspan="10" class="px-6 py-12 text-center text-gray-400 text-sm">No {{ strtolower($config['title']) }} found. Click "Add New {{ $config['singular'] }}" to create one.</td></tr>
+                    <tr id="emptyRow"><td colspan="{{ $withSubLevels ? 11 : 10 }}" class="px-6 py-12 text-center text-gray-400 text-sm">No {{ strtolower($config['title']) }} found. Click "Add New {{ $config['singular'] }}" to create one.</td></tr>
                     @endforelse
                 </tbody>
             </table>
@@ -167,6 +190,13 @@
                     @foreach($levels as $level)
                         <option value="{{ $level->id }}">{{ $level->name }}</option>
                     @endforeach
+                </select>
+            </div>
+
+            <div class="drawer-form-group" id="materialSubLevelGroup" style="display:none;">
+                <label for="materialSubLevel">Sub-Level <span class="text-gray-400 text-xs">(optional)</span></label>
+                <select id="materialSubLevel" name="sub_level_filter">
+                    <option value="">All Sub-Levels</option>
                 </select>
             </div>
 
@@ -282,11 +312,14 @@
     const saveText = document.getElementById('saveText');
     const materialSearch = document.getElementById('materialSearch');
     const levelFilter = document.getElementById('levelFilter');
+    const subLevelFilter = document.getElementById('subLevelFilter');
     const classFilter = document.getElementById('classFilter');
     const subjectFilter = document.getElementById('subjectFilter');
     const topicFilter = document.getElementById('topicFilter');
     const itemsCount = document.getElementById('itemsCount');
     const materialLevel = document.getElementById('materialLevel');
+    const materialSubLevel = document.getElementById('materialSubLevel');
+    const materialSubLevelGroup = document.getElementById('materialSubLevelGroup');
     const materialClass = document.getElementById('materialClass');
     const materialSubject = document.getElementById('materialSubject');
     const materialTopic = document.getElementById('materialTopic');
@@ -301,6 +334,8 @@
     const allClassRooms = @json($classRooms);
     const allSubjects = @json($subjects);
     const allTopics = @json($topics);
+    const levelsSubData = @json($levelsSubData);
+    const hasSubLevels = @json($withSubLevels ?? false);
     const materialType = '{{ $type }}';
     const singularName = '{{ $config['singular'] }}';
 
@@ -312,6 +347,8 @@
         drawerTitle.textContent = 'Add New ' + singularName;
         document.getElementById('materialId').value = '';
         materialLevel.value = '';
+        materialSubLevelGroup.style.display = 'none';
+        materialSubLevel.innerHTML = '<option value="">All Sub-Levels</option>';
         materialClass.innerHTML = '<option value="">Select a level first</option>';
         materialClass.disabled = true;
         materialSubject.innerHTML = '<option value="">Select a class first</option>';
@@ -347,7 +384,10 @@
         drawerTitle.textContent = 'Edit ' + singularName;
         document.getElementById('materialId').value = id;
         materialLevel.value = levelId;
-        populateMaterialClasses(levelId, classRoomId);
+        const classRoom = allClassRooms.find(c => c.id == classRoomId);
+        const subLevelId = classRoom ? (classRoom.sub_level_id || 'none') : null;
+        populateSubLevels(levelId, subLevelId);
+        populateMaterialClasses(levelId, classRoomId, materialSubLevel.value);
         populateMaterialSubjects(classRoomId, subjectId);
         populateMaterialTopics(subjectId, topicId);
         document.getElementById('materialTitle').value = title;
@@ -416,9 +456,38 @@
         }
     });
 
-    function populateMaterialClasses(levelId, selectedClassId = null) {
+    function populateSubLevels(levelId, selectedSubLevel = null) {
+        materialSubLevel.innerHTML = '<option value="">All Sub-Levels</option>';
+        const subs = levelsSubData[levelId] || [];
+        if (subs.length > 0) {
+            subs.forEach(s => {
+                const option = document.createElement('option');
+                option.value = s.id;
+                option.textContent = s.name;
+                if (selectedSubLevel && s.id == selectedSubLevel) option.selected = true;
+                materialSubLevel.appendChild(option);
+            });
+            const noneOption = document.createElement('option');
+            noneOption.value = 'none';
+            noneOption.textContent = 'No Sub-Level';
+            if (selectedSubLevel === 'none') noneOption.selected = true;
+            materialSubLevel.appendChild(noneOption);
+            materialSubLevelGroup.style.display = '';
+        } else {
+            materialSubLevelGroup.style.display = 'none';
+        }
+    }
+
+    function populateMaterialClasses(levelId, selectedClassId = null, subLevelFilter = null) {
         materialClass.innerHTML = '<option value="">Select a class</option>';
-        const filteredClasses = allClassRooms.filter(c => c.level_id == levelId);
+        let filteredClasses = allClassRooms.filter(c => c.level_id == levelId);
+        if (subLevelFilter !== null && subLevelFilter !== '') {
+            if (subLevelFilter === 'none') {
+                filteredClasses = filteredClasses.filter(c => !c.sub_level_id);
+            } else {
+                filteredClasses = filteredClasses.filter(c => c.sub_level_id == subLevelFilter);
+            }
+        }
         filteredClasses.forEach(c => {
             const option = document.createElement('option');
             option.value = c.id;
@@ -456,7 +525,16 @@
     }
 
     materialLevel.addEventListener('change', function() {
-        populateMaterialClasses(this.value);
+        populateSubLevels(this.value);
+        populateMaterialClasses(this.value, null, materialSubLevel.value);
+        materialSubject.innerHTML = '<option value="">Select a class first</option>';
+        materialSubject.disabled = true;
+        materialTopic.innerHTML = '<option value="">Select a subject first</option>';
+        materialTopic.disabled = true;
+    });
+
+    materialSubLevel.addEventListener('change', function() {
+        populateMaterialClasses(materialLevel.value, null, this.value);
         materialSubject.innerHTML = '<option value="">Select a class first</option>';
         materialSubject.disabled = true;
         materialTopic.innerHTML = '<option value="">Select a subject first</option>';
@@ -513,6 +591,7 @@
         const level = classRoom && classRoom.level ? classRoom.level : null;
         const className = classRoom ? classRoom.name : 'Unknown';
         const levelName = level ? level.name : 'Unknown';
+        const subLevelName = classRoom && classRoom.sub_level_id ? (classRoom.sub_level ? classRoom.sub_level.name : '') : '';
         const subjectName = subject ? subject.name : 'Unknown';
         const classRoomId = classRoom ? classRoom.id : '';
         const levelId = level ? level.id : '';
@@ -522,6 +601,11 @@
         const price = parseFloat(item.price) || 0;
         const isFree = item.is_free || price <= 0;
         const filePath = item.file_path ? escapeHtml(item.file_path) : '';
+        const subLevelBadge = hasSubLevels
+            ? (subLevelName
+                ? `<td class="px-6 py-3"><span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-medium bg-blue-50 text-blue-700 border border-blue-100">${subLevelName}</span></td>`
+                : `<td class="px-6 py-3"><span class="text-xs text-gray-400">—</span></td>`)
+            : '';
         const priceBadge = isFree
             ? `<span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-100">Free</span>`
             : `<span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-medium bg-amber-50 text-amber-700 border border-amber-100">TZS ${price.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>`;
@@ -547,6 +631,7 @@
                 </div>
             </td>
             <td class="px-6 py-3"><span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-100">${levelName}</span></td>
+            ${subLevelBadge}
             <td class="px-6 py-3"><span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-medium bg-amber-50 text-amber-700 border border-amber-100">${className}</span></td>
             <td class="px-6 py-3"><span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-medium bg-sky-50 text-sky-700 border border-sky-100">${subjectName}</span></td>
             <td class="px-6 py-3"><span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-medium bg-purple-50 text-purple-700 border border-purple-100">${topicName}</span></td>
@@ -583,7 +668,7 @@
             row.querySelector('td:first-child').textContent = index + 1;
         });
         if (rows.length === 0 && !document.getElementById('emptyRow')) {
-            materialsTable.innerHTML = '<tr id="emptyRow"><td colspan="10" class="px-6 py-12 text-center text-gray-400 text-sm">No ' + singularName.toLowerCase() + 's found. Click "Add New ' + singularName + '" to create one.</td></tr>';
+            materialsTable.innerHTML = '<tr id="emptyRow"><td colspan="' + (hasSubLevels ? 11 : 10) + '" class="px-6 py-12 text-center text-gray-400 text-sm">No ' + singularName.toLowerCase() + 's found. Click "Add New ' + singularName + '" to create one.</td></tr>';
         }
     }
 
@@ -738,6 +823,7 @@
     function loadMaterials() {
         const term = materialSearch.value.trim();
         const levelId = levelFilter.value;
+        const subLevelId = subLevelFilter ? subLevelFilter.value : '';
         const classRoomId = classFilter.value;
         const subjectId = subjectFilter.value;
         const topicId = topicFilter.value;
@@ -745,6 +831,7 @@
         const url = new URL('{{ url('admin/materials') }}/' + materialType, window.location.origin);
         if (term) url.searchParams.append('search', term);
         if (levelId) url.searchParams.append('level_id', levelId);
+        if (subLevelId) url.searchParams.append('sub_level_id', subLevelId);
         if (classRoomId) url.searchParams.append('class_room_id', classRoomId);
         if (subjectId) url.searchParams.append('subject_id', subjectId);
         if (topicId) url.searchParams.append('topic_id', topicId);
@@ -775,7 +862,7 @@
         materialsTable.innerHTML = '';
 
         if (items.length === 0) {
-            materialsTable.innerHTML = '<tr id="emptyRow"><td colspan="9" class="px-6 py-12 text-center text-gray-400 text-sm">No ' + singularName.toLowerCase() + 's found. Click "Add New ' + singularName + '" to create one.</td></tr>';
+            materialsTable.innerHTML = '<tr id="emptyRow"><td colspan="' + (hasSubLevels ? 11 : 10) + '" class="px-6 py-12 text-center text-gray-400 text-sm">No ' + singularName.toLowerCase() + 's found. Click "Add New ' + singularName + '" to create one.</td></tr>';
             updateItemsCount();
             return;
         }
@@ -788,6 +875,7 @@
             const level = classRoom && classRoom.level ? classRoom.level : null;
             const className = classRoom ? classRoom.name : 'Unknown';
             const levelName = level ? level.name : 'Unknown';
+            const subLevelName = classRoom && classRoom.sub_level_id ? (classRoom.sub_level ? classRoom.sub_level.name : '') : '';
             const subjectName = subject ? subject.name : 'Unknown';
             const classRoomId = classRoom ? classRoom.id : '';
             const levelId = level ? level.id : '';
@@ -795,6 +883,11 @@
             const topicId = item.topic ? item.topic.id : 'null';
             const order = item.order ?? 0;
             const filePath = item.file_path ? escapeHtml(item.file_path) : '';
+            const subLevelBadge = hasSubLevels
+                ? (subLevelName
+                    ? `<td class="px-6 py-3"><span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-medium bg-blue-50 text-blue-700 border border-blue-100">${subLevelName}</span></td>`
+                    : `<td class="px-6 py-3"><span class="text-xs text-gray-400">—</span></td>`)
+                : '';
 
             const row = document.createElement('tr');
             row.className = 'border-t border-gray-100 transition-colors animate-fade';
@@ -816,6 +909,7 @@
                     </div>
                 </td>
                 <td class="px-6 py-3"><span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-100">${levelName}</span></td>
+                ${subLevelBadge}
                 <td class="px-6 py-3"><span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-medium bg-amber-50 text-amber-700 border border-amber-100">${className}</span></td>
                 <td class="px-6 py-3"><span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-medium bg-sky-50 text-sky-700 border border-sky-100">${subjectName}</span></td>
                 <td class="px-6 py-3"><span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-medium bg-purple-50 text-purple-700 border border-purple-100">${topicName}</span></td>
@@ -839,11 +933,43 @@
         updateItemsCount();
     }
 
+    function populateFilterSubLevels() {
+        if (!subLevelFilter) return;
+        const levelId = levelFilter.value;
+        const selected = subLevelFilter.value;
+        subLevelFilter.innerHTML = '<option value="">All Sub-Levels</option>';
+        const subs = levelsSubData[levelId] || [];
+        subs.forEach(s => {
+            const option = document.createElement('option');
+            option.value = s.id;
+            option.textContent = s.name;
+            if (s.id == selected) option.selected = true;
+            subLevelFilter.appendChild(option);
+        });
+        if (subs.length > 0) {
+            const noneOption = document.createElement('option');
+            noneOption.value = 'none';
+            noneOption.textContent = 'No Sub-Level';
+            subLevelFilter.appendChild(noneOption);
+        }
+    }
+
     function populateFilterClasses() {
         const levelId = levelFilter.value;
+        const subLevelId = subLevelFilter ? subLevelFilter.value : '';
         const selectedClass = classFilter.value;
         classFilter.innerHTML = '<option value="">All Classes</option>';
-        allClassRooms.filter(c => !levelId || c.level_id == levelId).forEach(c => {
+        allClassRooms.filter(c => {
+            if (levelId && c.level_id != levelId) return false;
+            if (subLevelId) {
+                if (subLevelId === 'none') {
+                    if (c.sub_level_id) return false;
+                } else {
+                    if (c.sub_level_id != subLevelId) return false;
+                }
+            }
+            return true;
+        }).forEach(c => {
             const option = document.createElement('option');
             option.value = c.id;
             option.textContent = c.name + ' (' + (c.level ? c.level.name : '') + ')';
@@ -889,9 +1015,17 @@
     });
 
     levelFilter.addEventListener('change', function() {
+        populateFilterSubLevels();
         populateFilterClasses();
         loadMaterials();
     });
+
+    if (subLevelFilter) {
+        subLevelFilter.addEventListener('change', function() {
+            populateFilterClasses();
+            loadMaterials();
+        });
+    }
 
     classFilter.addEventListener('change', function() {
         populateFilterSubjects();

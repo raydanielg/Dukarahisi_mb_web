@@ -14,10 +14,19 @@ use App\Models\Subject;
 use App\Models\Syllabus;
 use App\Models\Topic;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 
 class MaterialManageController extends Controller
 {
+    protected function subLevelsTableExists(): bool
+    {
+        try {
+            return Schema::hasTable('sub_levels');
+        } catch (\Exception $e) {
+            return false;
+        }
+    }
     protected const TYPES = [
         'notes' => [
             'model' => Note::class,
@@ -75,12 +84,16 @@ class MaterialManageController extends Controller
         $config = $this->getConfig($type);
         $model = $config['model'];
 
-        $levels = Level::orderBy('order')->get();
-        $classRooms = ClassRoom::with('level')->orderBy('order')->get();
+        $withSubLevels = $this->subLevelsTableExists();
+        $levels = $withSubLevels ? Level::with('subLevels')->orderBy('order')->get() : Level::orderBy('order')->get();
+        $classRooms = $withSubLevels ? ClassRoom::with(['level', 'subLevel'])->orderBy('order')->get() : ClassRoom::with('level')->orderBy('order')->get();
         $subjects = Subject::with('classRoom.level')->orderBy('order')->get();
         $topics = Topic::with('subject.classRoom.level')->orderBy('order')->get();
 
         $query = $model::with(['subject.classRoom.level', 'topic'])->orderBy('order');
+        if ($withSubLevels) {
+            $query->with(['subject.classRoom.subLevel']);
+        }
 
         if ($request->filled('subject_id')) {
             $query->where('subject_id', $request->subject_id);
@@ -102,6 +115,17 @@ class MaterialManageController extends Controller
             });
         }
 
+        if ($request->filled('sub_level_id')) {
+            $subLevelId = $request->sub_level_id;
+            $query->whereHas('subject.classRoom', function ($q) use ($subLevelId) {
+                if ($subLevelId === 'none') {
+                    $q->whereNull('sub_level_id');
+                } else {
+                    $q->where('sub_level_id', $subLevelId);
+                }
+            });
+        }
+
         if ($request->filled('search')) {
             $search = $request->input('search');
             $query->where(function ($q) use ($search) {
@@ -118,7 +142,7 @@ class MaterialManageController extends Controller
             return response()->json(['success' => true, 'items' => $items]);
         }
 
-        return view('admin.materials.index', compact('items', 'levels', 'classRooms', 'subjects', 'topics', 'type', 'config'));
+        return view('admin.materials.index', compact('items', 'levels', 'classRooms', 'subjects', 'topics', 'type', 'config', 'withSubLevels'));
     }
 
     public function store(string $type, Request $request)
@@ -174,6 +198,9 @@ class MaterialManageController extends Controller
         }
 
         $item->load(['subject.classRoom.level', 'topic']);
+        if ($this->subLevelsTableExists()) {
+            $item->load(['subject.classRoom.subLevel']);
+        }
 
         if ($request->ajax() || $request->wantsJson()) {
             return response()->json([
@@ -259,6 +286,9 @@ class MaterialManageController extends Controller
         }
 
         $item->load(['subject.classRoom.level', 'topic']);
+        if ($this->subLevelsTableExists()) {
+            $item->load(['subject.classRoom.subLevel']);
+        }
 
         if ($request->ajax() || $request->wantsJson()) {
             return response()->json([
