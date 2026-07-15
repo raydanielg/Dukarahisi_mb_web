@@ -9,9 +9,19 @@ use App\Models\SubLevel;
 use App\Models\Subject;
 use App\Models\Topic;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Schema;
 
 class CatalogManageController extends Controller
 {
+    protected function subLevelsTableExists(): bool
+    {
+        try {
+            return Schema::hasTable('sub_levels');
+        } catch (\Exception $e) {
+            return false;
+        }
+    }
+
     // Levels
     public function levelsIndex(Request $request)
     {
@@ -58,7 +68,9 @@ class CatalogManageController extends Controller
         }
 
         $level = Level::create($data);
-        $level->load('subLevels');
+        if ($this->subLevelsTableExists()) {
+            $level->load('subLevels');
+        }
 
         if ($request->ajax() || $request->wantsJson()) {
             return response()->json([
@@ -97,7 +109,9 @@ class CatalogManageController extends Controller
         }
 
         $level->update($data);
-        $level->load('subLevels');
+        if ($this->subLevelsTableExists()) {
+            $level->load('subLevels');
+        }
 
         if ($request->ajax() || $request->wantsJson()) {
             return response()->json([
