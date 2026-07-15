@@ -55,6 +55,7 @@ class CatalogManageController extends Controller
         }
 
         $level = Level::create($data);
+        $level->load('subLevels');
 
         if ($request->ajax() || $request->wantsJson()) {
             return response()->json([
@@ -93,6 +94,7 @@ class CatalogManageController extends Controller
         }
 
         $level->update($data);
+        $level->load('subLevels');
 
         if ($request->ajax() || $request->wantsJson()) {
             return response()->json([

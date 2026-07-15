@@ -190,6 +190,8 @@
 
     let editingId = null;
 
+    const allLevelsData = @json($levels->mapWithKeys(fn($l) => [$l->id => ['id' => $l->id, 'name' => $l->name, 'subLevels' => $l->subLevels->map(fn($s) => ['id' => $s->id, 'name' => $s->name, 'description' => $s->description, 'order' => $s->order, 'is_active' => $s->is_active])]]));
+
     function openLevelDrawer() {
         editingId = null;
         drawerTitle.textContent = 'Add New Level';
@@ -311,6 +313,11 @@
             ? `<img src="${iconUrl}" alt="${level.name}" class="w-10 h-10 rounded-lg object-contain bg-gray-50 p-1">`
             : `<div class="w-10 h-10 rounded-lg bg-emerald-100 flex items-center justify-center text-emerald-600"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg></div>`;
 
+        const subs = (allLevelsData[level.id] && allLevelsData[level.id].subLevels) ? allLevelsData[level.id].subLevels : [];
+        const subBadgesHtml = subs.length > 0
+            ? `<div class="flex flex-wrap gap-1">${subs.map(s => `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-blue-50 text-blue-700 border border-blue-100">${s.name}</span>`).join('')}</div>`
+            : '<span class="text-xs text-gray-400">No sub-levels</span>';
+
         const row = document.createElement('tr');
         row.className = 'border-t border-gray-100 transition-colors';
         row.setAttribute('data-id', level.id);
@@ -319,6 +326,13 @@
             <td class="px-6 py-3 text-xs text-gray-500">${index}</td>
             <td class="px-6 py-3">${iconHtml}</td>
             <td class="px-6 py-3"><p class="text-sm font-semibold text-gray-900">${level.name}</p></td>
+            <td class="px-6 py-3">
+                ${subBadgesHtml}
+                <button onclick="openSubLevelDrawer(${level.id}, '${level.name.replace(/'/g, "\\'")}')" class="mt-1 text-[10px] text-emerald-600 hover:text-emerald-700 font-medium inline-flex items-center gap-1">
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                    Manage Sub-Levels
+                </button>
+            </td>
             <td class="px-6 py-3"><p class="text-xs text-gray-500 max-w-xs truncate">${level.description || 'No description'}</p></td>
             <td class="px-6 py-3"><span class="inline-flex items-center px-2 py-1 rounded-md bg-gray-100 text-xs font-medium text-gray-700">${level.order}</span></td>
             <td class="px-6 py-3">
@@ -351,7 +365,7 @@
             row.querySelector('td:first-child').textContent = index + 1;
         });
         if (rows.length === 0 && !document.getElementById('emptyRow')) {
-            levelsTable.innerHTML = '<tr id="emptyRow"><td colspan="7" class="px-6 py-12 text-center text-gray-400 text-sm">No levels found. Click "Add New Level" to create one.</td></tr>';
+            levelsTable.innerHTML = '<tr id="emptyRow"><td colspan="8" class="px-6 py-12 text-center text-gray-400 text-sm">No levels found. Click "Add New Level" to create one.</td></tr>';
         }
     }
 
@@ -391,6 +405,12 @@
             setLoading(false);
             if (result.success) {
                 showToast('success', result.message);
+                if (!allLevelsData[result.level.id]) {
+                    allLevelsData[result.level.id] = { id: result.level.id, name: result.level.name, subLevels: result.level.sub_levels || [] };
+                } else {
+                    allLevelsData[result.level.id].name = result.level.name;
+                    allLevelsData[result.level.id].subLevels = result.level.sub_levels || allLevelsData[result.level.id].subLevels;
+                }
                 addLevelToTable(result.level);
                 closeLevelDrawer();
             } else {
@@ -462,9 +482,9 @@
             },
             body: JSON.stringify({
                 name: row.querySelector('td:nth-child(3) p').textContent,
-                description: row.querySelector('td:nth-child(4) p').textContent === 'No description' ? '' : row.querySelector('td:nth-child(4) p').textContent,
+                description: row.querySelector('td:nth-child(5) p').textContent === 'No description' ? '' : row.querySelector('td:nth-child(5) p').textContent,
                 icon: row.querySelector('td:nth-child(2) img') ? row.querySelector('td:nth-child(2) img').getAttribute('src').replace('{{ asset('') }}', '') : '',
-                order: parseInt(row.querySelector('td:nth-child(5) span').textContent),
+                order: parseInt(row.querySelector('td:nth-child(6) span').textContent),
                 is_active: isActive ? 0 : 1
             })
         })
@@ -534,7 +554,7 @@
         levelsTable.innerHTML = '';
 
         if (levels.length === 0) {
-            levelsTable.innerHTML = '<tr id="emptyRow"><td colspan="7" class="px-6 py-12 text-center text-gray-400 text-sm">No levels found. Click "Add New Level" to create one.</td></tr>';
+            levelsTable.innerHTML = '<tr id="emptyRow"><td colspan="8" class="px-6 py-12 text-center text-gray-400 text-sm">No levels found. Click "Add New Level" to create one.</td></tr>';
             return;
         }
 
@@ -549,6 +569,11 @@
                 ? `<img src="${iconUrl}" alt="${level.name}" class="w-10 h-10 rounded-lg object-contain bg-gray-50 p-1">`
                 : `<div class="w-10 h-10 rounded-lg bg-emerald-100 flex items-center justify-center text-emerald-600"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg></div>`;
 
+            const subs = (allLevelsData[level.id] && allLevelsData[level.id].subLevels) ? allLevelsData[level.id].subLevels : [];
+            const subBadgesHtml = subs.length > 0
+                ? `<div class="flex flex-wrap gap-1">${subs.map(s => `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-blue-50 text-blue-700 border border-blue-100">${s.name}</span>`).join('')}</div>`
+                : '<span class="text-xs text-gray-400">No sub-levels</span>';
+
             const row = document.createElement('tr');
             row.className = 'border-t border-gray-100 transition-colors animate-fade';
             row.style.animationDelay = `${index * 0.05}s`;
@@ -558,6 +583,13 @@
                 <td class="px-6 py-3 text-xs text-gray-500">${index + 1}</td>
                 <td class="px-6 py-3">${iconHtml}</td>
                 <td class="px-6 py-3"><p class="text-sm font-semibold text-gray-900">${level.name}</p></td>
+                <td class="px-6 py-3">
+                    ${subBadgesHtml}
+                    <button onclick="openSubLevelDrawer(${level.id}, '${level.name.replace(/'/g, "\\'")}')" class="mt-1 text-[10px] text-emerald-600 hover:text-emerald-700 font-medium inline-flex items-center gap-1">
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                        Manage Sub-Levels
+                    </button>
+                </td>
                 <td class="px-6 py-3"><p class="text-xs text-gray-500 max-w-xs truncate">${displayDescription}</p></td>
                 <td class="px-6 py-3"><span class="inline-flex items-center px-2 py-1 rounded-md bg-gray-100 text-xs font-medium text-gray-700">${level.order}</span></td>
                 <td class="px-6 py-3">
@@ -577,6 +609,7 @@
             levelsTable.appendChild(row);
         });
     }
+</script>
 
 {{-- Sub-Level Sidebar Drawer --}}
 <div id="subLevelDrawer" class="drawer-overlay" aria-labelledby="sub-drawer-title" role="dialog" aria-modal="true" onclick="closeSubLevelDrawer()">
@@ -624,12 +657,10 @@
 </div>
 
 <script>
-    // Sub-Level management
+    // Sub-Level management (uses showToast/allLevelsData from first script block)
     const subLevelDrawer = document.getElementById('subLevelDrawer');
     const subLevelSidebar = subLevelDrawer.querySelector('.drawer-sidebar');
     const subLevelList = document.getElementById('subLevelList');
-
-    const allLevelsData = @json($levels->mapWithKeys(fn($l) => [$l->id => ['id' => $l->id, 'name' => $l->name, 'subLevels' => $l->subLevels->map(fn($s) => ['id' => $s->id, 'name' => $s->name, 'description' => $s->description, 'order' => $s->order, 'is_active' => $s->is_active])]]));
 
     function openSubLevelDrawer(levelId, levelName) {
         document.getElementById('subLevelLevelId').value = levelId;
