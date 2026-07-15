@@ -15,8 +15,11 @@ class CatalogManageController extends Controller
     // Levels
     public function levelsIndex(Request $request)
     {
+        $withSubLevels = $this->subLevelsTableExists();
+
         if ($request->ajax() || $request->wantsJson()) {
-            $query = Level::with('subLevels')->orderBy('order');
+            $query = $withSubLevels ? Level::with('subLevels') : Level::query();
+            $query->orderBy('order');
 
             if ($request->filled('search')) {
                 $search = $request->input('search');
@@ -30,7 +33,7 @@ class CatalogManageController extends Controller
             return response()->json(['success' => true, 'levels' => $levels]);
         }
 
-        $levels = Level::with('subLevels')->orderBy('order')->get();
+        $levels = ($withSubLevels ? Level::with('subLevels') : Level::query())->orderBy('order')->get();
         return view('admin.catalog.levels', compact('levels'));
     }
 
@@ -208,8 +211,10 @@ class CatalogManageController extends Controller
     // Classes
     public function classesIndex(Request $request)
     {
-        $levels = Level::with('subLevels')->orderBy('order')->get();
-        $query = ClassRoom::with(['level', 'subLevel'])->orderBy('order');
+        $withSubLevels = $this->subLevelsTableExists();
+        $levels = ($withSubLevels ? Level::with('subLevels') : Level::query())->orderBy('order')->get();
+        $query = $withSubLevels ? ClassRoom::with(['level', 'subLevel']) : ClassRoom::with(['level']);
+        $query->orderBy('order');
 
         if ($request->filled('level_id')) {
             $query->where('level_id', $request->level_id);
