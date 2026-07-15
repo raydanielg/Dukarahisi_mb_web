@@ -24,6 +24,7 @@ import '../../features/catalog/screens/topics_screen.dart';
 import '../../features/catalog/screens/materials_screen.dart' as catalog;
 import '../../features/catalog/screens/catalog_levels_screen.dart';
 import '../../features/catalog/screens/catalog_classes_screen.dart';
+import '../../features/catalog/screens/catalog_sub_levels_screen.dart';
 import '../../features/catalog/screens/catalog_subjects_screen.dart';
 import '../../features/catalog/screens/catalog_topics_screen.dart';
 import '../../features/catalog/screens/catalog_materials_screen.dart';
@@ -199,6 +200,10 @@ class AppRouter {
         GoRoute(
           path: '/catalog-classes',
           builder: (context, state) => const CatalogClassesScreen(),
+        ),
+        GoRoute(
+          path: '/catalog-sub-levels',
+          builder: (context, state) => const CatalogSubLevelsScreen(),
         ),
         GoRoute(
           path: '/catalog-subjects',

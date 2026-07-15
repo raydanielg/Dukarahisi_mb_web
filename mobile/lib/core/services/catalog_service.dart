@@ -18,11 +18,18 @@ class CatalogService {
     }
   }
 
-  Future<Map<String, dynamic>> getClasses(int levelId, {String? materialType}) async {
+  Future<Map<String, dynamic>> getClasses(int levelId, {String? materialType, dynamic subLevelId}) async {
     try {
       String url = '/catalog/classes/$levelId';
+      final params = <String>[];
       if (materialType != null) {
-        url += '?material_type=$materialType';
+        params.add('material_type=$materialType');
+      }
+      if (subLevelId != null) {
+        params.add('sub_level_id=$subLevelId');
+      }
+      if (params.isNotEmpty) {
+        url += '?${params.join('&')}';
       }
       final response = await _apiClient.get(url);
       return response.data;

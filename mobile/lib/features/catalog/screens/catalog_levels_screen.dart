@@ -122,12 +122,25 @@ class _CatalogLevelsScreenState extends State<CatalogLevelsScreen> {
 
   Widget _buildLevelCard(Map<String, dynamic> level) {
     final iconPath = level['icon']?.toString();
+    final subLevels = level['sub_levels'] as List?;
 
     return GestureDetector(
-      onTap: () => context.push('/catalog-classes', extra: {
-        'levelId': level['id'],
-        'materialType': _materialType,
-      }),
+      onTap: () {
+        if (subLevels != null && subLevels.isNotEmpty) {
+          context.push('/catalog-sub-levels', extra: {
+            'levelId': level['id'],
+            'levelName': level['name']?.toString(),
+            'levelIcon': iconPath,
+            'materialType': _materialType,
+            'subLevels': subLevels,
+          });
+        } else {
+          context.push('/catalog-classes', extra: {
+            'levelId': level['id'],
+            'materialType': _materialType,
+          });
+        }
+      },
       child: Container(
         margin: const EdgeInsets.only(bottom: 12),
         decoration: BoxDecoration(

@@ -16,6 +16,7 @@ class _CatalogClassesScreenState extends State<CatalogClassesScreen> {
   List<Map<String, dynamic>>? _classes;
   bool _loading = true;
   int? _levelId;
+  dynamic _subLevelId;
   String? _materialType;
 
   @override
@@ -26,6 +27,7 @@ class _CatalogClassesScreenState extends State<CatalogClassesScreen> {
       final extra = GoRouterState.of(context).extra as Map<String, dynamic>?;
       if (extra != null) {
         _levelId = extra['levelId'] as int?;
+        _subLevelId = extra['subLevelId'];
         _materialType = extra['materialType'] as String?;
         if (_levelId != null) {
           _loadClasses();
@@ -36,7 +38,7 @@ class _CatalogClassesScreenState extends State<CatalogClassesScreen> {
 
   Future<void> _loadClasses() async {
     try {
-      final response = await _catalogService.getClasses(_levelId!, materialType: _materialType);
+      final response = await _catalogService.getClasses(_levelId!, materialType: _materialType, subLevelId: _subLevelId);
       if (mounted) {
         setState(() {
           _classes = (response['data'] as List).map((e) => e as Map<String, dynamic>).toList();

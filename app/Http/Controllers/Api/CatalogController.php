@@ -77,10 +77,18 @@ class CatalogController extends Controller
     {
         $materialType = $request->query('material_type', 'notes');
         $hasSubLevels = $this->subLevelsTableExists();
+        $subLevelId = $request->query('sub_level_id');
 
         $classes = $level->classRooms()
             ->where('is_active', true)
             ->when($hasSubLevels, fn($q) => $q->with('subLevel'))
+            ->when($subLevelId !== null, function ($q) use ($subLevelId) {
+                if ($subLevelId === 'none' || $subLevelId === '0') {
+                    $q->whereNull('sub_level_id');
+                } else {
+                    $q->where('sub_level_id', $subLevelId);
+                }
+            })
             ->orderBy('order')
             ->get()
             ->map(function (ClassRoom $class) {
