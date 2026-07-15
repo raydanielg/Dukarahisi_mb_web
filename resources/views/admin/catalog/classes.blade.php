@@ -64,7 +64,7 @@
                             <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-100">{{ $classRoom->level->name }}</span>
                         </td>
                         <td class="px-6 py-3">
-                            @if($classRoom->subLevel)
+                            @if(($withSubLevels ?? true) && $classRoom->relationLoaded('subLevel') && $classRoom->subLevel)
                                 <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-medium bg-blue-50 text-blue-700 border border-blue-100">{{ $classRoom->subLevel->name }}</span>
                             @else
                                 <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-medium bg-gray-50 text-gray-500 border border-gray-100">None</span>
@@ -528,7 +528,7 @@
         updateClassesCount();
     }
 
-    const allLevelsForSub = @json($levels->mapWithKeys(fn($l) => [$l->id => $l->subLevels->map(fn($s) => ['id' => $s->id, 'name' => $s->name])]));
+    const allLevelsForSub = @json(($withSubLevels ?? true) ? $levels->mapWithKeys(fn($l) => [$l->id => $l->relationLoaded('subLevels') ? $l->subLevels->map(fn($s) => ['id' => $s->id, 'name' => $s->name]) : []]) : []);
 
     function populateSubLevels(levelId, selectedSubLevelId = null) {
         const select = document.getElementById('classSubLevel');

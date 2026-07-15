@@ -15,21 +15,33 @@ use App\Models\Subject;
 use App\Models\Syllabus;
 use App\Models\Topic;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Schema;
 
 class CatalogController extends Controller
 {
+    protected function subLevelsTableExists(): bool
+    {
+        try {
+            return Schema::hasTable('sub_levels');
+        } catch (\Exception $e) {
+            return false;
+        }
+    }
     /**
      * List all active levels.
      */
     public function levels(Request $request)
     {
         $materialType = $request->query('material_type', 'notes');
-        
-        $levels = Level::where('is_active', true)
-            ->with('subLevels')
-            ->orderBy('order')
-            ->get()
-            ->map(function (Level $level) {
+        $hasSubLevels = $this->subLevelsTableExists();
+
+        $query = Level::where('is_active', true)->orderBy('order');
+        if ($hasSubLevels) {
+            $query->with('subLevels');
+        }
+
+        $levels = $query->get()
+            ->map(function (Level $level) use ($hasSubLevels) {
                 return [
                     'id' => $level->id,
                     'name' => $level->name,
@@ -41,12 +53,14 @@ class CatalogController extends Controller
                         : 'assets/icons/level.png',
                     'order' => $level->order,
                     'is_active' => $level->is_active,
-                    'sub_levels' => $level->subLevels->where('is_active', true)->values()->map(fn($s) => [
-                        'id' => $s->id,
-                        'name' => $s->name,
-                        'description' => $s->description,
-                        'order' => $s->order,
-                    ]),
+                    'sub_levels' => $hasSubLevels
+                        ? $level->subLevels->where('is_active', true)->values()->map(fn($s) => [
+                            'id' => $s->id,
+                            'name' => $s->name,
+                            'description' => $s->description,
+                            'order' => $s->order,
+                        ])
+                        : collect(),
                 ];
             });
 
@@ -62,9 +76,11 @@ class CatalogController extends Controller
     public function classes(Request $request, Level $level)
     {
         $materialType = $request->query('material_type', 'notes');
-        
+        $hasSubLevels = $this->subLevelsTableExists();
+
         $classes = $level->classRooms()
             ->where('is_active', true)
+            ->when($hasSubLevels, fn($q) => $q->with('subLevel'))
             ->orderBy('order')
             ->get()
             ->map(function (ClassRoom $class) {

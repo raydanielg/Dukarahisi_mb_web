@@ -57,19 +57,25 @@
                             <p class="text-sm font-semibold text-gray-900">{{ $level->name }}</p>
                         </td>
                         <td class="px-6 py-3">
-                            @if($level->subLevels->count() > 0)
-                                <div class="flex flex-wrap gap-1">
-                                    @foreach($level->subLevels as $subLevel)
-                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-blue-50 text-blue-700 border border-blue-100">{{ $subLevel->name }}</span>
-                                    @endforeach
-                                </div>
+                            @if($withSubLevels ?? true)
+                                @if($level->relationLoaded('subLevels') ? $level->subLevels->count() > 0 : false)
+                                    <div class="flex flex-wrap gap-1">
+                                        @foreach($level->subLevels as $subLevel)
+                                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-blue-50 text-blue-700 border border-blue-100">{{ $subLevel->name }}</span>
+                                        @endforeach
+                                    </div>
+                                @else
+                                    <span class="text-xs text-gray-400">No sub-levels</span>
+                                @endif
                             @else
-                                <span class="text-xs text-gray-400">No sub-levels</span>
+                                <span class="text-xs text-gray-400">Sub-levels not available</span>
                             @endif
+                            @if($withSubLevels ?? true)
                             <button onclick="openSubLevelDrawer({{ $level->id }}, '{{ addslashes($level->name) }}')" class="mt-1 text-[10px] text-emerald-600 hover:text-emerald-700 font-medium inline-flex items-center gap-1">
                                 <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
                                 Manage Sub-Levels
                             </button>
+                            @endif
                         </td>
                         <td class="px-6 py-3">
                             <p class="text-xs text-gray-500 max-w-xs truncate">{{ $level->description ?? 'No description' }}</p>
@@ -190,7 +196,7 @@
 
     let editingId = null;
 
-    const allLevelsData = @json($levels->mapWithKeys(fn($l) => [$l->id => ['id' => $l->id, 'name' => $l->name, 'subLevels' => $l->subLevels->map(fn($s) => ['id' => $s->id, 'name' => $s->name, 'description' => $s->description, 'order' => $s->order, 'is_active' => $s->is_active])]]));
+    const allLevelsData = @json($withSubLevels ?? true ? $levels->mapWithKeys(fn($l) => [$l->id => ['id' => $l->id, 'name' => $l->name, 'subLevels' => $l->relationLoaded('subLevels') ? $l->subLevels->map(fn($s) => ['id' => $s->id, 'name' => $s->name, 'description' => $s->description, 'order' => $s->order, 'is_active' => $s->is_active]) : []]]) : []);
 
     function openLevelDrawer() {
         editingId = null;

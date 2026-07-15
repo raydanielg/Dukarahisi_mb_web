@@ -44,7 +44,7 @@ class CatalogManageController extends Controller
         }
 
         $levels = ($withSubLevels ? Level::with('subLevels') : Level::query())->orderBy('order')->get();
-        return view('admin.catalog.levels', compact('levels'));
+        return view('admin.catalog.levels', compact('levels', 'withSubLevels'));
     }
 
     public function levelsStore(Request $request)
@@ -248,7 +248,7 @@ class CatalogManageController extends Controller
             return response()->json(['success' => true, 'classes' => $classes]);
         }
 
-        return view('admin.catalog.classes', compact('classes', 'levels'));
+        return view('admin.catalog.classes', compact('classes', 'levels', 'withSubLevels'));
     }
 
     public function classesStore(Request $request)
