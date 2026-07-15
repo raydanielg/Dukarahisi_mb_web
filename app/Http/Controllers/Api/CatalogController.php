@@ -26,6 +26,7 @@ class CatalogController extends Controller
         $materialType = $request->query('material_type', 'notes');
         
         $levels = Level::where('is_active', true)
+            ->with('subLevels')
             ->orderBy('order')
             ->get()
             ->map(function (Level $level) {
@@ -40,6 +41,12 @@ class CatalogController extends Controller
                         : 'assets/icons/level.png',
                     'order' => $level->order,
                     'is_active' => $level->is_active,
+                    'sub_levels' => $level->subLevels->where('is_active', true)->values()->map(fn($s) => [
+                        'id' => $s->id,
+                        'name' => $s->name,
+                        'description' => $s->description,
+                        'order' => $s->order,
+                    ]),
                 ];
             });
 
@@ -64,9 +71,10 @@ class CatalogController extends Controller
                 return [
                     'id' => $class->id,
                     'level_id' => $class->level_id,
+                    'sub_level_id' => $class->sub_level_id,
+                    'sub_level_name' => $class->subLevel?->name,
                     'name' => $class->name,
                     'description' => $class->description,
-                    'medium' => $class->medium,
                     'order' => $class->order,
                     'is_active' => $class->is_active,
                 ];

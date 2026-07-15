@@ -108,9 +108,9 @@ class _ClassesScreenState extends State<ClassesScreen> {
   }
 
   Widget _buildGroupedClasses() {
-    final hasMediums = _classes!.any((c) => c['medium'] != null && c['medium'].toString().isNotEmpty);
+    final hasSubLevels = _classes!.any((c) => c['sub_level_name'] != null && c['sub_level_name'].toString().isNotEmpty);
 
-    if (!hasMediums) {
+    if (!hasSubLevels) {
       return GridView.builder(
         padding: const EdgeInsets.all(16),
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -129,35 +129,20 @@ class _ClassesScreenState extends State<ClassesScreen> {
 
     final groups = <String, List<Map<String, dynamic>>>{};
     for (final c in _classes!) {
-      final medium = (c['medium']?.toString() ?? 'general').toLowerCase();
-      groups.putIfAbsent(medium, () => []).add(c);
+      final subLevel = (c['sub_level_name']?.toString() ?? '').isNotEmpty ? c['sub_level_name'].toString() : 'General';
+      groups.putIfAbsent(subLevel, () => []).add(c);
     }
 
-    final orderedKeys = groups.keys.toList()
-      ..sort((a, b) {
-        if (a == 'english') return -1;
-        if (b == 'english') return 1;
-        if (a == 'kiswahili') return -1;
-        if (b == 'kiswahili') return 1;
-        return 0;
-      });
+    final orderedKeys = groups.keys.toList();
 
     return ListView.builder(
       padding: const EdgeInsets.all(16),
       itemCount: orderedKeys.length,
       itemBuilder: (context, index) {
-        final medium = orderedKeys[index];
-        final items = groups[medium]!;
-        final label = medium == 'english'
-            ? 'English Medium'
-            : medium == 'kiswahili'
-                ? 'Kiswahili Medium'
-                : 'General';
-        final badgeColor = medium == 'english'
-            ? const Color(0xFF3B82F6)
-            : medium == 'kiswahili'
-                ? const Color(0xFF10B981)
-                : AppColors.textMuted;
+        final subLevel = orderedKeys[index];
+        final items = groups[subLevel]!;
+        final label = subLevel;
+        final badgeColor = AppColors.primary;
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -208,17 +193,9 @@ class _ClassesScreenState extends State<ClassesScreen> {
   }
 
   Widget _buildClassCard(Map<String, dynamic> classItem) {
-    final medium = classItem['medium']?.toString();
-    final mediumLabel = medium == 'english'
-        ? 'English'
-        : medium == 'kiswahili'
-            ? 'Kiswahili'
-            : null;
-    final mediumColor = medium == 'english'
-        ? const Color(0xFF3B82F6)
-        : medium == 'kiswahili'
-            ? const Color(0xFF10B981)
-            : AppColors.textMuted;
+    final subLevelName = classItem['sub_level_name']?.toString();
+    final mediumLabel = (subLevelName != null && subLevelName.isNotEmpty) ? subLevelName : null;
+    final mediumColor = AppColors.primary;
 
     return GestureDetector(
       onTap: () => context.push('/subjects', extra: classItem['id']),

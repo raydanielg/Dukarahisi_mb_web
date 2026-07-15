@@ -90,7 +90,7 @@
                                 <div>
                                     <p class="text-sm font-semibold text-gray-900">{{ $item->title }}</p>
                                     @if($item->file_path)
-                                        <a href="{{ asset(str_replace('public/', 'storage/', $item->file_path)) }}" target="_blank" class="text-[10px] text-red-600 hover:text-red-700 font-medium inline-flex items-center gap-1 mt-0.5">
+                                        <a href="{{ url('/admin/materials/' . $type . '/' . $item->id . '/preview') }}" target="_blank" class="text-[10px] text-red-600 hover:text-red-700 font-medium inline-flex items-center gap-1 mt-0.5">
                                             <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8" stroke="white" stroke-width="2" stroke-linecap="round"/></svg>
                                             PDF
                                         </a>
@@ -361,7 +361,7 @@
         if (filePath) {
             currentPdfContainer.classList.remove('hidden');
             currentPdfName.textContent = filePath.split('/').pop();
-            currentPdfLink.href = '{{ url('/materials') }}/' + materialType + '/' + editingId + '/preview';
+            currentPdfLink.href = '{{ url('/admin/materials') }}/' + materialType + '/' + editingId + '/preview';
         } else {
             currentPdfContainer.classList.add('hidden');
             currentPdfLink.href = '#';
@@ -542,7 +542,7 @@
                     <div class="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center text-emerald-700 font-bold text-xs">${getInitials(item.title)}</div>
                     <div>
                         <p class="text-sm font-semibold text-gray-900">${item.title}</p>
-                        ${item.file_path ? `<a href="{{ url('/materials') }}/${materialType}/${item.id}/preview" target="_blank" class="text-[10px] text-red-600 hover:text-red-700 font-medium inline-flex items-center gap-1 mt-0.5"><svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8" stroke="white" stroke-width="2" stroke-linecap="round"/></svg>PDF</a>` : ''}
+                        ${item.file_path ? `<a href="{{ url('/admin/materials') }}/${materialType}/${item.id}/preview" target="_blank" class="text-[10px] text-red-600 hover:text-red-700 font-medium inline-flex items-center gap-1 mt-0.5"><svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8" stroke="white" stroke-width="2" stroke-linecap="round"/></svg>PDF</a>` : ''}
                     </div>
                 </div>
             </td>
@@ -604,8 +604,8 @@
         formData.delete('_token');
 
         const url = editingId
-            ? `{{ url('materials') }}/${materialType}/${editingId}`
-            : `{{ url('materials') }}/${materialType}`;
+            ? `{{ url('admin/materials') }}/${materialType}/${editingId}`
+            : `{{ url('admin/materials') }}/${materialType}`;
         const method = editingId ? 'POST' : 'POST';
 
         if (editingId) {
@@ -661,7 +661,7 @@
             cancelButtonText: 'Cancel'
         }).then((result) => {
             if (result.isConfirmed) {
-                fetch(`{{ url('materials') }}/${materialType}/${id}`, {
+                fetch(`{{ url('admin/materials') }}/${materialType}/${id}`, {
                     method: 'DELETE',
                     headers: {
                         'X-CSRF-TOKEN': '{{ csrf_token() }}',
@@ -702,7 +702,7 @@
         const currentPrice = parseFloat(row.getAttribute('data-price')) || 0;
         const currentIsFree = row.getAttribute('data-is-free') === '1';
 
-        fetch(`{{ url('materials') }}/${materialType}/${id}`, {
+        fetch(`{{ url('admin/materials') }}/${materialType}/${id}`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
@@ -742,7 +742,7 @@
         const subjectId = subjectFilter.value;
         const topicId = topicFilter.value;
 
-        const url = new URL('{{ url('materials') }}/' + materialType, window.location.origin);
+        const url = new URL('{{ url('admin/materials') }}/' + materialType, window.location.origin);
         if (term) url.searchParams.append('search', term);
         if (levelId) url.searchParams.append('level_id', levelId);
         if (classRoomId) url.searchParams.append('class_room_id', classRoomId);
@@ -811,7 +811,7 @@
                         <div class="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center text-emerald-700 font-bold text-xs">${getInitials(item.title)}</div>
                         <div>
                             <p class="text-sm font-semibold text-gray-900">${item.title}</p>
-                            ${item.file_path ? `<a href="{{ url('/materials') }}/${materialType}/${item.id}/preview" target="_blank" class="text-[10px] text-red-600 hover:text-red-700 font-medium inline-flex items-center gap-1 mt-0.5"><svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8" stroke="white" stroke-width="2" stroke-linecap="round"/></svg>PDF</a>` : ''}
+                            ${item.file_path ? `<a href="{{ url('/admin/materials') }}/${materialType}/${item.id}/preview" target="_blank" class="text-[10px] text-red-600 hover:text-red-700 font-medium inline-flex items-center gap-1 mt-0.5"><svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8" stroke="white" stroke-width="2" stroke-linecap="round"/></svg>PDF</a>` : ''}
                         </div>
                     </div>
                 </td>

@@ -183,32 +183,20 @@ class _CatalogClassesScreenState extends State<CatalogClassesScreen> {
                         color: AppColors.textPrimary,
                       ),
                     ),
-                    if (classItem['medium'] != null && classItem['medium'].toString().isNotEmpty) ...[
+                    if (classItem['sub_level_name'] != null && classItem['sub_level_name'].toString().isNotEmpty) ...[
                       const SizedBox(height: 4),
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                         decoration: BoxDecoration(
-                          color: (classItem['medium'] == 'english'
-                              ? const Color(0xFF3B82F6)
-                              : classItem['medium'] == 'kiswahili'
-                                  ? const Color(0xFF10B981)
-                                  : AppColors.textMuted).withOpacity(0.1),
+                          color: AppColors.primary.withOpacity(0.1),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
-                          classItem['medium'] == 'english'
-                              ? 'English Medium'
-                              : classItem['medium'] == 'kiswahili'
-                                  ? 'Kiswahili Medium'
-                                  : 'General',
+                          classItem['sub_level_name'].toString(),
                           style: TextStyle(
                             fontSize: 10,
                             fontWeight: FontWeight.w600,
-                            color: classItem['medium'] == 'english'
-                                ? const Color(0xFF3B82F6)
-                                : classItem['medium'] == 'kiswahili'
-                                    ? const Color(0xFF10B981)
-                                    : AppColors.textMuted,
+                            color: AppColors.primary,
                           ),
                         ),
                       ),

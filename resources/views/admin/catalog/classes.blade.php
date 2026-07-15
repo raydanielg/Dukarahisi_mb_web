@@ -47,7 +47,7 @@
                     <th class="px-6 py-3 font-medium">#</th>
                     <th class="px-6 py-3 font-medium">Class Name</th>
                     <th class="px-6 py-3 font-medium">Level</th>
-                    <th class="px-6 py-3 font-medium">Medium</th>
+                    <th class="px-6 py-3 font-medium">Sub-Level</th>
                     <th class="px-6 py-3 font-medium">Description</th>
                     <th class="px-6 py-3 font-medium">Order</th>
                     <th class="px-6 py-3 font-medium">Status</th>
@@ -55,7 +55,7 @@
                 </tr></thead>
                 <tbody>
                     @forelse($classes as $index => $classRoom)
-                    <tr class="border-t border-gray-100 transition-colors animate-fade" data-id="{{ $classRoom->id }}" data-level-id="{{ $classRoom->level_id }}" data-medium="{{ $classRoom->medium ?? '' }}" data-name="{{ strtolower($classRoom->name) }}" style="animation-delay: {{ $index * 0.05 }}s">
+                    <tr class="border-t border-gray-100 transition-colors animate-fade" data-id="{{ $classRoom->id }}" data-level-id="{{ $classRoom->level_id }}" data-sub-level-id="{{ $classRoom->sub_level_id ?? '' }}" data-name="{{ strtolower($classRoom->name) }}" style="animation-delay: {{ $index * 0.05 }}s">
                         <td class="px-6 py-3 text-xs text-gray-500">{{ $index + 1 }}</td>
                         <td class="px-6 py-3">
                             <p class="text-sm font-semibold text-gray-900">{{ $classRoom->name }}</p>
@@ -64,12 +64,10 @@
                             <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-100">{{ $classRoom->level->name }}</span>
                         </td>
                         <td class="px-6 py-3">
-                            @if($classRoom->medium === 'english')
-                                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-medium bg-blue-50 text-blue-700 border border-blue-100">English Medium</span>
-                            @elseif($classRoom->medium === 'kiswahili')
-                                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-100">Kiswahili Medium</span>
+                            @if($classRoom->subLevel)
+                                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-medium bg-blue-50 text-blue-700 border border-blue-100">{{ $classRoom->subLevel->name }}</span>
                             @else
-                                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-medium bg-gray-50 text-gray-500 border border-gray-100">General</span>
+                                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-medium bg-gray-50 text-gray-500 border border-gray-100">None</span>
                             @endif
                         </td>
                         <td class="px-6 py-3">
@@ -85,7 +83,7 @@
                         </td>
                         <td class="px-6 py-3 text-right">
                             <div class="flex items-center justify-end gap-2">
-                                <button onclick="editClass({{ $classRoom->id }}, {{ $classRoom->level_id }}, '{{ addslashes($classRoom->name) }}', '{{ addslashes($classRoom->description ?? '') }}', '{{ $classRoom->medium ?? '' }}', {{ $classRoom->order }}, {{ $classRoom->is_active ? 1 : 0 }})" class="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors" title="Edit">
+                                <button onclick="editClass({{ $classRoom->id }}, {{ $classRoom->level_id }}, '{{ addslashes($classRoom->name) }}', '{{ addslashes($classRoom->description ?? '') }}', '{{ $classRoom->sub_level_id ?? '' }}', {{ $classRoom->order }}, {{ $classRoom->is_active ? 1 : 0 }})" class="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors" title="Edit">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.433-4.333A2.001 2.001 0 0119 10a2.001 2.001 0 01-.433 1.333L12.5 17.5l-4 1 1-4 6.067-6.167z"/></svg>
                                 </button>
                                 <button onclick="deleteClass({{ $classRoom->id }})" class="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="Delete">
@@ -133,12 +131,10 @@
                 <input type="text" id="className" name="name" required placeholder="e.g. Standard 7">
             </div>
 
-            <div class="drawer-form-group">
-                <label for="classMedium">Medium <span class="text-gray-400 text-xs">(optional - mainly for Primary)</span></label>
-                <select id="classMedium" name="medium">
-                    <option value="">General (No specific medium)</option>
-                    <option value="english">English Medium</option>
-                    <option value="kiswahili">Kiswahili Medium</option>
+            <div class="drawer-form-group" id="subLevelFormGroup" style="display:none;">
+                <label for="classSubLevel">Sub-Level <span class="text-gray-400 text-xs">(optional - only for levels with sub-levels)</span></label>
+                <select id="classSubLevel" name="sub_level_id">
+                    <option value="">No sub-level</option>
                 </select>
             </div>
 
@@ -195,7 +191,8 @@
         document.getElementById('classId').value = '';
         document.getElementById('classLevel').value = '';
         document.getElementById('className').value = '';
-        document.getElementById('classMedium').value = '';
+        document.getElementById('classSubLevel').innerHTML = '<option value="">No sub-level</option>';
+        document.getElementById('subLevelFormGroup').style.display = 'none';
         document.getElementById('classDescription').value = '';
         document.getElementById('classOrder').value = 0;
         document.getElementById('classActive').checked = true;
@@ -212,13 +209,13 @@
         editingId = null;
     }
 
-    function editClass(id, levelId, name, description, medium, order, isActive) {
+    function editClass(id, levelId, name, description, subLevelId, order, isActive) {
         editingId = id;
         drawerTitle.textContent = 'Edit Class';
         document.getElementById('classId').value = id;
         document.getElementById('classLevel').value = levelId;
         document.getElementById('className').value = name;
-        document.getElementById('classMedium').value = medium || '';
+        populateSubLevels(levelId, subLevelId);
         document.getElementById('classDescription').value = description;
         document.getElementById('classOrder').value = order;
         document.getElementById('classActive').checked = isActive === 1;
@@ -258,24 +255,23 @@
         const activeText = classItem.is_active ? 'Active' : 'Inactive';
         const levelName = classItem.level ? classItem.level.name : 'Unknown';
         const description = classItem.description || 'No description';
-        const medium = classItem.medium || '';
-        const mediumBadge = medium === 'english'
-            ? '<span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-medium bg-blue-50 text-blue-700 border border-blue-100">English Medium</span>'
-            : medium === 'kiswahili'
-            ? '<span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-100">Kiswahili Medium</span>'
-            : '<span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-medium bg-gray-50 text-gray-500 border border-gray-100">General</span>';
+        const subLevelId = classItem.sub_level_id || '';
+        const subLevelName = classItem.sub_level ? classItem.sub_level.name : '';
+        const subLevelBadge = subLevelName
+            ? `<span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-medium bg-blue-50 text-blue-700 border border-blue-100">${subLevelName}</span>`
+            : '<span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-medium bg-gray-50 text-gray-500 border border-gray-100">None</span>';
 
         const row = document.createElement('tr');
         row.className = 'border-t border-gray-100 transition-colors animate-fade';
         row.setAttribute('data-id', classItem.id);
         row.setAttribute('data-level-id', classItem.level_id);
-        row.setAttribute('data-medium', medium);
+        row.setAttribute('data-sub-level-id', subLevelId);
         row.setAttribute('data-name', classItem.name.toLowerCase());
         row.innerHTML = `
             <td class="px-6 py-3 text-xs text-gray-500">${index}</td>
             <td class="px-6 py-3"><p class="text-sm font-semibold text-gray-900">${classItem.name}</p></td>
             <td class="px-6 py-3"><span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-100">${levelName}</span></td>
-            <td class="px-6 py-3">${mediumBadge}</td>
+            <td class="px-6 py-3">${subLevelBadge}</td>
             <td class="px-6 py-3"><p class="text-xs text-gray-500 max-w-xs truncate">${description}</p></td>
             <td class="px-6 py-3"><span class="inline-flex items-center px-2 py-1 rounded-md bg-gray-100 text-xs font-medium text-gray-700">${classItem.order}</span></td>
             <td class="px-6 py-3">
@@ -283,7 +279,7 @@
             </td>
             <td class="px-6 py-3 text-right">
                 <div class="flex items-center justify-end gap-2">
-                    <button onclick="editClass(${classItem.id}, ${classItem.level_id}, '${escapeHtml(classItem.name)}', '${escapeHtml(classItem.description)}', '${escapeHtml(medium)}', ${classItem.order}, ${classItem.is_active ? 1 : 0})" class="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors" title="Edit">
+                    <button onclick="editClass(${classItem.id}, ${classItem.level_id}, '${escapeHtml(classItem.name)}', '${escapeHtml(classItem.description)}', '${escapeHtml(subLevelId)}', ${classItem.order}, ${classItem.is_active ? 1 : 0})" class="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors" title="Edit">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.433-4.333A2.001 2.001 0 0119 10a2.001 2.001 0 01-.433 1.333L12.5 17.5l-4 1 1-4 6.067-6.167z"/></svg>
                     </button>
                     <button onclick="deleteClass(${classItem.id})" class="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="Delete">
@@ -327,7 +323,7 @@
             level_id: parseInt(formData.get('level_id')) || 0,
             name: formData.get('name'),
             description: formData.get('description'),
-            medium: formData.get('medium') || null,
+            sub_level_id: formData.get('sub_level_id') || null,
             order: parseInt(formData.get('order')) || 0,
             is_active: formData.get('is_active') ? 1 : 0,
             _token: formData.get('_token')
@@ -426,7 +422,7 @@
             body: JSON.stringify({
                 level_id: parseInt(levelId),
                 name: row.querySelector('td:nth-child(2) p').textContent,
-                medium: row.getAttribute('data-medium') || null,
+                sub_level_id: row.getAttribute('data-sub-level-id') || null,
                 description: row.querySelector('td:nth-child(5) p').textContent === 'No description' ? '' : row.querySelector('td:nth-child(5) p').textContent,
                 order: parseInt(row.querySelector('td:nth-child(6) span').textContent),
                 is_active: isActive ? 0 : 1
@@ -493,25 +489,24 @@
             const activeText = classItem.is_active ? 'Active' : 'Inactive';
             const levelName = classItem.level ? classItem.level.name : 'Unknown';
             const description = classItem.description || 'No description';
-            const medium = classItem.medium || '';
-            const mediumBadge = medium === 'english'
-                ? '<span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-medium bg-blue-50 text-blue-700 border border-blue-100">English Medium</span>'
-                : medium === 'kiswahili'
-                ? '<span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-100">Kiswahili Medium</span>'
-                : '<span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-medium bg-gray-50 text-gray-500 border border-gray-100">General</span>';
+            const subLevelId = classItem.sub_level_id || '';
+            const subLevelName = classItem.sub_level ? classItem.sub_level.name : '';
+            const subLevelBadge = subLevelName
+                ? `<span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-medium bg-blue-50 text-blue-700 border border-blue-100">${subLevelName}</span>`
+                : '<span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-medium bg-gray-50 text-gray-500 border border-gray-100">None</span>';
 
             const row = document.createElement('tr');
             row.className = 'border-t border-gray-100 transition-colors animate-fade';
             row.style.animationDelay = `${index * 0.05}s`;
             row.setAttribute('data-id', classItem.id);
             row.setAttribute('data-level-id', classItem.level_id);
-            row.setAttribute('data-medium', medium);
+            row.setAttribute('data-sub-level-id', subLevelId);
             row.setAttribute('data-name', classItem.name.toLowerCase());
             row.innerHTML = `
                 <td class="px-6 py-3 text-xs text-gray-500">${index + 1}</td>
                 <td class="px-6 py-3"><p class="text-sm font-semibold text-gray-900">${classItem.name}</p></td>
                 <td class="px-6 py-3"><span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-100">${levelName}</span></td>
-                <td class="px-6 py-3">${mediumBadge}</td>
+                <td class="px-6 py-3">${subLevelBadge}</td>
                 <td class="px-6 py-3"><p class="text-xs text-gray-500 max-w-xs truncate">${description}</p></td>
                 <td class="px-6 py-3"><span class="inline-flex items-center px-2 py-1 rounded-md bg-gray-100 text-xs font-medium text-gray-700">${classItem.order}</span></td>
                 <td class="px-6 py-3">
@@ -519,7 +514,7 @@
                 </td>
                 <td class="px-6 py-3 text-right">
                     <div class="flex items-center justify-end gap-2">
-                        <button onclick="editClass(${classItem.id}, ${classItem.level_id}, '${escapeHtml(classItem.name)}', '${escapeHtml(classItem.description)}', '${escapeHtml(medium)}', ${classItem.order}, ${classItem.is_active ? 1 : 0})" class="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors" title="Edit">
+                        <button onclick="editClass(${classItem.id}, ${classItem.level_id}, '${escapeHtml(classItem.name)}', '${escapeHtml(classItem.description)}', '${escapeHtml(subLevelId)}', ${classItem.order}, ${classItem.is_active ? 1 : 0})" class="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors" title="Edit">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.433-4.333A2.001 2.001 0 0119 10a2.001 2.001 0 01-.433 1.333L12.5 17.5l-4 1 1-4 6.067-6.167z"/></svg>
                         </button>
                         <button onclick="deleteClass(${classItem.id})" class="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="Delete">
@@ -532,6 +527,32 @@
         });
         updateClassesCount();
     }
+
+    const allLevelsForSub = @json($levels->mapWithKeys(fn($l) => [$l->id => $l->subLevels->map(fn($s) => ['id' => $s->id, 'name' => $s->name])]));
+
+    function populateSubLevels(levelId, selectedSubLevelId = null) {
+        const select = document.getElementById('classSubLevel');
+        const formGroup = document.getElementById('subLevelFormGroup');
+        const subs = allLevelsForSub[levelId] || [];
+        if (subs.length === 0) {
+            select.innerHTML = '<option value="">No sub-level</option>';
+            formGroup.style.display = 'none';
+            return;
+        }
+        formGroup.style.display = 'block';
+        select.innerHTML = '<option value="">No sub-level</option>';
+        subs.forEach(s => {
+            const option = document.createElement('option');
+            option.value = s.id;
+            option.textContent = s.name;
+            if (selectedSubLevelId && s.id == selectedSubLevelId) option.selected = true;
+            select.appendChild(option);
+        });
+    }
+
+    document.getElementById('classLevel').addEventListener('change', function() {
+        populateSubLevels(this.value);
+    });
 
     classSearch.addEventListener('input', function() {
         clearTimeout(searchTimeout);

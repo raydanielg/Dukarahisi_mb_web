@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\ClassRoom;
 use App\Models\Level;
+use App\Models\SubLevel;
 use App\Models\Subject;
 use App\Models\Topic;
 use Illuminate\Http\Request;
@@ -15,7 +16,7 @@ class CatalogManageController extends Controller
     public function levelsIndex(Request $request)
     {
         if ($request->ajax() || $request->wantsJson()) {
-            $query = Level::orderBy('order');
+            $query = Level::with('subLevels')->orderBy('order');
 
             if ($request->filled('search')) {
                 $search = $request->input('search');
@@ -29,7 +30,7 @@ class CatalogManageController extends Controller
             return response()->json(['success' => true, 'levels' => $levels]);
         }
 
-        $levels = Level::orderBy('order')->get();
+        $levels = Level::with('subLevels')->orderBy('order')->get();
         return view('admin.catalog.levels', compact('levels'));
     }
 
@@ -132,11 +133,81 @@ class CatalogManageController extends Controller
         return redirect()->route('admin.catalog.levels')->with('status', 'Level deleted successfully.');
     }
 
+    // Sub-Levels
+    public function subLevelsStore(Request $request)
+    {
+        $validated = $request->validate([
+            'level_id' => 'required|exists:levels,id',
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string|max:500',
+            'order' => 'required|integer|min:0',
+        ]);
+
+        $subLevel = SubLevel::create([
+            'level_id' => $validated['level_id'],
+            'name' => $validated['name'],
+            'description' => $validated['description'] ?? null,
+            'order' => $validated['order'],
+            'is_active' => true,
+        ]);
+
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Sub-level added successfully.',
+                'subLevel' => $subLevel
+            ]);
+        }
+
+        return redirect()->route('admin.catalog.levels')->with('status', 'Sub-level added successfully.');
+    }
+
+    public function subLevelsUpdate(Request $request, SubLevel $subLevel)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string|max:500',
+            'order' => 'required|integer|min:0',
+            'is_active' => 'boolean',
+        ]);
+
+        $subLevel->update([
+            'name' => $validated['name'],
+            'description' => $validated['description'] ?? null,
+            'order' => $validated['order'],
+            'is_active' => $validated['is_active'] ?? true,
+        ]);
+
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Sub-level updated successfully.',
+                'subLevel' => $subLevel
+            ]);
+        }
+
+        return redirect()->route('admin.catalog.levels')->with('status', 'Sub-level updated successfully.');
+    }
+
+    public function subLevelsDestroy(SubLevel $subLevel)
+    {
+        $subLevel->delete();
+
+        if (request()->ajax() || request()->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Sub-level deleted successfully.'
+            ]);
+        }
+
+        return redirect()->route('admin.catalog.levels')->with('status', 'Sub-level deleted successfully.');
+    }
+
     // Classes
     public function classesIndex(Request $request)
     {
-        $levels = Level::orderBy('order')->get();
-        $query = ClassRoom::with('level')->orderBy('order');
+        $levels = Level::with('subLevels')->orderBy('order')->get();
+        $query = ClassRoom::with(['level', 'subLevel'])->orderBy('order');
 
         if ($request->filled('level_id')) {
             $query->where('level_id', $request->level_id);
@@ -163,22 +234,22 @@ class CatalogManageController extends Controller
     {
         $validated = $request->validate([
             'level_id' => 'required|exists:levels,id',
+            'sub_level_id' => 'nullable|exists:sub_levels,id',
             'name' => 'required|string|max:255',
             'description' => 'nullable|string|max:500',
-            'medium' => 'nullable|string|in:english,kiswahili,general',
             'order' => 'required|integer|min:0',
         ]);
 
         $class = ClassRoom::create([
             'level_id' => $validated['level_id'],
+            'sub_level_id' => $validated['sub_level_id'] ?? null,
             'name' => $validated['name'],
             'description' => $validated['description'] ?? null,
-            'medium' => $validated['medium'] ?? null,
             'order' => $validated['order'],
             'is_active' => true,
         ]);
 
-        $class->load('level');
+        $class->load(['level', 'subLevel']);
 
         if ($request->ajax() || $request->wantsJson()) {
             return response()->json([
@@ -195,23 +266,23 @@ class CatalogManageController extends Controller
     {
         $validated = $request->validate([
             'level_id' => 'required|exists:levels,id',
+            'sub_level_id' => 'nullable|exists:sub_levels,id',
             'name' => 'required|string|max:255',
             'description' => 'nullable|string|max:500',
-            'medium' => 'nullable|string|in:english,kiswahili,general',
             'order' => 'required|integer|min:0',
             'is_active' => 'boolean',
         ]);
 
         $classRoom->update([
             'level_id' => $validated['level_id'],
+            'sub_level_id' => $validated['sub_level_id'] ?? null,
             'name' => $validated['name'],
             'description' => $validated['description'] ?? null,
-            'medium' => $validated['medium'] ?? null,
             'order' => $validated['order'],
             'is_active' => $validated['is_active'] ?? true,
         ]);
 
-        $classRoom->load('level');
+        $classRoom->load(['level', 'subLevel']);
 
         if ($request->ajax() || $request->wantsJson()) {
             return response()->json([

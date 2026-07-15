@@ -42,6 +42,10 @@ Route::middleware(['auth', 'admin'])->group(function () {
         Route::put('/levels/{level}', [CatalogManageController::class, 'levelsUpdate'])->name('levels.update');
         Route::delete('/levels/{level}', [CatalogManageController::class, 'levelsDestroy'])->name('levels.destroy');
 
+        Route::post('/sub-levels', [CatalogManageController::class, 'subLevelsStore'])->name('sub-levels.store');
+        Route::put('/sub-levels/{subLevel}', [CatalogManageController::class, 'subLevelsUpdate'])->name('sub-levels.update');
+        Route::delete('/sub-levels/{subLevel}', [CatalogManageController::class, 'subLevelsDestroy'])->name('sub-levels.destroy');
+
         Route::get('/classes', [CatalogManageController::class, 'classesIndex'])->name('classes');
         Route::post('/classes', [CatalogManageController::class, 'classesStore'])->name('classes.store');
         Route::put('/classes/{classRoom}', [CatalogManageController::class, 'classesUpdate'])->name('classes.update');
@@ -60,19 +64,19 @@ Route::middleware(['auth', 'admin'])->group(function () {
 
     // Materials management
     foreach (['notes', 'books', 'lesson-plans', 'syllabus', 'schemes', 'logbooks'] as $type) {
-        Route::get("/materials/$type", function (\Illuminate\Http\Request $request) use ($type) {
+        Route::get("/admin/materials/$type", function (\Illuminate\Http\Request $request) use ($type) {
             return app(MaterialManageController::class)->index($type, $request);
         })->name("admin.materials.$type");
-        Route::get("/materials/$type/{id}/preview", function ($id) use ($type) {
+        Route::get("/admin/materials/$type/{id}/preview", function ($id) use ($type) {
             return app(MaterialManageController::class)->previewFile($type, $id);
         })->name("admin.materials.$type.preview");
-        Route::post("/materials/$type", function (\Illuminate\Http\Request $request) use ($type) {
+        Route::post("/admin/materials/$type", function (\Illuminate\Http\Request $request) use ($type) {
             return app(MaterialManageController::class)->store($type, $request);
         })->name("admin.materials.$type.store");
-        Route::put("/materials/$type/{id}", function (\Illuminate\Http\Request $request, $id) use ($type) {
+        Route::put("/admin/materials/$type/{id}", function (\Illuminate\Http\Request $request, $id) use ($type) {
             return app(MaterialManageController::class)->update($type, $id, $request);
         })->name("admin.materials.$type.update");
-        Route::delete("/materials/$type/{id}", function (\Illuminate\Http\Request $request, $id) use ($type) {
+        Route::delete("/admin/materials/$type/{id}", function (\Illuminate\Http\Request $request, $id) use ($type) {
             return app(MaterialManageController::class)->destroy($type, $id, $request);
         })->name("admin.materials.$type.destroy");
     }

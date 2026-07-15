@@ -19,6 +19,11 @@ class Level extends Model
         return $this->hasMany(ClassRoom::class)->orderBy('order');
     }
 
+    public function subLevels(): HasMany
+    {
+        return $this->hasMany(SubLevel::class)->orderBy('order');
+    }
+
     public function notes(): HasMany
     {
         return $this->hasManyThrough(Note::class, ClassRoom::class);
