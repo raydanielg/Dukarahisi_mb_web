@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class ClassRoom extends Model
 {
-    protected $fillable = ['level_id', 'name', 'description', 'order', 'is_active'];
+    protected $fillable = ['level_id', 'name', 'description', 'medium', 'order', 'is_active'];
 
     protected $casts = [
         'is_active' => 'boolean',

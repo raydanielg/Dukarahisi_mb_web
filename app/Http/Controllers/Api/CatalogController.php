@@ -59,7 +59,18 @@ class CatalogController extends Controller
         $classes = $level->classRooms()
             ->where('is_active', true)
             ->orderBy('order')
-            ->get();
+            ->get()
+            ->map(function (ClassRoom $class) {
+                return [
+                    'id' => $class->id,
+                    'level_id' => $class->level_id,
+                    'name' => $class->name,
+                    'description' => $class->description,
+                    'medium' => $class->medium,
+                    'order' => $class->order,
+                    'is_active' => $class->is_active,
+                ];
+            });
 
         return response()->json([
             'status' => 'success',

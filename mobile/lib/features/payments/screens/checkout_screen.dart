@@ -115,6 +115,53 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     );
   }
 
+  Future<void> _checkStatusNow() async {
+    if (_orderId == null) return;
+    try {
+      final response = await _paymentService.checkStatus(_orderId!);
+      if (!mounted) return;
+
+      if (response['status'] == 'error') {
+        final code = response['code'] as int?;
+        if (code == 401 || code == 403) {
+          _pollingTimer?.cancel();
+          setState(() {
+            _status = _CheckoutStatus.failed;
+            _error = response['message']?.toString() ?? 'Session expired. Please login again.';
+          });
+          return;
+        }
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(response['message']?.toString() ?? 'Check failed')),
+        );
+        return;
+      }
+
+      final data = response['data'] as Map<String, dynamic>?;
+      final paymentStatus = data?['payment_status']?.toString().toLowerCase();
+      if (paymentStatus == 'success' || paymentStatus == 'paid') {
+        _pollingTimer?.cancel();
+        setState(() => _status = _CheckoutStatus.success);
+      } else if (paymentStatus == 'failed') {
+        _pollingTimer?.cancel();
+        setState(() {
+          _status = _CheckoutStatus.failed;
+          _error = 'Payment failed. Please try again.';
+        });
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Payment still pending. Keep waiting or refresh again.')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: ${e.toString()}')),
+        );
+      }
+    }
+  }
+
   void _startPolling() {
     _pollCount = 0;
     _pollingTimer?.cancel();
@@ -465,6 +512,21 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   'A USSD push has been sent to your mobile money number. Please enter your PIN to authorize the payment.',
                   textAlign: TextAlign.center,
                   style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
+                ),
+                const SizedBox(height: 20),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: _checkStatusNow,
+                    icon: const Icon(Icons.refresh, size: 18),
+                    label: const Text('Nimeshalipa / Refresh Status'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.primary,
+                      side: BorderSide(color: AppColors.primary),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                    ),
+                  ),
                 ),
               ],
             ),

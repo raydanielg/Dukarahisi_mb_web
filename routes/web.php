@@ -8,10 +8,17 @@ use App\Http\Controllers\Admin\ProfileController;
 use App\Http\Controllers\Admin\SalesController;
 use App\Http\Controllers\Admin\SettingController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\LandingController;
+use App\Http\Controllers\MaterialBrowseController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
-    return redirect('/login');
+Route::get('/', [LandingController::class, 'index'])->name('landing');
+
+// Public material browsing
+Route::prefix('materials')->name('materials.')->group(function () {
+    Route::get('/{type}', [MaterialBrowseController::class, 'typeIndex'])->name('type');
+    Route::get('/subject/{subject}', [MaterialBrowseController::class, 'subjectOverview'])->name('subject');
+    Route::get('/topic/{topic}', [MaterialBrowseController::class, 'topicOverview'])->name('topic');
 });
 
 Auth::routes();

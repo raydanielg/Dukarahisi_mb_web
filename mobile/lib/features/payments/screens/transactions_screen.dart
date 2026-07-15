@@ -6,43 +6,26 @@ import '../../../core/network/api_client.dart';
 import '../../../core/services/dashboard_service.dart';
 import 'checkout_screen.dart';
 
-class PaymentsScreen extends StatefulWidget {
-  const PaymentsScreen({super.key});
+class TransactionsScreen extends StatefulWidget {
+  const TransactionsScreen({super.key});
 
   @override
-  State<PaymentsScreen> createState() => _PaymentsScreenState();
+  State<TransactionsScreen> createState() => _TransactionsScreenState();
 }
 
-enum _OrderFilter { all, pending, paid, failed }
-
-class _PaymentsScreenState extends State<PaymentsScreen>
-    with SingleTickerProviderStateMixin {
+class _TransactionsScreenState extends State<TransactionsScreen> {
   late final DashboardService _dashboardService;
-  late TabController _tabController;
   List<Map<String, dynamic>> _orders = [];
   bool _loading = true;
-  _OrderFilter _filter = _OrderFilter.all;
 
   @override
   void initState() {
     super.initState();
     _dashboardService = DashboardService(ApiClient());
-    _tabController = TabController(length: 4, vsync: this);
-    _tabController.addListener(() {
-      setState(() {
-        _filter = _OrderFilter.values[_tabController.index];
-      });
-    });
-    _loadOrders();
+    _loadTransactions();
   }
 
-  @override
-  void dispose() {
-    _tabController.dispose();
-    super.dispose();
-  }
-
-  Future<void> _loadOrders() async {
+  Future<void> _loadTransactions() async {
     setState(() => _loading = true);
     try {
       final response = await _dashboardService.getUserOrders();
@@ -62,22 +45,6 @@ class _PaymentsScreenState extends State<PaymentsScreen>
     }
   }
 
-  List<Map<String, dynamic>> get _filteredOrders {
-    switch (_filter) {
-      case _OrderFilter.pending:
-        return _orders.where((o) => o['status'] == 'pending').toList();
-      case _OrderFilter.paid:
-        return _orders.where((o) => o['status'] == 'paid').toList();
-      case _OrderFilter.failed:
-        return _orders
-            .where((o) => o['status'] == 'failed' || o['status'] == 'expired')
-            .toList();
-      case _OrderFilter.all:
-      default:
-        return _orders;
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -86,22 +53,21 @@ class _PaymentsScreenState extends State<PaymentsScreen>
         child: Column(
           children: [
             _buildHeader(),
-            _buildTabs(),
             Expanded(
               child: _loading
                   ? const Center(
                       child: CircularProgressIndicator(color: AppColors.primary))
                   : RefreshIndicator(
-                      onRefresh: _loadOrders,
+                      onRefresh: _loadTransactions,
                       color: AppColors.primary,
-                      child: _filteredOrders.isEmpty
+                      child: _orders.isEmpty
                           ? _buildEmptyState()
                           : ListView.builder(
                               physics: const AlwaysScrollableScrollPhysics(),
                               padding: const EdgeInsets.all(16),
-                              itemCount: _filteredOrders.length,
+                              itemCount: _orders.length,
                               itemBuilder: (context, index) {
-                                return _buildOrderCard(_filteredOrders[index]);
+                                return _buildTransactionCard(_orders[index]);
                               },
                             ),
                     ),
@@ -113,8 +79,12 @@ class _PaymentsScreenState extends State<PaymentsScreen>
   }
 
   Widget _buildHeader() {
+    final totalSpent = _orders
+        .where((o) => o['status'] == 'paid')
+        .fold<double>(0, (sum, o) => sum + _parseAmount(o['total_amount']));
+
     return Container(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 20),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
       decoration: BoxDecoration(
         color: Colors.white,
         border: Border(
@@ -131,70 +101,112 @@ class _PaymentsScreenState extends State<PaymentsScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'My Orders',
-            style: TextStyle(
-              fontSize: 26,
-              fontWeight: FontWeight.bold,
-              color: AppColors.textPrimary,
-            ),
-          ),
-          const SizedBox(height: 16),
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _buildStatCard(
-                'Total',
-                _orders.length.toString(),
-                AppColors.primary,
-                Icons.receipt_long_outlined,
+              IconButton(
+                icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
+                onPressed: () => context.pop(),
               ),
-              _buildStatCard(
-                'Pending',
-                _orders.where((o) => o['status'] == 'pending').length.toString(),
-                AppColors.warning,
-                Icons.schedule_outlined,
-              ),
-              _buildStatCard(
-                'Paid',
-                _orders.where((o) => o['status'] == 'paid').length.toString(),
-                AppColors.success,
-                Icons.check_circle_outline,
+              const SizedBox(width: 4),
+              const Text(
+                'My Transactions',
+                style: TextStyle(
+                  fontSize: 26,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.textPrimary,
+                ),
               ),
             ],
+          ),
+          const SizedBox(height: 20),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [Color(0xFF024938), Color(0xFF047857)],
+              ),
+              borderRadius: BorderRadius.circular(24),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.primary.withOpacity(0.25),
+                  blurRadius: 20,
+                  offset: const Offset(0, 10),
+                ),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Jumla Ulilolipa',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.white70,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  '${AppConfig.currency} ${totalSpent.toStringAsFixed(0)}',
+                  style: const TextStyle(
+                    fontSize: 32,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    _buildMiniStat(
+                      'Paid',
+                      _orders.where((o) => o['status'] == 'paid').length.toString(),
+                      Colors.green.shade300,
+                    ),
+                    const SizedBox(width: 16),
+                    _buildMiniStat(
+                      'Pending',
+                      _orders.where((o) => o['status'] == 'pending').length.toString(),
+                      Colors.orange.shade300,
+                    ),
+                    const SizedBox(width: 16),
+                    _buildMiniStat(
+                      'Failed',
+                      _orders.where((o) => o['status'] == 'failed').length.toString(),
+                      Colors.red.shade300,
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildStatCard(String label, String value, Color color, IconData icon) {
+  Widget _buildMiniStat(String label, String value, Color color) {
     return Container(
-      width: 100,
-      padding: const EdgeInsets.symmetric(vertical: 14),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.06),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color.withOpacity(0.12)),
+        color: Colors.white.withOpacity(0.15),
+        borderRadius: BorderRadius.circular(12),
       ),
-      child: Column(
+      child: Row(
         children: [
-          Icon(icon, size: 22, color: color),
-          const SizedBox(height: 8),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
-              color: color,
-            ),
+          Container(
+            width: 8,
+            height: 8,
+            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
           ),
-          const SizedBox(height: 2),
+          const SizedBox(width: 6),
           Text(
-            label,
-            style: TextStyle(
-              fontSize: 11,
-              color: AppColors.textSecondary,
+            '$label: $value',
+            style: const TextStyle(
+              fontSize: 12,
+              color: Colors.white,
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -203,58 +215,7 @@ class _PaymentsScreenState extends State<PaymentsScreen>
     );
   }
 
-  Widget _buildTabs() {
-    return Container(
-      color: Colors.white,
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      child: Container(
-        height: 44,
-        decoration: BoxDecoration(
-          color: Colors.grey.shade100,
-          borderRadius: BorderRadius.circular(22),
-        ),
-        child: TabBar(
-          controller: _tabController,
-          indicator: BoxDecoration(
-            color: AppColors.primary,
-            borderRadius: BorderRadius.circular(22),
-          ),
-          indicatorColor: Colors.transparent,
-          indicatorSize: TabBarIndicatorSize.tab,
-          indicatorPadding: const EdgeInsets.all(2),
-          labelColor: Colors.white,
-          unselectedLabelColor: AppColors.textSecondary,
-          labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
-          unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w500, fontSize: 13),
-          dividerColor: Colors.transparent,
-          splashFactory: NoSplash.splashFactory,
-          tabs: const [
-            Tab(text: 'All'),
-            Tab(text: 'Pending'),
-            Tab(text: 'Paid'),
-            Tab(text: 'Failed'),
-          ],
-        ),
-      ),
-    );
-  }
-
   Widget _buildEmptyState() {
-    String message;
-    switch (_filter) {
-      case _OrderFilter.pending:
-        message = 'Hakuna malipo yanayosubiri';
-        break;
-      case _OrderFilter.paid:
-        message = 'Bado hujalipa chochote';
-        break;
-      case _OrderFilter.failed:
-        message = 'Hakuna malipo yaliyoshindwa';
-        break;
-      case _OrderFilter.all:
-      default:
-        message = 'Hakuna maagizo bado';
-    }
     return LayoutBuilder(
       builder: (context, constraints) {
         return SingleChildScrollView(
@@ -280,7 +241,7 @@ class _PaymentsScreenState extends State<PaymentsScreen>
                   ),
                   const SizedBox(height: 24),
                   Text(
-                    message,
+                    'Hakuna transactions bado',
                     style: TextStyle(
                       fontSize: 16,
                       color: Colors.grey.shade600,
@@ -296,7 +257,7 @@ class _PaymentsScreenState extends State<PaymentsScreen>
     );
   }
 
-  Widget _buildOrderCard(Map<String, dynamic> order) {
+  Widget _buildTransactionCard(Map<String, dynamic> order) {
     final amount = _parseAmount(order['total_amount']);
     final status = order['status']?.toString() ?? 'pending';
     final reference = order['reference']?.toString() ?? '';
@@ -414,7 +375,7 @@ class _PaymentsScreenState extends State<PaymentsScreen>
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         const Text(
-                          'Total Amount',
+                          'Amount',
                           style: TextStyle(
                             fontSize: 13,
                             color: AppColors.textSecondary,
@@ -457,19 +418,6 @@ class _PaymentsScreenState extends State<PaymentsScreen>
     );
   }
 
-  Widget _buildInfoRow(IconData icon, String text) {
-    return Row(
-      children: [
-        Icon(icon, size: 16, color: AppColors.textSecondary),
-        const SizedBox(width: 8),
-        Text(
-          text,
-          style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
-        ),
-      ],
-    );
-  }
-
   Widget _buildActionButtons(
     Map<String, dynamic> order,
     Map<String, dynamic>? note,
@@ -478,43 +426,23 @@ class _PaymentsScreenState extends State<PaymentsScreen>
     final statusLower = status.toLowerCase();
 
     if (statusLower == 'paid') {
-      final noteId = note?['id'] as int? ?? 0;
-      final type = note?['type']?.toString() ?? 'notes';
-      final title = note?['title']?.toString() ?? 'Material';
-      final downloadUrl = note?['download_url']?.toString() ??
-          '${AppConfig.baseUrl}/catalog/materials/$type/$noteId/download';
-
-      return Row(
-        children: [
-          Expanded(
-            child: OutlinedButton.icon(
-              onPressed: () => _viewMaterial(type, noteId, title),
-              icon: const Icon(Icons.visibility, size: 18),
-              label: const Text('Tazama'),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: AppColors.primary,
-                side: BorderSide(color: AppColors.primary),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                padding: const EdgeInsets.symmetric(vertical: 12),
-              ),
-            ),
+      return SizedBox(
+        width: double.infinity,
+        child: ElevatedButton.icon(
+          onPressed: () => _downloadFile(note),
+          icon: const Icon(Icons.download, size: 18),
+          label: const Text(
+            'Pakua PDF',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: ElevatedButton.icon(
-              onPressed: () => _downloadFile(downloadUrl, title),
-              icon: const Icon(Icons.download, size: 18),
-              label: const Text('Pakua'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                elevation: 0,
-              ),
-            ),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppColors.primary,
+            foregroundColor: Colors.white,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            padding: const EdgeInsets.symmetric(vertical: 14),
+            elevation: 0,
           ),
-        ],
+        ),
       );
     }
 
@@ -551,6 +479,7 @@ class _PaymentsScreenState extends State<PaymentsScreen>
       case 'failed':
         return (color: AppColors.error, text: 'Imeshindwa');
       case 'expired':
+      case 'cancelled':
         return (color: Colors.orange, text: 'Muda Umeisha');
       default:
         return (color: AppColors.textMuted, text: status);
@@ -577,13 +506,8 @@ class _PaymentsScreenState extends State<PaymentsScreen>
     );
   }
 
-  void _viewMaterial(String type, int id, String title) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Opening $title...')),
-    );
-  }
-
-  void _downloadFile(String url, String title) {
+  void _downloadFile(Map<String, dynamic>? note) {
+    final title = note?['title']?.toString() ?? 'Material';
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('Downloading $title...')),
     );

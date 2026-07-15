@@ -165,6 +165,7 @@ class CatalogManageController extends Controller
             'level_id' => 'required|exists:levels,id',
             'name' => 'required|string|max:255',
             'description' => 'nullable|string|max:500',
+            'medium' => 'nullable|string|in:english,kiswahili,general',
             'order' => 'required|integer|min:0',
         ]);
 
@@ -172,6 +173,7 @@ class CatalogManageController extends Controller
             'level_id' => $validated['level_id'],
             'name' => $validated['name'],
             'description' => $validated['description'] ?? null,
+            'medium' => $validated['medium'] ?? null,
             'order' => $validated['order'],
             'is_active' => true,
         ]);
@@ -195,6 +197,7 @@ class CatalogManageController extends Controller
             'level_id' => 'required|exists:levels,id',
             'name' => 'required|string|max:255',
             'description' => 'nullable|string|max:500',
+            'medium' => 'nullable|string|in:english,kiswahili,general',
             'order' => 'required|integer|min:0',
             'is_active' => 'boolean',
         ]);
@@ -203,6 +206,7 @@ class CatalogManageController extends Controller
             'level_id' => $validated['level_id'],
             'name' => $validated['name'],
             'description' => $validated['description'] ?? null,
+            'medium' => $validated['medium'] ?? null,
             'order' => $validated['order'],
             'is_active' => $validated['is_active'] ?? true,
         ]);

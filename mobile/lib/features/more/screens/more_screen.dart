@@ -62,6 +62,12 @@ class MoreScreen extends StatelessWidget {
                       () => context.push('/payments'),
                     ),
                     _buildMenuItem(
+                      'Transactions',
+                      Icons.receipt_long_outlined,
+                      const Color(0xFF10B981),
+                      () => context.push('/transactions'),
+                    ),
+                    _buildMenuItem(
                       'Ripoti',
                       Icons.assessment_outlined,
                       const Color(0xFF0EA5E9),
