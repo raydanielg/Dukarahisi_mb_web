@@ -81,6 +81,37 @@
         .level-card:hover .level-icon {
             background: rgba(255,255,255,0.2);
         }
+        {{-- Sidebar drawer --}}
+        .sidebar-overlay {
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+        .sidebar-overlay.open {
+            opacity: 1;
+            visibility: visible;
+        }
+        .sidebar-panel {
+            transform: translateX(-100%);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .sidebar-panel.open {
+            transform: translateX(0);
+        }
+        .accordion-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+        .accordion-content.open {
+            max-height: 2000px;
+        }
+        .accordion-arrow {
+            transition: transform 0.3s ease;
+        }
+        .accordion-arrow.open {
+            transform: rotate(180deg);
+        }
     </style>
 </head>
 <body class="text-[#4C4E64] bg-[#F7F7F9]">
@@ -89,17 +120,20 @@
     <nav class="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-gray-200/60 shadow-sm">
         <div class="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex items-center justify-between h-16">
-                <a href="/" class="flex items-center gap-2 no-underline">
-                    <div class="w-9 h-9 rounded-lg bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center text-white font-bold text-lg">D</div>
-                    <span class="text-xl font-bold text-[#4C4E64]">Dukarahisi</span>
-                </a>
-                <div class="hidden xl:flex items-center gap-1">
+                {{-- Mobile: clickable site name opens sidebar --}}
+                <button onclick="toggleSidebar()" class="xl:hidden flex items-center gap-2 text-lg font-black text-[#4C4E64] hover:text-brand-600 transition">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+                    Darasa Huru
+                </button>
+
+                {{-- Centered menu with icons --}}
+                <div class="hidden xl:flex items-center gap-1 mx-auto">
                     @php
                     $menu = [
                         ['title' => 'Lesson Plans', 'slug' => 'lesson-plans', 'icon' => 'M19 3h-1V1h-2v2H8V1H6v2H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V5a2 2 0 00-2-2m0 16H5V10h14v9M7 12h5v5H7v-5z', 'color' => 'bg-blue-50 text-blue-600'],
                         ['title' => 'Schemes', 'slug' => 'schemes', 'icon' => 'M6 2a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6H6m0 2h7v5h5v11H6V4m2 8v2h8v-2H8m0 4v2h5v-2H8z', 'color' => 'bg-emerald-50 text-emerald-600'],
                         ['title' => 'Logbooks', 'slug' => 'logbooks', 'icon' => 'M17 4v6l-2-2l-2 2V4H9v16h10V4h-2M7 7V5h2V4a2 2 0 0 1 2-2h12c1.05 0 2 .95 2 2v16c0 1.05-.95 2-2 2H7c-1.05 0-2-.95-2-2v-1H3v-2h2v-4H3v-2h2V7H3m2-2v2h2V5H5m0 14h2v-2H5v2m0-6h2v-2H5v2z', 'color' => 'bg-violet-50 text-violet-600'],
-                        ['title' => 'Exams', 'slug' => 'exams', 'icon' => 'M19 3h-4.18C14.25 1.44 12.53.64 11 1.2c-.86.3-1.5.96-1.82 1.8H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2m-7 0a1 1 0 0 1 1 1a1 1 0 0 1-1 1a1 1 0 0 1-1-1a1 1 0 0 1 1-1M7 7h10V5h2v14H5V5h2v2m10 4H7V9h10v2m-2 4H7v-2h8v2z', 'color' => 'bg-amber-50 text-amber-600'],
+                        ['title' => 'Exams', 'slug' => 'exams', 'icon' => 'M19 3h-4.18C14.25 1.44 12.53.64 11 1.2c-.86.3-1.5.96-1.82 1.8H5a2 2 0 1 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2m-7 0a1 1 0 0 1 1 1a1 1 0 0 1-1 1a1 1 0 0 1-1-1a1 1 0 0 1 1-1M7 7h10V5h2v14H5V5h2v2m10 4H7V9h10v2m-2 4H7v-2h8v2z', 'color' => 'bg-amber-50 text-amber-600'],
                         ['title' => 'Subject Notes', 'slug' => 'notes', 'icon' => 'M19 2l-5 4.5v11l5-4.5V2M6.5 5C4.55 5 2.45 5.4 1 6.5v14.66c0 .25.25.5.5.5.1 0 .15-.07.25-.07 1.35-.65 3.3-1.09 4.75-1.09 1.95 0 4.05.4 5.5 1.5 1.35-.85 3.8-1.5 5.5-1.5 1.65 0 3.35.31 4.75 1.06.1.05.15.03.25.03.25 0 .5-.25.5-.5V6.5c-.6-.45-1.25-.75-2-1V19c-1.1-.35-2.3-.5-3.5-.5-1.7 0-4.15.65-5.5 1.5V6.5C10.55 5.4 8.45 5 6.5 5z', 'color' => 'bg-rose-50 text-rose-600'],
                         ['title' => 'Books', 'slug' => 'books', 'icon' => 'M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253', 'color' => 'bg-indigo-50 text-indigo-600'],
                     ];
@@ -107,8 +141,8 @@
 
                     @foreach($menu as $item)
                     <div class="nav-dropdown relative py-4">
-                        <button class="flex items-center gap-2 px-4 py-2 text-sm font-bold text-[#4C4E64] hover:text-brand-600 transition rounded-lg hover:bg-gray-50">
-                            <div class="w-7 h-7 rounded-lg {{ $item['color'] }} flex items-center justify-center">
+                        <button class="flex items-center gap-2 px-3 py-2 text-sm font-bold text-[#4C4E64] hover:text-brand-600 transition rounded-lg hover:bg-gray-50">
+                            <div class="w-8 h-8 rounded-lg {{ $item['color'] }} flex items-center justify-center">
                                 <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="{{ $item['icon'] }}"></path></svg>
                             </div>
                             {{ $item['title'] }}
@@ -175,16 +209,96 @@
                     </div>
                     @endforeach
                 </div>
-                <div class="flex items-center gap-3">
-                    <a href="{{ route('login') }}" class="hidden sm:inline-flex text-sm font-medium text-[#4C4E64] hover:text-brand-600 transition">Login</a>
-                    <a href="{{ route('register') }}" class="inline-flex items-center px-4 py-2 rounded-lg bg-brand-600 text-white text-sm font-semibold hover:bg-brand-700 transition shadow-md shadow-brand-500/20">Register</a>
-                    <button class="xl:hidden p-2 rounded-lg hover:bg-gray-100 text-[#4C4E64]" aria-label="Menu">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
-                    </button>
-                </div>
+
             </div>
         </div>
     </nav>
+
+    {{-- Mobile Sidebar Drawer --}}
+    <div id="sidebarOverlay" class="sidebar-overlay fixed inset-0 bg-black/50 z-[60] xl:hidden" onclick="toggleSidebar()"></div>
+    <div id="sidebarPanel" class="sidebar-panel fixed top-0 left-0 z-[61] w-[300px] h-full bg-white shadow-2xl xl:hidden flex flex-col">
+        {{-- Sidebar header --}}
+        <div class="flex items-center justify-between px-5 h-16 border-b border-gray-100 bg-gradient-to-r from-brand-600 to-brand-800">
+            <span class="text-lg font-black text-white">Darasa Huru</span>
+            <button onclick="toggleSidebar()" class="p-1.5 rounded-lg hover:bg-white/15 text-white transition">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+        </div>
+        {{-- Sidebar menu (accordion) --}}
+        <div class="flex-1 overflow-y-auto py-3 px-3">
+            @foreach($menu as $item)
+            <div class="mb-1">
+                <button onclick="toggleAccordion('acc-{{ $item['slug'] }}')" class="w-full flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-gray-50 transition text-left">
+                    <div class="w-9 h-9 rounded-lg {{ $item['color'] }} flex items-center justify-center shrink-0">
+                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="{{ $item['icon'] }}"></path></svg>
+                    </div>
+                    <span class="flex-1 text-sm font-bold text-[#4C4E64]">{{ $item['title'] }}</span>
+                    <svg id="arrow-{{ $item['slug'] }}" class="accordion-arrow w-4 h-4 text-gray-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                </button>
+                <div id="acc-{{ $item['slug'] }}" class="accordion-content">
+                    <div class="pl-14 pr-2 pt-1 pb-2 space-y-3">
+                        @foreach($levels as $level)
+                        @php
+                        $levelIsPrimary = stripos($level->name, 'primary') !== false;
+                        $levelMediums = $levelIsPrimary ? $level->classRooms->groupBy(fn($c) => $c->medium ?: 'General') : collect();
+                        @endphp
+                        <div>
+                            <h5 class="text-[10px] font-black text-brand-600 uppercase tracking-wider mb-2">{{ $level->name }}</h5>
+                            @if($levelIsPrimary && $levelMediums->count() > 1)
+                                @foreach($levelMediums as $mediumName => $mediumClasses)
+                                <div class="mb-2">
+                                    <span class="text-[9px] font-bold text-[#4C4E64]/50 uppercase block mb-1">{{ ucfirst($mediumName) }} Medium</span>
+                                    <div class="flex flex-col gap-1">
+                                        @foreach($mediumClasses as $classRoom)
+                                        <a href="{{ route('materials.type', ['type' => $item['slug'], 'level' => $level->id, 'class' => $classRoom->id]) }}" class="flex items-center gap-2 p-1.5 rounded-lg hover:bg-brand-50 transition">
+                                            <div class="w-5 h-5 rounded bg-gray-100 text-[#4C4E64] text-[9px] font-bold flex items-center justify-center shrink-0">
+                                                {{ strtoupper(substr($level->name, 0, 1)) }}{{ substr($classRoom->name, -1) }}
+                                            </div>
+                                            <span class="text-xs font-semibold text-[#4C4E64] truncate">{{ $classRoom->name }}</span>
+                                        </a>
+                                        @endforeach
+                                    </div>
+                                </div>
+                                @endforeach
+                            @else
+                            <div class="flex flex-col gap-1">
+                                @forelse($level->classRooms as $classRoom)
+                                <a href="{{ route('materials.type', ['type' => $item['slug'], 'level' => $level->id, 'class' => $classRoom->id]) }}" class="flex items-center gap-2 p-1.5 rounded-lg hover:bg-brand-50 transition">
+                                    <div class="w-5 h-5 rounded bg-gray-100 text-[#4C4E64] text-[9px] font-bold flex items-center justify-center shrink-0">
+                                        {{ strtoupper(substr($level->name, 0, 1)) }}{{ substr($classRoom->name, -1) }}
+                                    </div>
+                                    <span class="text-xs font-semibold text-[#4C4E64] truncate">{{ $classRoom->name }}</span>
+                                </a>
+                                @empty
+                                <span class="text-xs text-gray-400">No classes</span>
+                                @endforelse
+                            </div>
+                            @endif
+                        </div>
+                        @endforeach
+                        <a href="{{ route('materials.type', $item['slug']) }}" class="inline-flex items-center text-xs font-bold text-brand-600 hover:text-brand-700 transition pt-1">
+                            View all {{ $item['title'] }}
+                            <svg class="w-3.5 h-3.5 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path></svg>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            @endforeach
+        </div>
+    </div>
+
+    <script>
+        function toggleSidebar() {
+            document.getElementById('sidebarOverlay').classList.toggle('open');
+            document.getElementById('sidebarPanel').classList.toggle('open');
+        }
+        function toggleAccordion(id) {
+            const content = document.getElementById(id);
+            const arrow = document.getElementById('arrow-' + id.replace('acc-', ''));
+            content.classList.toggle('open');
+            if (arrow) arrow.classList.toggle('open');
+        }
+    </script>
 
     @foreach($levels as $levelIndex => $level)
     @php
@@ -322,10 +436,7 @@
         <div class="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-12">
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12">
                 <div>
-                    <div class="flex items-center gap-2 mb-4">
-                        <div class="w-9 h-9 rounded-lg bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center text-white font-bold text-lg">D</div>
-                        <span class="text-xl font-black text-[#4C4E64]">Dukarahisi</span>
-                    </div>
+                    <h3 class="text-xl font-black text-[#4C4E64] mb-4">Dukarahisi</h3>
                     <p class="text-sm text-[#4C4E64]/60 leading-relaxed mb-4 max-w-xs">
                         A digital network for education systems in Tanzania — empowering educators with innovative tools and resources.
                     </p>

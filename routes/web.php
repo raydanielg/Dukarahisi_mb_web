@@ -12,7 +12,8 @@ use App\Http\Controllers\LandingController;
 use App\Http\Controllers\MaterialBrowseController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', [LandingController::class, 'index'])->name('landing');
+Route::get('/', [LandingController::class, 'onboarding'])->name('onboarding');
+Route::get('/browse', [LandingController::class, 'index'])->name('landing');
 
 // Public material browsing
 Route::prefix('materials')->name('materials.')->group(function () {

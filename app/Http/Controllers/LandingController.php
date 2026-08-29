@@ -68,6 +68,11 @@ class LandingController extends Controller
         ],
     ];
 
+    public function onboarding(): View
+    {
+        return view('onboarding');
+    }
+
     public function index(Request $request): View
     {
         $levels = Level::where('is_active', true)
